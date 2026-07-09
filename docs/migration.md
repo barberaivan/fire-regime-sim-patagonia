@@ -273,7 +273,40 @@ light `source()` only for dependency-free libs.
         **loaded** the two new shapefiles (285 and 23,986 features), the xlsx (284×35), and the
         fitted `ignition_model_samples.rds` (a real `stanfit` object) to confirm they're not just
         present but readable.
-- [ ] **T10** — `fire_regime/` (`simulate.R`, `probability_maps.R`, `plots.R`).
+- [x] **T10** — `fire_regime/` (`simulate.R` 1583 lines, `probability_maps.R` 321 lines,
+      `plots.R` 950 lines). Same grep-sweep-first approach as T8/T9 given the combined size.
+      Path edits (all 3, where present): `source()`s → `R/flammability_indices_functions.R` +
+      `R/fortnight_functions.R` (+ `R/config.R` newly added to `plots.R`, which had no `source()`
+      calls before); veg xlsx → `config$veg_equiv_xlsx` (TODO #2); `"ignition_FWIZ"` →
+      `"ignition"`; `"fire_regime_simulation_FWIZ"` → `"fire_regime_simulation"` — **each script
+      also hardcoded this literal again at several sites instead of reusing its own
+      `export_dir`/`source_dir` variable** (4 extra sites in `simulate.R`, several in `plots.R`),
+      caught by grepping the literal token repo-wide rather than trusting one `replace_all` per
+      variable definition. External `patagonian_fires.shp` / `ignition_points_pnnh_bari-
+      kitzberger.shp` absolute paths (in `plots.R`) → repo-relative.
+      - **Important, not-cosmetic finding (new TODO #7):** `simulate.R` and `probability_maps.R`
+        both read the fitted spread model from `hierarchical_model_FWIZ` — the **legacy,
+        pre-SMC** folder — not the canonical `hierarchical_model_FWIZ_SMC` that
+        `spread/hierarchical_fit.R` (T8) actually produces. Confirmed via `md5sum`/size that the
+        two `spread_model_samples.rds` are genuinely different files (48.5M legacy vs. 37.7M
+        SMC), not a naming accident. Per the behavior-preserving rule, did **not** silently
+        repoint this at the SMC output: copied the legacy file into a distinctly-named
+        `files/hierarchical_model_legacy_preSMC/` and left both scripts reading from there, with
+        a prominent inline `TODO(migration #7)` comment. This is very likely exactly the
+        "evaluation" update the user mentioned at the start of this conversation is still
+        pending (spread estimation method already changed to SMC; evaluation hasn't caught up)
+        — a deliberate decision for the user, not something to change silently during migration.
+      - **New external-file addition**: `plots.R` actively reads
+        `ignition_points_pnnh_bari-kitzberger.shp` (no `_data` suffix — a different file than the
+        one T9 copied) from the same external, non-public `ignition_data` directory. Added it to
+        the store's existing `data/ignition_data/` folder alongside T9's files.
+      - Left one inert commented-out comparison snippet untouched (`firesmap` in `simulate.R`,
+        not a live cache pattern) — same precedent as T6's abandoned WindNinja comment.
+      - **Verified:** parse() OK on all 3; grep audit clean; both `R/` dependencies source in
+        all 3; **16** distinct data/store paths resolve — including confirming, by size, that
+        `hierarchical_model/spread_model_samples.rds` and
+        `hierarchical_model_legacy_preSMC/spread_model_samples.rds` really are different files —
+        and actually loading the legacy spread model object and the new shapefile (288 features).
 - [ ] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
 
 ---
@@ -410,7 +443,19 @@ confirms the new repo runs.
    same script. Pre-existing in the old repo, not introduced by migration; looks like an
    abandoned/exploratory side-analysis, not a canonical output. Flagged in-code; needs either a
    real fit + `saveRDS`/`readRDS` pair, or removal, if this section is ever needed.
-7. **Refactors (post-verification, not part of this migration):**
+7. **`fire_regime/simulate.R` and `probability_maps.R` use the LEGACY, pre-SMC spread model —
+   likely the pending "evaluation" update.** Both read `spread_model_samples.rds` from
+   `files/hierarchical_model_legacy_preSMC/` (copied there during T10 to preserve exact old
+   behavior), not from the canonical SMC fit at `files/hierarchical_model/spread_model_samples.rds`
+   that `spread/hierarchical_fit.R` (T8) produces. Confirmed genuinely different files (48.5M vs
+   37.7M, different dates) via `md5sum`/size — not a naming accident. This is very likely what
+   the user meant by "will change how I evaluate the model" (spread parameter *estimation*
+   already moved to SMC; the regime *evaluation* scripts haven't been repointed at it yet).
+   **Action needed (user decision, not a migration task):** decide whether to repoint
+   `simulate.R`/`probability_maps.R` at the canonical SMC fit, and if so, re-run the downstream
+   regime simulation/probability-map outputs, since they were generated against the old
+   parameters.
+8. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
