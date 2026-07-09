@@ -523,18 +523,44 @@ confirms the new repo runs.
      Kept for provenance at `data/vegetation_equivalences_ciefap.xlsx`; not wired into
      `config$`, since nothing here reads it. If a future upstream step needs it, add a second
      `config$` entry then.
-3. **WindNinja dir** — machine-local scratch dir, absent on this machine; only needed to
-   *regenerate* wind layers (already baked into the prepared landscape `.rds` files, so not a
-   blocker for most of the pipeline). All uses now derive from `config$windninja_dir`
-   (`R/config.R`), including the 3 `system()`/`unlink()` shell-command strings in
-   `landscapes_preparation.R` that used to hardcode the absolute path directly (fixed in T6).
-   **Install feasibility checked (2026-07-09):** not available via `apt` or `snap`; checked the
-   official GitHub releases (`firelab/windninja`) via the API — the latest release (3.12.2) has
-   **zero attached binary assets**, so there's no prebuilt Linux package at all. Installing would
-   mean building from source (GDAL/NetCDF/Boost/Qt dependency chain) — a genuinely heavy,
-   multi-hour, failure-prone undertaking not appropriate to attempt without the user's explicit
-   go-ahead, especially since it isn't currently blocking anything. Only matters if new focal
-   fires are added or the PNNH landscape needs rebuilding from scratch — not needed yet.
+3. **WindNinja — INSTALLED (2026-07-09), built from source.** Needed now: the user is planning
+   to simulate fire across the whole `patagonian_fires` study area, which means generating wind
+   fields well beyond the already-cached focal-fire/PNNH landscapes. No prebuilt Linux package
+   exists (checked `apt`, `snap`, and the GitHub releases API — zero binary assets on any
+   release), so built from source at `~/dev/windninja-src` (tag `3.12.2`), installed to
+   `~/.local` (no root needed; `~/.local/bin` was already on `PATH`, so the existing
+   `system("WindNinja_cli …")` calls in `landscapes_preparation.R` work unchanged).
+   - **Build config**: `NINJAFOAM=OFF`, `NINJA_QTGUI=OFF` (the Dockerfile in the WindNinja repo
+     names this flag `NINJA_GUI`, which doesn't exist in this version's `CMakeLists.txt` and
+     silently no-ops — the real flag is `NINJA_QTGUI`). Skipping both avoids the two heaviest
+     dependencies (OpenFOAM, Qt4) entirely — `domainAverageInitialization`, the only
+     initialization method this pipeline uses, needs neither.
+   - **Dependency gap found and fixed**: `libboost-{date-time,program-options,test}-dev` were
+     missing, and installing them hit a real Ubuntu archive inconsistency — `libboost1.83-dev`
+     was at a `.1` point-release not matched by the component packages in the `noble` repo.
+     Fixed by explicitly downgrading the core package to the exact repo version
+     (`--allow-downgrades libboost1.83-dev=1.83.0-2.1ubuntu3`) so all four align. Also needed
+     `libshp-dev` (shapelib), missing entirely.
+   - **A real build failure, not a missing dependency**: the default branch tip failed to
+     compile (`ninjaArmy.h`: `ninja` type not declared) under this machine's GCC 13 — building
+     the tagged `3.12.2` release instead (rather than the branch tip) compiled cleanly.
+   - **Verified with an actual simulation**, not just `--version`: ran a full
+     `domainAverageInitialization` solve against the real PNNH elevation raster — meshing,
+     equation building, and solving all completed (100%), ascii wind-direction/speed grids
+     written correctly.
+   - **Config-format fix needed and applied**: `momentum_flag` is only a recognized option in
+     NINJAFOAM builds — a NINJAFOAM-off build (the one now installed) rejects it outright
+     (`unrecognised option`). Removed it from both of `landscapes_preparation.R`'s WindNinja
+     config-writing blocks (focal-fire and PNNH) — harmless removal, since
+     `domainAverageInitialization` only ever used the simple solver regardless of this flag.
+   - **Near-miss, caught and fixed**: WindNinja writes ascii output *next to the input elevation
+     file*, by a fixed naming convention. The first verification run used the real
+     `data/pnnh_images/pnnh_data_spread_elevation_30m.tif` at a deliberately coarse test
+     resolution — which **overwrote the production wind ascii files already in the store**
+     (same filenames). Caught immediately (byte-size mismatch against the untouched old repo),
+     restored by copying the originals back from `~/Insync/Fire spread modelling/fire_spread/`
+     (confirmed byte-identical via `md5sum` after). **Lesson for next time**: always point
+     WindNinja test runs at a copied/scratch elevation file, never a real one in the store.
 4. **`fwi_mean_sd_spread.rds` — RESOLVED (2026-07-09).** The canonical `hierarchical_fit.R`'s
    `saveRDS()` for this file was commented out (so it only existed via a legacy non-SMC run's
    copy — see T3). Traced what actually produces the two numbers: `fwi_mean`/`fwi_sd` are just

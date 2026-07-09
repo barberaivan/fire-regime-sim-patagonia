@@ -145,5 +145,7 @@ per the behavior-preserving-first approach):
    (`docs/migration.md` TODO #1).
 4. Make the working-directory assumption explicit (repo root via the `.Rproj`).
 5. Replace the hardcoded WindNinja absolute path with a config value — **done**: centralized in
-   `R/config.R` (`docs/migration.md` TODO #3 covers the remaining machine-setup step).
+   `R/config.R`. WindNinja itself is now built from source and installed on this machine too
+   (`docs/migration.md` TODO #3 has the full build log, including a config-format fix this
+   surfaced in `landscapes_preparation.R`).
 6. One canonical version per script; drop the suffix sprawl — **done** during migration.

@@ -180,8 +180,10 @@ units_mesh_resolution      = m
 output_buffer_clipping     = 0.0
 write_ascii_output         = true
 ascii_out_resolution       = 30.0
-units_ascii_out_resolution = m
-momentum_flag              = false",
+units_ascii_out_resolution = m",
+# momentum_flag was dropped: it's only a recognized option in NINJAFOAM (momentum-solver)
+# builds. domainAverageInitialization uses the simple conservation-of-mass solver regardless,
+# so a NINJAFOAM-off build (the one in use — see docs/migration.md) doesn't need or accept it.
 # variables: DEM and wind direction
 paste("elevation_file             =", elev_path),
 paste("input_direction            =", wind_direction)
@@ -646,8 +648,8 @@ output_buffer_clipping     = 0.0
 write_ascii_output         = true
 ascii_out_resolution       = 30.0
 units_ascii_out_resolution = m
-momentum_flag              = false
 input_direction            = 293",
+# momentum_flag was dropped here too — see the same note in the focal-fire wind config above.
 paste("elevation_file      =", elev_path)
 )
 # The RAM was not enought to use mesh_resolution = 90.0
