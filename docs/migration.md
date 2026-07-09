@@ -59,7 +59,31 @@ light `source()` only for dependency-free libs.
         `~/Insync/patagonian_fires/patagonian_fires/` into `data/patagonian_fires/`.
       - Verified: full store tree listed, plus `file.exists()` spot-checks through the repo's
         `data` symlink for one representative path per folder — all `TRUE`.
-- [ ] **T3** — Store outputs copy (`files/` folders, Reference B).
+- [x] **T3** — Store outputs copy (`files/` folders, Reference B). ~5.0G copied.
+      - `hierarchical_model/` (from `hierarchical_model_FWIZ_SMC/`, 267M, 21 files, no `dump/`) —
+        copied wholesale, **plus** `fwi_mean_sd_spread.rds` brought in from the **legacy**
+        `hierarchical_model_FWIZ/` (non-SMC) folder. Reason: the canonical SMC fit script
+        (`hierarchical model fitting_FWIZ2_SMC.R` line 660) has the `saveRDS()` for this file
+        **commented out**, so it's never produced by the canonical pipeline — yet
+        `fire_regime_simulations_FWIZ.R` (line 830) reads it. This is real pre-existing tech
+        debt, not something introduced by the migration; see TODO #4 below — flagged rather
+        than silently fixed, per the behavior-preserving-now principle. The rest of
+        `hierarchical_model_FWIZ/` (its other 20 files + its `dump/` subfolder, which differs
+        from its parent — a stale backup) was **not** copied: it's the legacy non-SMC fit,
+        superseded by the SMC output.
+      - `posterior_samples_stage1/` (from `posterior_samples_stage1_smc/`, 294M) — copied
+        wholesale; clean, no `_exploration`/`-BACKUP` variants mixed in.
+      - `ignition/` (from `ignition_FWIZ/`, 138M) — copied wholesale, including some
+        alternative-spec model variants (`*_ordinal`, `*_time-only1/2`, `*_relative_raw`)
+        alongside the two canonically-read files (`ignition_model_samples.rds`,
+        `escape_model_samples.rds`); none are `_OLD`/`dump`-labeled so kept for provenance.
+      - `fire_regime_simulation/` (from `fire_regime_simulation_FWIZ/`, 4.2G, 220 files) —
+        copied wholesale; clean, no `_OLD`/`-EXPONENTIAL`/`_OLD_BUG` variants mixed in (those
+        sibling folders exist in the old repo but were correctly excluded, per Reference B).
+      - `landscape_flammability/` (72M, same name) — copied wholesale; not produced by any
+        script in the canonical migration set (a leaf input, like the fixed CSVs in `data/`).
+      - Verified: sizes match source folders; store `files/` tree listed; spot-checked
+        `file.exists()` through the repo's `files` symlink.
 - [ ] **T4** — `data_prep/flammability_indices.R`.
 - [ ] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R`,
       `fwi_projections.R`).
@@ -172,8 +196,17 @@ confirms the new repo runs.
 3. **WindNinja dir** — machine-local scratch dir, absent on this machine; only needed to
    *regenerate* wind layers (already baked into the prepared landscape `.rds` files, so not a
    blocker for most of the pipeline).
-4. **`hierarchical_model_FWIZ` vs `_FWIZ_SMC`** — confirm `fire_regime/simulate.R` should read
-   the SMC fit once both old names collapse to the new `files/hierarchical_model`.
+4. **`fwi_mean_sd_spread.rds` isn't actually produced by the canonical fit** — resolved during
+   T3: the `saveRDS()` for it in the canonical `hierarchical model fitting_FWIZ2_SMC.R` (line
+   660) is **commented out**, so the file only exists because a legacy non-SMC run
+   (`hierarchical model fitting_FWIZ.R`) produced it. `fire_regime/simulate.R` needs it (reads
+   it from `hierarchical_model_FWIZ` in the old repo). For the migration, the file was copied
+   from the legacy folder into the new `files/hierarchical_model/` alongside the canonical SMC
+   outputs (data-only carry-over, no code change). **Real open question for T8/T10:** should
+   `hierarchical_fit.R` uncomment that write and regenerate this artifact from the SMC fit
+   (statistically more correct — it'd reflect the actual model being used), or is reusing the
+   legacy artifact fine because it's just an FWI standardization constant, independent of which
+   fit produced it? Needs a decision when those scripts are migrated, not before.
 5. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
