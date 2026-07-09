@@ -151,9 +151,11 @@ dveg$veg_num <- dveg$cnum2
 
 igmod <- readRDS(file.path("files", "ignition", "ignition_model_samples.rds"))
 escmod <- readRDS(file.path("files", "ignition", "escape_model_samples.rds"))
-# TODO(migration #7): legacy pre-SMC spread model — see docs/migration.md #7 and the identical
-# note in fire_regime/simulate.R. Decide deliberately before repointing at the canonical SMC fit.
-smod <- readRDS(file.path("files", "hierarchical_model_legacy_preSMC",
+# UPDATED (see docs/migration.md #7 and the identical note in fire_regime/simulate.R): repointed
+# from the legacy pre-SMC fit to the canonical SMC-fitted spread model. Structurally identical
+# to the legacy file (verified), only the posterior values differ. NOT RE-RUN/RE-VALIDATED after
+# this change. files/hierarchical_model_legacy_preSMC/ should be deleted once validated.
+smod <- readRDS(file.path("files", "hierarchical_model",
                           "spread_model_samples.rds"))
 
 # Prepare raster for maps -------------------------------------------------

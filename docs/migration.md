@@ -479,18 +479,28 @@ confirms the new repo runs.
    same script. Pre-existing in the old repo, not introduced by migration; looks like an
    abandoned/exploratory side-analysis, not a canonical output. Flagged in-code; needs either a
    real fit + `saveRDS`/`readRDS` pair, or removal, if this section is ever needed.
-7. **`fire_regime/simulate.R` and `probability_maps.R` use the LEGACY, pre-SMC spread model —
-   likely the pending "evaluation" update.** Both read `spread_model_samples.rds` from
-   `files/hierarchical_model_legacy_preSMC/` (copied there during T10 to preserve exact old
-   behavior), not from the canonical SMC fit at `files/hierarchical_model/spread_model_samples.rds`
-   that `spread/hierarchical_fit.R` (T8) produces. Confirmed genuinely different files (48.5M vs
-   37.7M, different dates) via `md5sum`/size — not a naming accident. This is very likely what
-   the user meant by "will change how I evaluate the model" (spread parameter *estimation*
-   already moved to SMC; the regime *evaluation* scripts haven't been repointed at it yet).
-   **Action needed (user decision, not a migration task):** decide whether to repoint
-   `simulate.R`/`probability_maps.R` at the canonical SMC fit, and if so, re-run the downstream
-   regime simulation/probability-map outputs, since they were generated against the old
-   parameters.
+7. **`fire_regime/simulate.R` and `probability_maps.R` — repointed to the canonical SMC spread
+   model; NOT yet re-validated.** Originally both read `spread_model_samples.rds` from
+   `files/hierarchical_model_legacy_preSMC/` (the pre-SMC fit, kept during T10 to preserve exact
+   old behavior — confirmed genuinely different from the SMC fit: 48.5M vs 37.7M, different
+   dates, via `md5sum`/size). Per user decision (2026-07-09): the spread-parameter *estimation*
+   method has already moved to SMC (post-PhD work); the regime *evaluation* scripts (these two)
+   are the ones still pending an update, and that update may not happen for months — so the read
+   was **repointed now** to `files/hierarchical_model/spread_model_samples.rds` (the canonical
+   SMC fit), rather than left on the legacy file indefinitely.
+   - **Verified safe to swap structurally**: the legacy and SMC `spread_model_samples.rds` have
+     identical `names()` (`fixef, rho, ranef, steps, stepsU`), identical dimensions, and
+     identical dimnames (parameter names) — only the posterior *values* differ. Downstream code
+     that indexes into `smod$fixef`, `smod$ranef`, etc. is therefore unaffected structurally by
+     the swap.
+   - **NOT tested beyond this**: neither script has been re-run end-to-end against the new
+     parameters — the regime simulation and probability-map outputs currently in the store were
+     generated with the *old* (pre-SMC) parameters and have not been regenerated. Treat any
+     existing `files/fire_regime_simulation/` or probability-map output as stale until these
+     scripts are actually re-run.
+   - **Cleanup deferred**: `files/hierarchical_model_legacy_preSMC/` should be deleted once the
+     re-run/validation above is done and confirmed working — not before, in case a rollback is
+     needed.
 8. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.

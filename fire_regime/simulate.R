@@ -936,14 +936,14 @@ dveg$veg_num <- dveg$cnum2
 
 igmod <- readRDS(file.path("files", "ignition", "ignition_model_samples.rds"))
 escmod <- readRDS(file.path("files", "ignition", "escape_model_samples.rds"))
-# TODO(migration #7): this reads the LEGACY, pre-SMC spread_model_samples.rds (kept at
-# files/hierarchical_model_legacy_preSMC/ to preserve this script's exact old behavior — see
-# docs/migration.md #7). The canonical SMC-fitted spread model now lives at
-# files/hierarchical_model/spread_model_samples.rds (spread/hierarchical_fit.R's output) and is
-# NOT the same file (different size/date, confirmed via md5sum during migration). This is very
-# likely the "evaluation" update the user described as still pending — decide deliberately
-# whether to repoint this at the canonical SMC fit; do not do so silently.
-smod <- readRDS(file.path("files", "hierarchical_model_legacy_preSMC",
+# UPDATED (see docs/migration.md #7): repointed from the legacy pre-SMC fit to the canonical
+# SMC-fitted spread model (spread/hierarchical_fit.R's output). Structurally identical to the
+# legacy file (same list names, dims, and dimnames — verified during migration), only the
+# posterior values differ, so the parameter-extraction code below is unaffected structurally.
+# NOT RE-RUN/RE-VALIDATED after this change — the rest of this script, and the regime-simulation
+# outputs it produces, have not been tested against SMC-fitted parameters yet.
+# files/hierarchical_model_legacy_preSMC/ should be deleted once that validation is done.
+smod <- readRDS(file.path("files", "hierarchical_model",
                           "spread_model_samples.rds"))
 
 # extract parameters from stan models

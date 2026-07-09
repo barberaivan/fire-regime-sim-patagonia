@@ -125,11 +125,14 @@ holds the history instead. Full task-by-task log, every finding, and the complet
 live in **`docs/migration.md`** — the two most important open items before running the full
 pipeline:
 
-- **`fire_regime/simulate.R` and `probability_maps.R` read the legacy, pre-SMC spread model**,
-  not the canonical SMC fit `spread/hierarchical_fit.R` produces (`docs/migration.md` TODO #7) —
-  very likely the "evaluation" update the user described as still pending.
+- **`fire_regime/simulate.R` and `probability_maps.R` now read the canonical SMC-fitted spread
+  model** (repointed from the legacy pre-SMC fit, structurally verified compatible), but neither
+  script has been re-run/validated against it — existing outputs are stale until they are
+  (`docs/migration.md` TODO #7).
 - **The vegetation-equivalences `.xlsx`** several scripts need is missing from disk
   (`docs/migration.md` TODO #2).
+- **The ignition-escape "fire size" model and ordinal-class escape model are abandoned/
+  superseded** — see `ignition_escape/README.md`; not touched, just flagged.
 
 Tech-debt items deferred to *after* this migration (old `INVENTORY.md` §9; not addressed here
 per the behavior-preserving-first approach):
