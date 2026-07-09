@@ -42,6 +42,10 @@ under `data/` (heavy, in the store).
   consumed by `landscapes_preparation.R` and the raw GEE per-fire exports, and it's what the two
   equivalence tables in the store (`data/vegetation_equivalences.xlsx` for Lara,
   `data/vegetation_equivalences_ciefap.xlsx` for ciefap) are for.
-- **Status:** the R code with this reclassification/patching logic hasn't been located yet.
-  Believed to be in `~/Insync/Mapa vegetación WWF - Lara et al. 1999/` and/or
-  `~/Insync/Mapa vegetación ciefap/` (both fully synced). Not yet part of this repo.
+- **Status (updated 2026-07-09):** the polygon-level reclassification R scripts were found —
+  `vegetation reclassification.R` (Lara, 8-class scheme) and `exploring_layers.R` (ciefap,
+  `class1`/`class2` join) — both in the source folders above, both ending with "upload to GEE".
+  The actual regional **mosaic + pre-2014-burned-area patching** step was **not** found in either
+  folder and is very likely done directly in the **GEE Code Editor** (JavaScript), not saved to
+  any repo or local file — a filesystem search can't locate it. See `docs/migration.md` TODO #8
+  for full detail; not yet part of this repo.

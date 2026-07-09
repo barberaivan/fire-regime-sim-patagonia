@@ -516,20 +516,36 @@ confirms the new repo runs.
    - **Cleanup deferred**: `files/hierarchical_model_legacy_preSMC/` should be deleted once the
      re-run/validation above is done and confirmed working — not before, in case a rollback is
      needed.
-8. **Regional vegetation raster — build code not yet located, not migrated.** The user's memory
+8. **Regional vegetation raster — R-side reclassification found; the actual mosaic/patching step
+   is very likely in GEE JavaScript, not locatable by filesystem search.** The user's memory
    (2026-07-09): there's a large regional vegetation raster built from the **ciefap** map,
    reclassified, with **burned areas from before ~2014 patched in using cover from the Lara et al.
-   1999 map** instead (since a post-fire-era map can't show pre-fire vegetation in areas that
-   burned before it was made). This is presumably what produces the raw `veg`/`GRID_CODE` layer
-   that `landscapes_preparation.R` and the raw GEE fire exports consume, and connects the two
-   equivalence tables already in the store (`data/vegetation_equivalences.xlsx` for Lara,
-   `data/vegetation_equivalences_ciefap.xlsx` for ciefap — see TODO #2 above). The R code with
-   the reclassification/patching ("remap") logic hasn't been found yet — user believes it's in
-   `~/Insync/Mapa vegetación WWF - Lara et al. 1999/` and/or `~/Insync/Mapa vegetación ciefap/`
-   (both fully synced: 76 and 55 files respectively). **Action needed:** locate the script(s),
-   understand the reclassification + pre-2014-burned-area patching logic, and decide whether to
-   bring it into this repo (likely as a `data_prep/` script feeding `landscapes_preparation.R`).
-   Document the final process in `docs/data-prep.md` once found.
+   1999 map** instead (a post-fire-era map can't show pre-fire vegetation where a fire predates
+   it). This presumably produces the raw `veg`/`GRID_CODE` layer that `landscapes_preparation.R`
+   and the raw GEE fire exports consume, and connects the two equivalence tables already in the
+   store (`data/vegetation_equivalences.xlsx` for Lara, `data/vegetation_equivalences_ciefap.xlsx`
+   for ciefap — TODO #2).
+   - **Found** (2026-07-09), in `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`:
+     `vegetation reclassification.R` — reclassifies the original Lara et al. 1999 polygons (by
+     `CLASE` code) into 8 vegetation classes (Wet forest, Dry forest, Subalpine forest,
+     Shrubland, Grassland, Anthropogenic prairie, Plantation, Non-burnable); also
+     `rasterize vegetation polygons.R`. In `~/Insync/Mapa vegetación ciefap/`: `exploring_layers.R`
+     — merges ciefap's regional shapefiles (NQN/RN/CH), joins the `class1/class2` equivalence
+     table, and ends with the comment **"esto se sube a GEE"** ("this gets uploaded to GEE").
+   - **Not found — likely lives in the GEE Code Editor, not in any file.** Both R pipelines
+     terminate at "upload to GEE"; the actual regional **mosaic** and the **pre-2014
+     burned-area patching** aren't in either folder. Checked for a fire-spread-specific GEE JS
+     repo (only the unrelated MapBiomas one exists locally) and searched the old repo for
+     "2014"/patching mentions — nothing. The older folder these two scripts reference internally
+     (`Burned area mapping/Ecorregion shapefiles (Lara et al. 2000)/`) no longer exists (moved/
+     renamed at some point). **This step may only exist in the GEE Code Editor's script list**
+     (per Earth Engine account, not necessarily saved to any repo) — the user would need to check
+     their GEE Code Editor directly, not a filesystem search.
+   - **Action needed:** user to check the GEE Code Editor script list for the mosaic/patching
+     script; if found, it belongs in a separate GEE JS repo (per the `mapbiomas-arg-fire-gee`
+     precedent in `CLAUDE.md`), not as R code here. The two R reclassification scripts found above
+     could be migrated into `data_prep/` as upstream/reference material once their role is
+     confirmed. Document the final end-to-end process in `docs/data-prep.md` once resolved.
 9. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
