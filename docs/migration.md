@@ -103,8 +103,42 @@ light `source()` only for dependency-free libs.
       not a new bug); separately compiled `flammability_indices.stan` at its new path with
       `stan_model()` — succeeds (only a pre-existing, harmless "incomplete final line" warning
       from the stan file itself). Full end-to-end run is blocked on TODO #2 (the xlsx).
-- [ ] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R`,
-      `fwi_projections.R`).
+- [x] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R` + its
+      `fwi_fortnight_matrix_expquad.stan`, `fwi_projections.R`). Path edits: `source(weather/
+      fortnight_functions.R)` → `R/fortnight_functions.R` (all 3); external
+      `patagonian_fires.shp` absolute path → `data/patagonian_fires/patagonian_fires.shp`;
+      `stan_model()` path updated (`fwi_fortnight_matrix.R`).
+      - **Surfaced a systemic gap**: T2 only copied the **folders** listed in Reference B —
+        it never inventoried `data/`'s many **loose top-level files** (shapefiles + CSVs sitting
+        directly in `data/`, not in a subfolder). `fwi_fortnight_matrix.R` needed several of
+        these. Rather than patch just this task's own needs, grepped **all remaining canonical
+        scripts (T6–T10)** at once for loose-file references, so this gap doesn't get
+        rediscovered piecemeal later.
+      - Copied for T5 itself: `ignition_points_checked.*`, `ignition_points_checked_with_date.*`
+        (its own `writeVector()` is commented out — like TODO #4, it only exists because a
+        prior run produced it once; needed as-is), `ignition_points_checked_with_date-fort-
+        matrix-fwiz.*`, `ignition_points_checked_with_date-fort-fwiz2.*`,
+        `climatic_data_by_fire_fwi-fortnight-{matrix_FWIZ,cumulative_FWIZ,cumulative_FWIZ2}.csv`.
+        No filename changes — per the no-file-rename decision, only folder names are cleaned up.
+      - Also copied two small items **for T6** (`climatic_data_by_fire_fwi-fortnight-
+        cumulative.csv` bare, `climatic_data_by_fire_FWI-wind_corrected.csv`) and one **for T8**
+        (`patagonian_fires_spread.*`) — cheap to grab now since already located by the same grep;
+        avoids re-deriving this list later. `landscapes_ig-known_non-steppe.rds` (also read by
+        `landscapes_preparation.R`) does **not** exist yet anywhere — it's a self-produced cache
+        file (written and read by that same script), not a pre-existing input; left for T6.
+      - Confirmed `data/fwi_daily_1998-2022/` was already copied **wholesale** in T2 (before
+        selective copying started), so `fwi_standardize.R`'s outputs
+        (`fwi_daily_..._standardized.tif`, `fwi_fortnights_..._standardized.tif`) were already
+        in the store — verified by exact byte-size match against the source folder, no re-copy
+        needed.
+      - **Verified:** parse() OK for all 3; grep audit clean (no `/home/`, no leftover
+        `weather/fortnight_functions.R` source); actually loaded every data dependency through
+        the store symlink with `terra` (`apn_limites` 55 features, `patagonian_fires` 238,
+        `fwi_fortnights` raster 676 layers — all load); separately compiled
+        `fwi_fortnight_matrix_expquad.stan` at its new path — succeeds. Full script runs are
+        long-running (fortnight aggregation, ~150-model-member projection loop) and were not
+        executed end-to-end — only the data-loading and stan-compile surface was verified,
+        consistent with the plan's verification bar.
 - [ ] **T6** — `data_prep/landscapes_preparation.R`.
 - [ ] **T7** — `src/sample_triplets_weighted.cpp` + `spread/stage1_smc.R`.
 - [ ] **T8** — `spread/hierarchical_fit.R`.
@@ -127,6 +161,7 @@ light `source()` only for dependency-free libs.
 | `flammability indices/flammability_indices.stan` | `data_prep/flammability_indices.stan` |
 | `weather/FWI standardize and aggregate by fortnight.R` | `data_prep/fwi_standardize.R` |
 | `weather/FWI fortnight matrix for spread and lengthscale estimation.R` | `data_prep/fwi_fortnight_matrix.R` |
+| `weather/FWI model cumulative expquad_simpler.stan` | `data_prep/fwi_fortnight_matrix_expquad.stan` |
 | `weather/FWI projections/standardize and aggregate projections by fortnight (2050 and 2090).R` | `data_prep/fwi_projections.R` |
 | `spread/landscapes_preparation.R` | `data_prep/landscapes_preparation.R` |
 | `spread/sampling_fire_wise_posteriors_(stage1)_SMC.R` | `spread/stage1_smc.R` |
