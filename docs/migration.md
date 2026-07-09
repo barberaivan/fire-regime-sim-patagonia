@@ -527,7 +527,7 @@ confirms the new repo runs.
    to simulate fire across the whole `patagonian_fires` study area, which means generating wind
    fields well beyond the already-cached focal-fire/PNNH landscapes. No prebuilt Linux package
    exists (checked `apt`, `snap`, and the GitHub releases API — zero binary assets on any
-   release), so built from source at `~/dev/windninja-src` (tag `3.12.2`), installed to
+   release), so built from source at `~/.local/src/windninja` (tag `3.12.2`), installed to
    `~/.local` (no root needed; `~/.local/bin` was already on `PATH`, so the existing
    `system("WindNinja_cli …")` calls in `landscapes_preparation.R` work unchanged).
    - **Build config**: `NINJAFOAM=OFF`, `NINJA_QTGUI=OFF` (the Dockerfile in the WindNinja repo
@@ -687,8 +687,53 @@ confirms the new repo runs.
    - No files were moved and `setup.sh` was not changed — this is a documentation-only entry,
      deliberately left for the user to resolve.
 10. **Refactors (post-verification, not part of this migration):**
-   - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
+   - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop) —
+     **analysis below**, not yet designed/decided; next session should read it before starting.
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
    - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
      migration/refactor, not up front).
+
+   ### `landscapes_preparation.R` refactor — handoff notes (not started)
+
+   The script (`data_prep/landscapes_preparation.R`) currently builds landscapes in **three
+   near-duplicate blocks** instead of one function:
+   1. **Focal-fires loop** (`for(i in 1:n_fires)`, ~line 309) — one landscape per historical fire.
+   2. **PNNH plain** (~line 606) — one landscape for the national park, urban treated as forest.
+   3. **PNNH urban-nonburnable** (~line 759) — same park, urban treated as non-burnable instead.
+
+   All three do the same core steps (remap veg codes via `dveg`, compute VFI from NDVI +
+   `fi_params`, compute TFI from elevation/slope/aspect, project wind onto the raster, stack into
+   `rall`, mask NA as non-burnable, `land_cube()` into the C++-ready array), but **differ** in
+   ways that need to be parameterized rather than assumed:
+   - **Input raster stack**: `raw_imgs[[i]]` (per-fire, from `data/focal_fires/raw_gee/`) vs.
+     `pnnh_rast` (single park-wide raster). Different source, same expected band names
+     (`veg`, `ndvi_prev`/`ndvi`, `elevation`, `slope`, `aspect`, `burned` — focal fires only).
+   - **Veg remap column**: focal fires use `dveg$cnum3` (urban → forest, zero-indexed); PNNH
+     plain uses `dveg$cnum2`/`cnum3`-equivalent; PNNH urban-nonburnable adds `cnum4`/`cnum5`
+     (urban → 99/non-burnable). A generic function needs a `veg_col` (or `urban_treatment`
+     enum) argument instead of hardcoded column names.
+   - **NDVI detrending**: only the focal-fires block detrends NDVI by fire year via `mdetrend`
+     (a fire has a specific historical date; PNNH is "now", so it uses raw `ndvi` untransformed
+     via `vfi_calc()` directly). A generic function needs this as an optional step gated on
+     whether a `fire_date` is supplied.
+   - **Fire-specific bookkeeping**: `ig_rowcol`, `burned_layer`, `burned_ids`, `counts_veg*` are
+     only computed for focal fires (needs `points` + a `burned` band); PNNH blocks skip all of
+     this and only save the bare `land_arr`. A generic function should make this an optional
+     block (`compute_fire_extras = TRUE/FALSE`), not assume it always runs.
+   - **WindNinja invocation differs per block**: thread count, `mesh_resolution` (90 m focal vs.
+     120 m PNNH — RAM-constrained, see the script's own comment), and the output filename
+     convention (`<elev_basename>_<dir>_<res>_{ang,vel}.asc`, [[windninja-setup]]) is
+     string-built inline each time rather than through a shared helper.
+
+   **Proposed shape (not decided — evaluate before implementing):** two functions, not one —
+   `run_windninja(elevation_raster, direction, mesh_resolution, out_dir, ...)` (wraps config-file
+   writing + `system()` call + ascii read-back, shared by all 3 blocks) and
+   `build_landscape(raster_stack, dveg, fi_params, wind_rast, wind_sd, urban_treatment =
+   c("forest", "nonburnable"), fire_date = NULL, mdetrend = NULL, ignition_point = NULL,
+   compute_fire_extras = FALSE)` returning the same list structure the focal-fires loop currently
+   produces (or just `land_arr` when `compute_fire_extras = FALSE`). The **goal stated in
+   `CLAUDE.md`** is a function that "can create any landscape" (any ROI, not just the fixed focal
+   fires + PNNH) — achieving that fully likely also needs the GEE-side landscape export
+   generalized first (see `CLAUDE.md`'s "next roadmap" note), since the R script currently
+   assumes GEE has already exported a fixed band set for a fixed set of ROIs.
