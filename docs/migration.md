@@ -481,6 +481,13 @@ confirms the new repo runs.
    blocker for most of the pipeline). All uses now derive from `config$windninja_dir`
    (`R/config.R`), including the 3 `system()`/`unlink()` shell-command strings in
    `landscapes_preparation.R` that used to hardcode the absolute path directly (fixed in T6).
+   **Install feasibility checked (2026-07-09):** not available via `apt` or `snap`; checked the
+   official GitHub releases (`firelab/windninja`) via the API — the latest release (3.12.2) has
+   **zero attached binary assets**, so there's no prebuilt Linux package at all. Installing would
+   mean building from source (GDAL/NetCDF/Boost/Qt dependency chain) — a genuinely heavy,
+   multi-hour, failure-prone undertaking not appropriate to attempt without the user's explicit
+   go-ahead, especially since it isn't currently blocking anything. Only matters if new focal
+   fires are added or the PNNH landscape needs rebuilding from scratch — not needed yet.
 4. **`fwi_mean_sd_spread.rds` — RESOLVED (2026-07-09).** The canonical `hierarchical_fit.R`'s
    `saveRDS()` for this file was commented out (so it only existed via a legacy non-SMC run's
    copy — see T3). Traced what actually produces the two numbers: `fwi_mean`/`fwi_sd` are just
