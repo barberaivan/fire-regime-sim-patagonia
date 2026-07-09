@@ -8,6 +8,9 @@ here — that's what git log and `docs/migration.md` are for.
 
 **Last updated:** 2026-07-09
 
+**Open to-dos live in `docs/migration.md`'s TODO register** (items #6, #7, #9 are still
+unresolved — summarized under "Open items" below, full detail in that file).
+
 ---
 
 ## Current state
@@ -45,13 +48,19 @@ here — that's what git log and `docs/migration.md` are for.
    PNNH, or a future arbitrary ROI) can be built without a hard-coded loop. Full analysis of the
    three current duplicate blocks and a proposed function shape is in `docs/migration.md`
    → Refactors (item 10) → "`landscapes_preparation.R` refactor — handoff notes". Not started.
-2. **GEE-side generalization** — export landscape variables for any ROI, not just the fixed
+2. **Implement the spread-paper validation** — the analyses, sampling scheme, and metrics
+   described in `manuscript-spread/validation-and-journal.md` (regional size distribution,
+   per-fire spatial signature via edge-pair conditional logistic regression, FWI-stratified
+   version, shape metrics). This is what follows the landscape refactor: validation needs
+   large-N fire simulations over the PNNH landscape, which the refactor makes easier to drive.
+   Not started.
+3. **GEE-side generalization** — export landscape variables for any ROI, not just the fixed
    focal-fire set + PNNH. Needs planning; likely a prerequisite (or companion) to item 1's "any
    landscape" goal, since the R script currently assumes GEE has already exported a fixed band
    set for a fixed set of ROIs. See `CLAUDE.md` → "GEE Code Editor scripts".
-3. **Simulate fire across the whole `patagonian_fires` study area** — the actual motivation for
+4. **Simulate fire across the whole `patagonian_fires` study area** — the actual motivation for
    installing WindNinja: generate new wind fields beyond the cached focal-fire/PNNH landscapes.
-   Depends on items 1–2 to build landscapes for arbitrary locations.
-4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
+   Depends on items 1 and 3 to build landscapes for arbitrary locations.
+5. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise.
-5. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+6. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
