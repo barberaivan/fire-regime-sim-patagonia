@@ -23,9 +23,14 @@ light `source()` only for dependency-free libs.
 ## Task checklist
 
 - [x] **T0** — This file + `R/config.R` (machine-local/external paths in one place).
-- [ ] **T1** — `R/` libraries: `fortnight_functions.R`, `mcmc_functions_smc.R` (+
-      `mcmc_functions.R` only if needed — verify), `flammability_indices_functions.R` + its 2
-      `.rds` into `data/flammability_indices/`.
+- [x] **T1** — `R/` libraries: `fortnight_functions.R`, `mcmc_functions_smc.R`,
+      `flammability_indices_functions.R` + its 2 `.rds` into `data/flammability_indices/`.
+      Confirmed `mcmc_functions_smc.R` is self-contained — despite the header comment ("inherits
+      from mcmc_functions.R"), it has no `source()` call and defines every function itself
+      (`update_lm`, `update_corr`, `update_truncnorm`, `update_ranef`, `update_steps`,
+      `update_stepsU`, the `logit_scaled*` family). `R/mcmc_functions.R` was **not** copied.
+      All three files verified by actually `source()`-ing them (not just `parse()`), including
+      `flammability_indices_functions.R` reading its `.rds` through the store symlink.
 - [ ] **T2** — Store inputs copy (`data/` folders, Reference B).
 - [ ] **T3** — Store outputs copy (`files/` folders, Reference B).
 - [ ] **T4** — `data_prep/flammability_indices.R`.
@@ -46,7 +51,7 @@ light `source()` only for dependency-free libs.
 |---|---|
 | `flammability indices/flammability_indices_functions.R` | `R/flammability_indices_functions.R` |
 | `weather/fortnight_functions.R` | `R/fortnight_functions.R` |
-| `spread/mcmc_functions.R` | `R/mcmc_functions.R` *(only if SMC needs it — verify)* |
+| ~~`spread/mcmc_functions.R`~~ | *(not migrated — `mcmc_functions_SMC.R` is self-contained; confirmed in T1)* |
 | `spread/mcmc_functions_SMC.R` | `R/mcmc_functions_smc.R` |
 | `spread/sample_triplets_weighted.cpp` | `src/sample_triplets_weighted.cpp` |
 | `flammability indices/flammability_indices.R` | `data_prep/flammability_indices.R` |
@@ -146,6 +151,5 @@ confirms the new repo runs.
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
-   - Consider dropping `R/mcmc_functions.R` if the SMC variant turns out self-contained.
    - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
      migration/refactor, not up front).
