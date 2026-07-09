@@ -84,7 +84,25 @@ light `source()` only for dependency-free libs.
         script in the canonical migration set (a leaf input, like the fixed CSVs in `data/`).
       - Verified: sizes match source folders; store `files/` tree listed; spot-checked
         `file.exists()` through the repo's `files` symlink.
-- [ ] **T4** — `data_prep/flammability_indices.R`.
+- [x] **T4** — `data_prep/flammability_indices.R` (+ its `flammability_indices.stan` model,
+      copied alongside since it's code, not store data). Path edits: `"flammability indices"`
+      → `"flammability_indices"` (5 data read/write sites); `stan_model(...)` path updated to
+      `data_prep/flammability_indices.stan`; external veg xlsx read replaced with
+      `config$veg_equiv_xlsx` + a `# TODO(migration #2)` comment (added `source(R/config.R)`).
+      Surfaced two more store gaps while reading the script, both filled: the input
+      `ndvi_regional_points.shp` (+ sidecars, not yet copied in T2) and two of the script's own
+      legitimate outputs already computed in the old repo — `flammability_indices_samples.rds`
+      (21.9M Stan fit) and `ndvi_elevation_summary.rds` — carried over so the ~24-min Stan fit
+      doesn't need re-running. Other files in that old data folder
+      (`ndvi_effects_samples.rds`, `ndvi_ts_detrend.*`, `ndvi_images-by-summer.csv`,
+      `ndvi_optim_and_proportion.rds`) are unreferenced by this script and were left out.
+      **Verified:** `parse()` OK; grep audit clean (no leftover `"flammability indices"`/`/home/`);
+      actually ran the script up through both store-backed reads
+      (`ndvi_detrender_model.rds`, `ndvi_regional_points.shp`, both load through the symlink);
+      confirmed `config$veg_equiv_xlsx` correctly resolves to **missing** (TODO #2, expected,
+      not a new bug); separately compiled `flammability_indices.stan` at its new path with
+      `stan_model()` — succeeds (only a pre-existing, harmless "incomplete final line" warning
+      from the stan file itself). Full end-to-end run is blocked on TODO #2 (the xlsx).
 - [ ] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R`,
       `fwi_projections.R`).
 - [ ] **T6** — `data_prep/landscapes_preparation.R`.
@@ -106,6 +124,7 @@ light `source()` only for dependency-free libs.
 | `spread/mcmc_functions_SMC.R` | `R/mcmc_functions_smc.R` |
 | `spread/sample_triplets_weighted.cpp` | `src/sample_triplets_weighted.cpp` |
 | `flammability indices/flammability_indices.R` | `data_prep/flammability_indices.R` |
+| `flammability indices/flammability_indices.stan` | `data_prep/flammability_indices.stan` |
 | `weather/FWI standardize and aggregate by fortnight.R` | `data_prep/fwi_standardize.R` |
 | `weather/FWI fortnight matrix for spread and lengthscale estimation.R` | `data_prep/fwi_fortnight_matrix.R` |
 | `weather/FWI projections/standardize and aggregate projections by fortnight (2050 and 2090).R` | `data_prep/fwi_projections.R` |
