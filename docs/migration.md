@@ -344,6 +344,53 @@ light `source()` only for dependency-free libs.
         from "skeleton stage" to "migration complete", surfacing TODO #7 and #2 as the two
         things to resolve before running the full pipeline.
       - Did **not** merge `migrate` → `main` as part of this task — see final summary for why.
+      (Later merged into `main` in a follow-up turn, per user request.)
+- [x] **T12** — Vegetation-source R scripts + raw polygon data (2026-07-09, post-migration
+      follow-up). TODO #8's original write-up treated the R-side reclassification scripts as
+      "one-time upstream, not migrated" — the user pushed back: the whole vegetation-data story
+      should be clean and reproducible in this repo, coupled with its GEE-side counterpart. Went
+      back and read the **other 3 R scripts** in the Lara folder that hadn't been read yet
+      (`subseting lakes.R`, `vegetation reclassification.R`,
+      `vegetation reclassification_dry forests separados.R`, `rasterize vegetation polygons.R`)
+      to properly separate canonical from exploratory, rather than migrating everything.
+      - **Found a genuine canonical/exploratory split**, confirmed two independent ways: (1) a
+        repo-wide grep across both `fire_spread-gee` and this repo found their outputs
+        (`vegetation_valdivian_img*`, `*reclassified*`, `*dryforest2*`, `Kitz22`) referenced
+        **nowhere downstream** — only `vegetation_valdivian_raw` (the *raw*, non-reclassified
+        merge) is actually used by the GEE mosaic script; (2) the 2 canonical scripts use only
+        `terra` (still maintained), while the 4 excluded ones use `library(rgeos); library(rgdal)`
+        — **not installed on this machine** (both packages were retired from CRAN in 2023) — so
+        the excluded scripts couldn't even run here as-is. The GEE mosaic does its own
+        `GRID_CODE`→`cnum1` remap directly (matching the Lara xlsx's `Sheet3`), independent of
+        the excluded scripts' string-based class labels.
+      - **Migrated the 2 canonical scripts**: `merging all shapefiles in one.R` →
+        `data_prep/vegetation_lara_merge.R` (merges `norte/centro/sur` regional pieces →
+        `vegetation_map_lara1999.shp`, the GEE `vegetation_valdivian_raw` asset's source);
+        `exploring_layers.R` → `data_prep/vegetation_ciefap_merge.R` (merges ciefap's NQN/RN/CH
+        2013 provincial shapefiles, joins the equivalence table by `Ley_N3` →
+        `ciefap_2016_NQN-RN-CH_reclass.shp`, the GEE `vegetation_ciefap_2016_NQN-RN-CH_reclass`
+        asset's source). Added `config$veg_equiv_xlsx_ciefap` (sheet 1, keyed by `Ley_N3` — a
+        different sheet/join than `veg_equiv_xlsx`'s `Sheet2`). Added `overwrite = TRUE` to both
+        `writeVector()` calls since their outputs now pre-exist in the store (needed for
+        reproducible re-runs; the originals lacked this and would error on re-run).
+      - **Copied the canonical inputs + outputs into the store**: `data/vegetation_lara/`
+        (`norte/centro/sur.*` + `vegetation_map_lara1999.*`, 207M) and `data/vegetation_ciefap/`
+        (`NQN_2013/`, `RN_2013/`, `CH_2013/` — only the 2013 vintage the script reads, not 2017
+        or the untouched SC/TF `.rar` archives — + `ciefap_2016_NQN-RN-CH_reclass.*`, 2.1G).
+      - **Left the 4 excluded scripts in their original Insync location** (not migrated) —
+        `subseting lakes.R`, both `vegetation reclassification*.R` variants, and
+        `rasterize vegetation polygons.R` — confirmed exploratory/superseded, unreferenced
+        downstream, and reliant on retired packages.
+      - **Verified beyond parse-checking**: actually **ran both scripts end-to-end** (not just
+        checked they parse) — `vegetation_lara_merge.R` merged 15,523 polygons and reprojected
+        to WGS84; `vegetation_ciefap_merge.R` merged 157,145 polygons across the 3 provinces,
+        produced a 142-row area-by-class summary (matching the equivalence table's `Sheet1` row
+        count), and confirmed all 11 expected vegetation categories present in the joined
+        `class1` column.
+      - Updated `CLAUDE.md`'s GEE section, `docs/data-prep.md`, and this entry to reflect the
+        full, now-reproducible chain: Lara/ciefap raw data → R merge/reclass (this repo) → GEE
+        mosaic + pre-2014 patching (`fire_spread-gee`) → per-fire/PNNH raw exports (already in
+        this repo's store).
 
 ---
 

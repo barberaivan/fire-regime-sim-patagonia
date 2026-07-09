@@ -11,8 +11,10 @@ config <- list(
   windninja_dir = "/home/ivan/windninja_cli_fire_spread_files",
 
   # Vegetation-class equivalence table (WWF/Lara et al. 1999 map); sheet "Sheet2" has the
-  # cnum1/class1/cnum2/class2 crosswalk every script reads. A separate table for a different
-  # source vegetation map (ciefap) is kept alongside it at
-  # data/vegetation_equivalences_ciefap.xlsx but is not used by anything in this repo.
-  veg_equiv_xlsx = file.path("data", "vegetation_equivalences.xlsx")
+  # cnum1/class1/cnum2/class2 crosswalk every script reads.
+  veg_equiv_xlsx = file.path("data", "vegetation_equivalences.xlsx"),
+
+  # Same, for the ciefap source map; used only by data_prep/vegetation_ciefap_merge.R (sheet 1,
+  # joined by Ley_N3 — a different sheet/key than veg_equiv_xlsx's Sheet2 join).
+  veg_equiv_xlsx_ciefap = file.path("data", "vegetation_equivalences_ciefap.xlsx")
 )

@@ -14,7 +14,7 @@ this repo fits the models to data and integrates them into the regime simulator.
 |--------|------|
 | `R/` | shared function libraries (sourced by the pipeline scripts) |
 | `src/` | in-repo C++ (Rcpp) |
-| `data_prep/` | preprocessing: flammability indices, FWI, landscape arrays |
+| `data_prep/` | preprocessing: flammability indices, FWI, landscape arrays, vegetation-source merge |
 | `spread/` | spread model fitting (ABC-SMC stage 1 + hierarchical fit) |
 | `ignition_escape/` | ignition + escape model fitting |
 | `fire_regime/` | integration: recalibration, the simulator function, runs, plots |

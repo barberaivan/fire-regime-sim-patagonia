@@ -89,18 +89,22 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
 
 ## GEE Code Editor scripts (separate repo)
 
-Raw per-fire and PNNH exports, and the regional vegetation raster (ciefap map, patched with
-Lara et al. 1999 cover in areas burned before 2014 — see `docs/data-prep.md` /
-`docs/migration.md` TODO #8), are built in Google Earth Engine JavaScript, **not** in this repo:
+Raw per-fire and PNNH exports are built in Google Earth Engine JavaScript, **not** in this repo:
 
 - **Local**: `~/dev/fire_spread-gee/`
 - **Remote**: `https://earthengine.googlesource.com/users/Ivan_Barbera/fire_spread`
 
-Files have no extension (they're Code Editor scripts). Key ones: `Vegetation type image -
-CIEFAP WWF merge` (the vegetation mosaic), `Landscapes export` / `Landscapes export BalconGut
-with distance` (per-fire raw exports, consume the merged vegetation asset), `Export data for
-ignition model and fire regime simulation (PNNH)` (PNNH exports). This repo does not keep `.js`
-copies of GEE code — the `fire_spread-gee` repo is the source of truth.
+Files have no extension (they're Code Editor scripts). Key ones: `Landscapes export` /
+`Landscapes export BalconGut with distance` (per-fire raw exports), `Export data for ignition
+model and fire regime simulation (PNNH)` (PNNH exports). This repo does not keep `.js` copies of
+GEE code — the `fire_spread-gee` repo is the source of truth.
+
+**Regional vegetation raster** (the `veg` band in every raw export above) is a **cross-repo**
+pipeline: `data_prep/vegetation_lara_merge.R` and `data_prep/vegetation_ciefap_merge.R` (in
+*this* repo) merge/reclassify the source polygons, uploaded as GEE assets; the GEE script
+`Vegetation type image - CIEFAP WWF merge` (in `fire_spread-gee`) mosaics them, patching
+pre-2014-burned pixels with Lara cover. See `docs/data-prep.md` for the full chain diagram and
+`docs/migration.md` TODO #8 / T12 for how this was traced.
 
 ## ⚠️ Do not share the store as a whole — see TODO #9
 
