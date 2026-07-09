@@ -481,17 +481,19 @@ confirms the new repo runs.
    blocker for most of the pipeline). All uses now derive from `config$windninja_dir`
    (`R/config.R`), including the 3 `system()`/`unlink()` shell-command strings in
    `landscapes_preparation.R` that used to hardcode the absolute path directly (fixed in T6).
-4. **`fwi_mean_sd_spread.rds` isn't actually produced by the canonical fit** — resolved during
-   T3: the `saveRDS()` for it in the canonical `hierarchical model fitting_FWIZ2_SMC.R` (line
-   660) is **commented out**, so the file only exists because a legacy non-SMC run
-   (`hierarchical model fitting_FWIZ.R`) produced it. `fire_regime/simulate.R` needs it (reads
-   it from `hierarchical_model_FWIZ` in the old repo). For the migration, the file was copied
-   from the legacy folder into the new `files/hierarchical_model/` alongside the canonical SMC
-   outputs (data-only carry-over, no code change). **Real open question for T8/T10:** should
-   `hierarchical_fit.R` uncomment that write and regenerate this artifact from the SMC fit
-   (statistically more correct — it'd reflect the actual model being used), or is reusing the
-   legacy artifact fine because it's just an FWI standardization constant, independent of which
-   fit produced it? Needs a decision when those scripts are migrated, not before.
+4. **`fwi_mean_sd_spread.rds` — RESOLVED (2026-07-09).** The canonical `hierarchical_fit.R`'s
+   `saveRDS()` for this file was commented out (so it only existed via a legacy non-SMC run's
+   copy — see T3). Traced what actually produces the two numbers: `fwi_mean`/`fwi_sd` are just
+   `mean()`/`sd()` of each fire's FWI value, computed from the climate CSV + fire-ID labels
+   *before* any MCMC/Stan fitting — not derived from posterior draws at all, so they cannot
+   differ between the legacy and SMC fits. Verified this empirically: independently recomputed
+   both numbers from `data/climatic_data_by_fire_fwi-fortnight-cumulative_FWIZ2.csv` +
+   `files/posterior_samples_stage1/samples_all_fires.rds` (for fire-ID labels) and got values
+   **byte-identical** to the legacy copy already in the store (`fwi_mean = 0.8636725`,
+   `fwi_sd = 0.9051262`). So the existing file's *value* was already correct — the only real gap
+   was provenance (the canonical script couldn't reproduce its own output). Uncommented the
+   `saveRDS()` in `hierarchical_fit.R` so a future full re-run regenerates it correctly; did not
+   rewrite the existing (already-correct) file in the store.
 5. **`posterior_samples_stage1` name collision — resolved during T7.** In the old repo, the
    bare `files/posterior_samples_stage1/` belonged to the **legacy** importance-sampling stage-1
    output (`sampling_fire_wise_posteriors_IMPORTANCE.R`, "not used" per this doc's history and

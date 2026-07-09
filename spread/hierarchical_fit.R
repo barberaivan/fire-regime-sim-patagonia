@@ -653,12 +653,11 @@ fires_data$area_ha_log <- log(fires_data$area_ha)
 fwi_mean <- mean(fires_data$fwi_fort_expquad) # more than zero
 fwi_sd <- sd(fires_data$fwi_fort_expquad)     # less than 1
 
-### export fwi scale
-# fwi_spread_mean_sd <- list(fwi_mean = fwi_mean,
-#                            fwi_sd = fwi_sd)
-# saveRDS(fwi_spread_mean_sd,
-#         file.path("files", "hierarchical_model", "fwi_mean_sd_spread.rds"))
-###
+# export fwi scale
+fwi_spread_mean_sd <- list(fwi_mean = fwi_mean,
+                           fwi_sd = fwi_sd)
+saveRDS(fwi_spread_mean_sd,
+        file.path("files", "hierarchical_model", "fwi_mean_sd_spread.rds"))
 
 fires_data$fwi <- (fires_data$fwi_fort_expquad - fwi_mean) / fwi_sd
 rownames(fires_data) <- fires_data$fire_id
