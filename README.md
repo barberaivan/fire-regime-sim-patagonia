@@ -87,6 +87,14 @@ wrappers as the scripts do.
 
 ---
 
+## ⚠️ Before sharing the store with anyone
+
+`data/ignition_data/` (Bari-Kitzberger ignition + population point data) is **not public**. It
+currently lives *inside* the store folder (see "Getting started" → "Get the data store" below),
+which is also what would get handed out as a single Drive share link to collaborators.
+**Do not share the store as a whole until this is resolved** — see `docs/migration.md` TODO #9
+for the open decision.
+
 ## Status
 
 **Migration complete (T0–T11)** — all canonical R/C++ code and heavy data have been copied from

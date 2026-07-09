@@ -582,7 +582,32 @@ confirms the new repo runs.
      precedent in `CLAUDE.md`), not as R code here. The two R reclassification scripts found above
      could be migrated into `data_prep/` as upstream/reference material once their role is
      confirmed. Document the final end-to-end process in `docs/data-prep.md` once resolved.
-9. **Refactors (post-verification, not part of this migration):**
+9. **Non-public Bari-Kitzberger data risks exposure via a future store share link — UNSOLVED,
+   left as an open decision on purpose (user, 2026-07-09).** `data/ignition_data/`
+   (`ignition_points_pnnh_bari-kitzberger*`, `population_points_pnnh_bari-kitzberger_data.*`,
+   `Total_focos_NH_nov89-mar21.xlsx`, `base_ampliado_kitzberger_rayos.xlsx`) is explicitly
+   non-public — the original script's own comment says so ("Ignition data is not in the
+   fire_spread repo, it's not public"), which is why the *old* repo kept it physically outside
+   the repo entirely, at a separate sibling path (`../ignition_data`), never bundled with
+   anything shared.
+   - **The problem this migration (re)introduced:** T9 copied that data *into*
+     `fire-regime-sim-patagonia-store/data/ignition_data/` for convenience — but the store as a
+     whole is exactly the kind of folder that gets a single shared Google Drive link handed to
+     collaborators (see the `mapbiomas-arg-fire` precedent in `~/Insync/Claude/repo-store-
+     structure.md` and this repo's own `README.md` "Getting started"). If the *whole store*
+     is ever shared that way, this non-public data goes out with it.
+   - **Not solved here on purpose** — this needs the user's own decision, not a unilateral
+     restructuring. Two directions worth weighing when the user gets to it:
+     1. **Physically separate it again**, mirroring the old repo's own solution: a second,
+        never-shared location (e.g. a sibling `fire-regime-sim-patagonia-store-private/`),
+        symlinked in by `setup.sh` via a second, optional argument — the most robust guarantee,
+        since a share link simply can't reach a folder it was never given.
+     2. **Restrict the subfolder's permissions within Google Drive** (Drive supports overriding
+        a specific subfolder's sharing even when its parent is shared) — keeps everything in one
+        physical place, but is easier to misconfigure or forget after future restructuring.
+   - No files were moved and `setup.sh` was not changed — this is a documentation-only entry,
+     deliberately left for the user to resolve.
+10. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.

@@ -87,6 +87,13 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
 - Prefer functions over top-level scripts; keep MCMC/algorithm cores in `R/`, and keep the
   regime **simulator as a standalone function** so the production side can extract it.
 
+## ⚠️ Do not share the store as a whole — see TODO #9
+
+`data/ignition_data/` (Bari-Kitzberger ignition + population data) is **not public**, but
+currently lives inside `fire-regime-sim-patagonia-store/` — the same folder that would get
+handed out as a single Drive link to collaborators. Unsolved on purpose; see
+`docs/migration.md` TODO #9 before setting up any sharing.
+
 ## Status & migration
 
 **Migration complete (T0–T11)** — canonical R/C++ code and heavy data have been copied from the
