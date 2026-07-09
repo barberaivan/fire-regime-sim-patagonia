@@ -31,7 +31,34 @@ light `source()` only for dependency-free libs.
       `update_stepsU`, the `logit_scaled*` family). `R/mcmc_functions.R` was **not** copied.
       All three files verified by actually `source()`-ing them (not just `parse()`), including
       `flammability_indices_functions.R` reading its `.rds` through the store symlink.
-- [ ] **T2** — Store inputs copy (`data/` folders, Reference B).
+- [x] **T2** — Store inputs copy (`data/` folders, Reference B). 9.8G copied. Went beyond a
+      blind `cp -r`: grep-verified which files are actually read by canonical scripts before
+      copying, and excluded what wasn't (see below) — cheaper to decide now than to migrate and
+      later wonder why a 4GB folder is unused.
+      - `focal_fires/` (renamed from `focal fires data/`): `fire_size_data.{rds,csv}`,
+        `raw_gee/` (renamed from `raw data from GEE/`, 58 files), `landscapes/`. **Excluded:**
+        `defensa_tesis_extra/` (13M, thesis-defense presentation tifs, unreferenced),
+        `gam_terms_to_include.{csv,xls}` and `fwi_values_ig-known.rds` (unreferenced by any
+        canonical script).
+      - `pnnh_images/`: copied only the 14 files actually referenced by canonical scripts
+        (grep-verified across `landscapes_preparation.R`, `hierarchical_fit`, `simulate.R`,
+        `probability_maps.R`, `plots.R`) — 3.3G. **Excluded** unreferenced multi-resolution/
+        exploratory variants: `pnnh_data_300m.tif(.aux.xml)`, `_60m.tif`, bare `_30m.tif` and
+        `_30m_std.tif` (only the `_buff_10000` variants are read), `_spread_buffered_120m.tif.tif`,
+        `visualizing_images_scale.qgz`, and the WindNinja `_cld.asc/.prj` (only `_ang`/`_vel` are
+        read for PNNH) — saved ~1.3G.
+      - `protected_areas/`, `ignition/`, `fwi_daily_1998-2022/`: copied wholesale (small, all
+        confirmed canonical).
+      - `fwi_projections/`: copied wholesale **except** the three `_OLD`/`__old` superseded
+        folders (`fwi_fortnights_standardized_modern_compare_OLD`,
+        `fwi_fortnights_standardized_OLD`,
+        `Quilcaille_Batibeniz_2023_database-nw_patagonia_clipped__old`) — saved ~1.9G, kept 4.7G
+        incl. the 4.3G Quilcaille/Batibeniz CMIP6 database (confirmed read by
+        `fwi_projections.R`'s `proj_dir`).
+      - External `patagonian_fires.shp` (+ sidecars) copied from
+        `~/Insync/patagonian_fires/patagonian_fires/` into `data/patagonian_fires/`.
+      - Verified: full store tree listed, plus `file.exists()` spot-checks through the repo's
+        `data` symlink for one representative path per folder — all `TRUE`.
 - [ ] **T3** — Store outputs copy (`files/` folders, Reference B).
 - [ ] **T4** — `data_prep/flammability_indices.R`.
 - [ ] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R`,
