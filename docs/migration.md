@@ -516,7 +516,21 @@ confirms the new repo runs.
    - **Cleanup deferred**: `files/hierarchical_model_legacy_preSMC/` should be deleted once the
      re-run/validation above is done and confirmed working — not before, in case a rollback is
      needed.
-8. **Refactors (post-verification, not part of this migration):**
+8. **Regional vegetation raster — build code not yet located, not migrated.** The user's memory
+   (2026-07-09): there's a large regional vegetation raster built from the **ciefap** map,
+   reclassified, with **burned areas from before ~2014 patched in using cover from the Lara et al.
+   1999 map** instead (since a post-fire-era map can't show pre-fire vegetation in areas that
+   burned before it was made). This is presumably what produces the raw `veg`/`GRID_CODE` layer
+   that `landscapes_preparation.R` and the raw GEE fire exports consume, and connects the two
+   equivalence tables already in the store (`data/vegetation_equivalences.xlsx` for Lara,
+   `data/vegetation_equivalences_ciefap.xlsx` for ciefap — see TODO #2 above). The R code with
+   the reclassification/patching ("remap") logic hasn't been found yet — user believes it's in
+   `~/Insync/Mapa vegetación WWF - Lara et al. 1999/` and/or `~/Insync/Mapa vegetación ciefap/`
+   (both fully synced: 76 and 55 files respectively). **Action needed:** locate the script(s),
+   understand the reclassification + pre-2014-burned-area patching logic, and decide whether to
+   bring it into this repo (likely as a `data_prep/` script feeding `landscapes_preparation.R`).
+   Document the final process in `docs/data-prep.md` once found.
+9. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.

@@ -33,3 +33,15 @@ under `data/` (heavy, in the store).
 - **Depends on:** `../FireSpread` wrappers, `R/flammability_indices_functions.R`, WindNinja outputs
   (_tech debt #5: hardcoded WindNinja path → config_).
 - **Outputs:** `data/focal_fires/landscapes/*.rds`.
+
+## Regional vegetation raster — build code not yet in this repo (`docs/migration.md` TODO #8)
+- **Purpose (per user's memory, unverified):** a large regional vegetation raster built from the
+  **ciefap** map, reclassified, with burned areas from before ~2014 **patched in with cover from
+  the Lara et al. 1999 map** (a post-fire map can't show pre-fire vegetation in areas that
+  burned before it existed). This is presumably what produces the raw `veg`/`GRID_CODE` layer
+  consumed by `landscapes_preparation.R` and the raw GEE per-fire exports, and it's what the two
+  equivalence tables in the store (`data/vegetation_equivalences.xlsx` for Lara,
+  `data/vegetation_equivalences_ciefap.xlsx` for ciefap) are for.
+- **Status:** the R code with this reclassification/patching logic hasn't been located yet.
+  Believed to be in `~/Insync/Mapa vegetación WWF - Lara et al. 1999/` and/or
+  `~/Insync/Mapa vegetación ciefap/` (both fully synced). Not yet part of this repo.
