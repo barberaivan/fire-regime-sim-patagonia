@@ -533,6 +533,18 @@ confirms the new repo runs.
    - **Cleanup deferred**: `files/hierarchical_model_legacy_preSMC/` should be deleted once the
      re-run/validation above is done and confirmed working — not before, in case a rollback is
      needed.
+   - **Re-run scale, assessed 2026-07-09 (not launched):** the original `fire_regime_simulation/`
+     output is 180 batch files spanning **2025-01-09 to 2025-01-12 (~2.5 days wall-clock)** —
+     `simulate.R` runs `nsim <- 1000` fire-year simulations per scenario-period, in batches of
+     100, via `foreach`/`registerDoMC`, across 9 scenario-periods (modern + 2040/2090 × 4 SSP
+     scenarios). This is a multi-day job, not something to launch without deciding on core count
+     and scope first — exactly the class of long-running script `CLAUDE.md`'s "Running long
+     scripts" convention says belongs in `tmux`, started deliberately. Did not attempt a
+     stripped-down smoke test (e.g. `nsim=2`) either: extracting a minimal runnable slice from
+     the 1583-line script without reading it in full risks a false signal either way — a
+     mistake in the extraction misread as "the SMC repoint is broken," or the reverse. **When
+     ready:** manually try a small `nsim` (2–3) for one scenario first, in `tmux`, before
+     committing to the full re-run.
 8. **Regional vegetation raster — R-side reclassification found; the actual mosaic/patching step
    is very likely in GEE JavaScript, not locatable by filesystem search.** The user's memory
    (2026-07-09): there's a large regional vegetation raster built from the **ciefap** map,
