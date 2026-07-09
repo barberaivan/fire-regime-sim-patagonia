@@ -7,7 +7,8 @@
 config <- list(
   # WindNinja CLI scratch directory (only needed to *regenerate* wind layers from scratch;
   # not required to read the already-prepared landscape .rds files). Machine-local — edit
-  # this path per machine; not present on this machine as of the 2026-07 migration.
+  # this path per machine. `WindNinja_cli` itself must be on PATH (built from source and
+  # installed at ~/.local/bin on this machine — see docs/migration.md TODO #3 for the build).
   windninja_dir = "/home/ivan/windninja_cli_fire_spread_files",
 
   # Vegetation-class equivalence table (WWF/Lara et al. 1999 map); sheet "Sheet2" has the

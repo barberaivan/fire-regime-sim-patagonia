@@ -85,6 +85,15 @@ Scripts use the **`FireSpread`** R package, expected as a **sibling repo** at `.
 (`~/dev/FireSpread`). Clone it next to this repo and `library(FireSpread)` / source its
 wrappers as the scripts do.
 
+### WindNinja (optional — only to regenerate wind layers)
+
+Already-prepared landscapes (`data/focal_fires/landscapes/`, `data/pnnh_images/`) embed their
+wind layers, so most work doesn't need this. It's only required to generate *new* wind fields
+(e.g. simulating fire outside the already-cached locations). No prebuilt Linux package exists;
+build from source and put `WindNinja_cli` on `PATH`. See `docs/migration.md` TODO #3 for the
+full build recipe (flags, dependency gotchas, the release tag to use) and set
+`config$windninja_dir` in `R/config.R` to a scratch directory on your machine.
+
 ---
 
 ## ⚠️ Before sharing the store with anyone
@@ -112,3 +121,4 @@ TODO register, especially:
   superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
 
 See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.
+**Picking this back up after a break? See `docs/roadmap.md`** for current state + next steps.

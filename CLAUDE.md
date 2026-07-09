@@ -45,11 +45,13 @@ Two tiers: the short per-folder `README.md` (orientation) and the deep `docs/*.m
 
 | Doc | Covers |
 |-----|--------|
-| `docs/architecture.md` | **Start here.** Module map, the **dependency tree**, data flow, canonical pipeline, migration status & tech debt |
+| `docs/roadmap.md` | **Coming back after a break? Start here.** Living doc: current state + next steps, kept short and edited in place |
+| `docs/architecture.md` | Module map, the **dependency tree**, data flow, canonical pipeline, migration status & tech debt |
 | `docs/data-prep.md` | flammability indices, FWI processing, landscape arrays |
 | `docs/spread.md` | spread model — ABC-SMC stage 1 + hierarchical fit (paper 1) |
 | `docs/ignition-escape.md` | ignition + escape models (paper 2) |
 | `docs/fire-regime.md` | integration, recalibration, the simulator, projections (paper 2) |
+| `docs/migration.md` | historical changelog of the PhD-repo migration (append-only, not for new work notes) |
 
 `docs/` carries the architectural/computational detail; the papers' **supplementary** carry the
 model/statistical detail. Keep them in sync, not duplicated.
