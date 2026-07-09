@@ -202,7 +202,43 @@ light `source()` only for dependency-free libs.
         `posterior_samples_stage1/` (58 files: 57 per-fire `full_samples_history_*.rds` + the
         merged `samples_all_fires.rds` — exactly matching T3's copy). The multi-day SMC
         sampling loop itself was not run end-to-end.
-- [ ] **T8** — `spread/hierarchical_fit.R`.
+- [x] **T8** — `spread/hierarchical_fit.R`. The ~3000-line monolith. Given the size, skipped a
+      full sequential read: did a targeted grep sweep for every path-bearing pattern first
+      (including a **string-literal** sweep for the renamed tokens, since `file.path()` calls
+      broken across lines hide from a single-line grep — this caught 2 extra
+      `"flammability indices"` and 1 extra `"hierarchical_model_FWIZ_SMC"` occurrence my first
+      pass missed), read small context windows only at edit sites, and spot-read the two sections
+      flagged as risky by the sweep. Edits: `source()`s → `R/mcmc_functions_smc.R` +
+      `R/flammability_indices_functions.R`; `"hierarchical_model_FWIZ_SMC"` → `"hierarchical_model"`
+      (28 occurrences, single `replace_all`); `"posterior_samples_stage1_smc"` →
+      `"posterior_samples_stage1"`; `"flammability indices"` → `"flammability_indices"`;
+      `"focal fires data"` → `"focal_fires"`; added the `TODO(migration #1)` marker at the
+      FireSpread source line (same pattern as T6/T7).
+      - **Checked for a repeat of T7's naming collision** (bare `hierarchical_model` vs.
+        `_FWIZ_SMC`) since the very first directory scan (early in this conversation) showed a
+        **third** sibling folder, `files/hierarchical_model/` (bare, no suffix) — distinct from
+        both `_FWIZ` and `_FWIZ_SMC`. Found two bare-name references at `spreadprobs`
+        (`spreadprob_veg_comparison_array.rds`) — but unlike T7, this is **benign**: the array is
+        computed fresh by *this same script* and immediately reloaded (a self-contained
+        write-then-reread, not a reference to another script's legacy output), and since our
+        rename collapses `hierarchical_model_FWIZ_SMC` → `hierarchical_model` anyway, the bare
+        name was already coincidentally correct — **no edit needed** for those two lines.
+        Confirmed the old bare folder is genuinely messy (many `_FI`/`_thin`/`2`-suffixed
+        exploratory artifacts from both this script and the legacy, non-canonical
+        `hierarchical model fitting_FWIZ2.R`), but only `spreadprob_veg_comparison_array.rds` is
+        actually referenced by the canonical script — copied just that one file (9.8M) into the
+        store's `files/hierarchical_model/`, not the rest of the messy folder.
+      - Also confirmed `fwi_mean_sd_spread.rds` (TODO #4) is **only** referenced here via the
+        already-known dead commented write (line 660) — this script never reads it back, so TODO
+        #4's open question is unaffected by this task.
+      - **Verified:** parse() OK on the full 3043-line file; grep audit clean; actually sourced
+        both `R/` dependencies (`update_ranef` confirmed defined); **all 22** distinct data
+        paths this script touches resolve through the store symlinks (`file.exists()` — landscapes,
+        fire_size_data, flammability indices + summary, both FWI cumulative CSVs,
+        `patagonian_fires_spread.shp`, `apn_limites.shp`, stage-1 posterior samples, the PNNH
+        landscape, `landscape_flammability`'s CSV, and all 13 canonical `hierarchical_model/`
+        artifacts including the 10 `draws_batch_*.rds` — exact count match). The MCMC/Stan
+        fitting itself (originally a multi-day run) was not executed end-to-end.
 - [ ] **T9** — `ignition_escape/fit.R`.
 - [ ] **T10** — `fire_regime/` (`simulate.R`, `probability_maps.R`, `plots.R`).
 - [ ] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
