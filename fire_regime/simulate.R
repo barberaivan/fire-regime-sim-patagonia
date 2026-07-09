@@ -920,7 +920,7 @@ study_area_size <- burnable_buff * total_burnable_r
 
 # Import vegetation class transforms --------------------------------------
 
-# TODO(migration #2): config$veg_equiv_xlsx is missing from disk — see docs/migration.md
+# RESOLVED (migration #2): config$veg_equiv_xlsx now resolves — see R/config.R
 dveg <- readxl::read_excel(config$veg_equiv_xlsx, sheet = "Sheet2")
 # Make urban as forest, and get zero-indexing
 dveg$cnum2[dveg$class1 == "Urban"] <- 1

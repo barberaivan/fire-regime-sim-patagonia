@@ -122,15 +122,18 @@ data-loading through the store symlinks — not full multi-day fits/simulations 
 Originals in the old repo are kept until the new repo is confirmed working. Legacy
 `_FWIZ/_FWIZ2/_SMC` variants and `dump/` were **not** carried over (old `INVENTORY.md` §6); git
 holds the history instead. Full task-by-task log, every finding, and the complete TODO register
-live in **`docs/migration.md`** — the two most important open items before running the full
+live in **`docs/migration.md`** — the most important open item before running the full
 pipeline:
 
 - **`fire_regime/simulate.R` and `probability_maps.R` now read the canonical SMC-fitted spread
   model** (repointed from the legacy pre-SMC fit, structurally verified compatible), but neither
   script has been re-run/validated against it — existing outputs are stale until they are
   (`docs/migration.md` TODO #7).
-- **The vegetation-equivalences `.xlsx`** several scripts need is missing from disk
-  (`docs/migration.md` TODO #2).
+
+Resolved since migration: **the vegetation-equivalences `.xlsx`** (`docs/migration.md` TODO #2)
+was found via Google Drive and wired in; a separate "ciefap" table for a different source
+vegetation map is kept alongside it for provenance, unused by any script here.
+
 - **The ignition-escape "fire size" model and ordinal-class escape model are abandoned/
   superseded** — see `ignition_escape/README.md`; not touched, just flagged.
 

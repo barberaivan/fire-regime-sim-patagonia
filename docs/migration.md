@@ -439,13 +439,28 @@ confirms the new repo runs.
    `source(…)` line from the 4 scripts that use it and rely on `library(FireSpread)`. The R
    reference reimplementations in that file (`simulate_fire_r()`, `spread_one_cell_r()`) stay
    test-only — the pipeline never calls them (confirmed by grep).
-2. **Vegetation-equivalences `.xlsx` missing** — original WWF/Lara file
-   (`Mapa vegetación WWF - Lara et al. 1999/clases de vegetacion y equivalencias.xlsx`) is gone
-   from disk; only a different *ciefap* variant exists
-   (`Mapa vegetación ciefap/clases de vegetacion y equivalencias_ciefap.xlsx`). User to
-   locate/confirm the correct file → copy to `data/vegetation_equivalences.xlsx`. Until then,
-   the 4 scripts that read it (`landscapes_preparation.R`, `ignition_escape/fit.R`,
-   `data_prep/flammability_indices.R`, `fire_regime/simulate.R`) can't run past that line.
+2. **Vegetation-equivalences `.xlsx` — RESOLVED (2026-07-09).** The original WWF/Lara file
+   (`Mapa vegetación WWF - Lara et al. 1999/clases de vegetacion y equivalencias.xlsx`) was
+   never actually lost — it wasn't synced to this machine's Insync, but the user found it in
+   Google Drive, downloaded it, and it's now at `data/vegetation_equivalences.xlsx` in the
+   store (`config$veg_equiv_xlsx`). Verified: 3 sheets — `Sheet2` (the one every script reads)
+   has exactly the schema all 6 consuming scripts expect (`cnum1, class1, cnum2, class2`, 11
+   rows, the same 6 category names used throughout the codebase); `Sheet1` is a richer
+   `GRID_CODE`→class legend crosswalk with the author's own provenance notes (not read by any
+   script); `Sheet3` is an alternate wide `GRID_CODE`→`cnum1` lookup (also unread). All 6
+   consuming scripts (`landscapes_preparation.R`, `ignition_escape/fit.R`,
+   `data_prep/flammability_indices.R`, `fire_regime/simulate.R`, `probability_maps.R`, `plots.R`)
+   re-verified: parse OK, and the exact `readxl::read_excel(config$veg_equiv_xlsx, sheet =
+   "Sheet2")` call confirmed to load correctly (11×4, matching values).
+   - **The "ciefap" file is a separate, legitimate input, not a substitute** — the user
+     confirmed both the Lara and ciefap equivalence tables were used, for two *different* source
+     vegetation maps. A repo-wide grep found **zero** references to "ciefap" anywhere in this
+     repo's code, so it's not consumed by anything migrated here — most likely used in the
+     separate GEE JS repo (`mapbiomas`-style upstream raw-layer prep; see `CLAUDE.md`'s "GEE Code
+     Editor scripts" section for precedent, though this specific case predates that convention).
+     Kept for provenance at `data/vegetation_equivalences_ciefap.xlsx`; not wired into
+     `config$`, since nothing here reads it. If a future upstream step needs it, add a second
+     `config$` entry then.
 3. **WindNinja dir** — machine-local scratch dir, absent on this machine; only needed to
    *regenerate* wind layers (already baked into the prepared landscape `.rds` files, so not a
    blocker for most of the pipeline). All uses now derive from `config$windninja_dir`

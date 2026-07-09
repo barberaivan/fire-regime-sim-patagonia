@@ -99,9 +99,13 @@ repo is confirmed working, then can be deleted.
 TODO register — most importantly **#7**: `fire_regime/simulate.R` and `probability_maps.R` now
 read the **canonical SMC-fitted** spread model (repointed 2026-07-09; structurally verified
 compatible with the legacy fit), but neither script has been **re-run/validated** against it —
-existing regime-simulation/probability-map outputs are stale until they are — and **#2**: the
-vegetation-equivalences `.xlsx` several scripts need is missing from disk. Also see
+existing regime-simulation/probability-map outputs are stale until they are. Also see
 `ignition_escape/README.md`: the "fire size" model and the ordinal-class escape model are
 abandoned/superseded, not part of the canonical ignition-escape pipeline (binary
 `escape_model.stan` is canonical). The full tech-debt and TODO list live in
 **`docs/architecture.md` → Migration status & tech debt** and **`docs/migration.md`**.
+
+**TODO #2 (vegetation-equivalences `.xlsx`) is resolved** — found via Google Drive, placed at
+`data/vegetation_equivalences.xlsx`. A separate "ciefap" equivalence table (for a different
+source vegetation map, used elsewhere — not by anything in this repo) is kept alongside it at
+`data/vegetation_equivalences_ciefap.xlsx` for provenance.

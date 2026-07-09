@@ -58,7 +58,7 @@ mdetrend <- readRDS(file.path("data", "flammability_indices",
 v0 <- vect(file.path("data", "flammability_indices",
                      "ndvi_regional_points.shp"))
 
-# TODO(migration #2): config$veg_equiv_xlsx is missing from disk — see docs/migration.md
+# RESOLVED (migration #2): config$veg_equiv_xlsx now resolves — see R/config.R
 dveg <- readxl::read_excel(config$veg_equiv_xlsx, sheet = "Sheet2")
 
 names(dveg) <- c("vegnum1", "vegfac1", "vegnum2", "vegfac2")

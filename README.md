@@ -100,8 +100,10 @@ TODO register, especially:
   pre-SMC fit), but neither `simulate.R` nor `probability_maps.R` has been **re-run/validated**
   against it yet — treat existing regime-simulation/probability-map outputs as stale until they
   are (TODO #7);
-- the vegetation-equivalences `.xlsx` several scripts need is missing from disk (TODO #2);
 - the ignition-escape "fire size" model and the ordinal-class escape model are abandoned/
   superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
+
+The vegetation-equivalences `.xlsx` (TODO #2) has been found and wired in — see
+`docs/migration.md` for provenance and the separate "ciefap" table kept alongside it.
 
 See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.

@@ -110,7 +110,7 @@ pnnh_rast_full <- rast(file.path("data", "pnnh_images", "pnnh_data_30m_buff_1000
 veg_map0 <- pnnh_rast_full$veg # 11 classes
 
 # vegetation transform data:
-# TODO(migration #2): config$veg_equiv_xlsx is missing from disk — see docs/migration.md
+# RESOLVED (migration #2): config$veg_equiv_xlsx now resolves — see R/config.R
 dveg <- readxl::read_excel(config$veg_equiv_xlsx, sheet = "Sheet2")
 
 # Aplica la reclasificación
