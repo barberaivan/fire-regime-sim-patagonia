@@ -239,7 +239,40 @@ light `source()` only for dependency-free libs.
         landscape, `landscape_flammability`'s CSV, and all 13 canonical `hierarchical_model/`
         artifacts including the 10 `draws_batch_*.rds` — exact count match). The MCMC/Stan
         fitting itself (originally a multi-day run) was not executed end-to-end.
-- [ ] **T9** — `ignition_escape/fit.R`.
+- [x] **T9** — `ignition_escape/fit.R` (+ its `ignition_model.stan`, `escape_model.stan`,
+      `size_model.stan` — all 3 `stan_model()` calls are commented in the canonical script,
+      models are loaded from pre-fit `.rds`, but copied the `.stan` sources for reference). Path
+      edits: `source()`s → `R/flammability_indices_functions.R` + `R/fortnight_functions.R`; veg
+      xlsx → `config$veg_equiv_xlsx` (+ TODO #2); `"flammability indices"` →
+      `"flammability_indices"`; `"ignition_FWIZ"` → `"ignition"`; the 3 stan-path comments
+      updated to `ignition_escape/*.stan` for consistency.
+      - **New external dependency found and resolved**: `igdata_dir <- file.path("..",
+        "ignition_data")` — a directory *outside* the repo entirely (sibling to old
+        `fire_spread/`), with an explicit comment "Ignition data is not in the fire_spread repo,
+        it's not public". Two of its 4 referenced files
+        (`Total_focos_NH_nov89-mar21.xlsx`, `base_ampliado_kitzberger_rayos.xlsx`) turned out to
+        be **byte-identical duplicates** (confirmed via `md5sum`) of files already in
+        `data/ignition/` (copied in T2) — the external folder even had a file literally named
+        `..._duplicado?.xlsx` confirming the user's own suspicion. Rather than restructure the
+        script's 4 reads individually, kept `igdata_dir` as a single variable pointing at a new
+        `data/ignition_data/` store folder holding all 4 needed files (2 xlsx + 2 shapefiles with
+        sidecars) — simplest edit (one line), at the cost of ~1.6M of harmless duplication
+        (acceptable — not space-limited). Preserved the "not public" intent via an updated
+        comment: data now lives in the gitignored store, still never in git.
+      - **Found a second pre-existing dangling-variable bug** (distinct from T8's, not
+        introduced by migration): the "Fire size model" section uses `sizemod` at 3 sites, but
+        its only assignment is commented out and — unlike `igmod`/`escmod`, which both have a
+        `readRDS()` fallback right after their commented `sampling()` call — **no fitted-size-
+        model `.rds` exists anywhere in the old repo** to load instead (the `ignition/` store
+        folder's 6 files are all ignition/escape variants, no size model). This section would
+        error in the *old* repo too if run fresh; flagged with an inline `TODO(migration)`
+        comment rather than invented a fix.
+      - **Verified:** parse() OK; grep audit clean; both `R/` dependencies actually source;
+        `config$veg_equiv_xlsx` confirmed missing as expected (TODO #2); all 15 data/code
+        dependencies resolve through the store/repo — and beyond `file.exists()`, actually
+        **loaded** the two new shapefiles (285 and 23,986 features), the xlsx (284×35), and the
+        fitted `ignition_model_samples.rds` (a real `stanfit` object) to confirm they're not just
+        present but readable.
 - [ ] **T10** — `fire_regime/` (`simulate.R`, `probability_maps.R`, `plots.R`).
 - [ ] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
 
@@ -371,7 +404,13 @@ confirms the new repo runs.
    rather than silently pointed at the SMC folder itself (which would have made it compare the
    SMC output against itself — a real bug, not just stale code). Re-derive from the archived old
    repo if that comparison is ever needed again.
-6. **Refactors (post-verification, not part of this migration):**
+6. **`ignition_escape/fit.R`'s "Fire size model" section can't run from a fresh session** —
+   `sizemod` (used at 3 sites) has no active assignment (its `sampling()` call is commented) and
+   no fitted `.rds` exists anywhere to load instead, unlike the ignition/escape models in the
+   same script. Pre-existing in the old repo, not introduced by migration; looks like an
+   abandoned/exploratory side-analysis, not a canonical output. Flagged in-code; needs either a
+   real fit + `saveRDS`/`readRDS` pair, or removal, if this section is ever needed.
+7. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
