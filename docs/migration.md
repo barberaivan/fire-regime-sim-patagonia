@@ -552,36 +552,42 @@ confirms the new repo runs.
      mistake in the extraction misread as "the SMC repoint is broken," or the reverse. **When
      ready:** manually try a small `nsim` (2–3) for one scenario first, in `tmux`, before
      committing to the full re-run.
-8. **Regional vegetation raster — R-side reclassification found; the actual mosaic/patching step
-   is very likely in GEE JavaScript, not locatable by filesystem search.** The user's memory
-   (2026-07-09): there's a large regional vegetation raster built from the **ciefap** map,
-   reclassified, with **burned areas from before ~2014 patched in using cover from the Lara et al.
-   1999 map** instead (a post-fire-era map can't show pre-fire vegetation where a fire predates
-   it). This presumably produces the raw `veg`/`GRID_CODE` layer that `landscapes_preparation.R`
-   and the raw GEE fire exports consume, and connects the two equivalence tables already in the
-   store (`data/vegetation_equivalences.xlsx` for Lara, `data/vegetation_equivalences_ciefap.xlsx`
-   for ciefap — TODO #2).
-   - **Found** (2026-07-09), in `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`:
-     `vegetation reclassification.R` — reclassifies the original Lara et al. 1999 polygons (by
-     `CLASE` code) into 8 vegetation classes (Wet forest, Dry forest, Subalpine forest,
-     Shrubland, Grassland, Anthropogenic prairie, Plantation, Non-burnable); also
-     `rasterize vegetation polygons.R`. In `~/Insync/Mapa vegetación ciefap/`: `exploring_layers.R`
-     — merges ciefap's regional shapefiles (NQN/RN/CH), joins the `class1/class2` equivalence
-     table, and ends with the comment **"esto se sube a GEE"** ("this gets uploaded to GEE").
-   - **Not found — likely lives in the GEE Code Editor, not in any file.** Both R pipelines
-     terminate at "upload to GEE"; the actual regional **mosaic** and the **pre-2014
-     burned-area patching** aren't in either folder. Checked for a fire-spread-specific GEE JS
-     repo (only the unrelated MapBiomas one exists locally) and searched the old repo for
-     "2014"/patching mentions — nothing. The older folder these two scripts reference internally
-     (`Burned area mapping/Ecorregion shapefiles (Lara et al. 2000)/`) no longer exists (moved/
-     renamed at some point). **This step may only exist in the GEE Code Editor's script list**
-     (per Earth Engine account, not necessarily saved to any repo) — the user would need to check
-     their GEE Code Editor directly, not a filesystem search.
-   - **Action needed:** user to check the GEE Code Editor script list for the mosaic/patching
-     script; if found, it belongs in a separate GEE JS repo (per the `mapbiomas-arg-fire-gee`
-     precedent in `CLAUDE.md`), not as R code here. The two R reclassification scripts found above
-     could be migrated into `data_prep/` as upstream/reference material once their role is
-     confirmed. Document the final end-to-end process in `docs/data-prep.md` once resolved.
+8. **Regional vegetation raster — RESOLVED (2026-07-09).** Full process now understood, across
+   two repos:
+   - **R-side reclassification** (found earlier the same day): `vegetation reclassification.R`
+     (`~/Insync/Mapa vegetación WWF - Lara et al. 1999/`) reclassifies the Lara et al. 1999
+     polygons into 8 classes; `exploring_layers.R` (`~/Insync/Mapa vegetación ciefap/`) merges
+     ciefap's regional shapefiles and joins the `class1/class2` table. Both end with "upload to
+     GEE" — correctly predicted the mosaic step itself was GEE-side.
+   - **GEE-side mosaic + pre-2014 patching** (found via the GEE Code Editor repo the user
+     provided): cloned to `~/dev/fire_spread-gee/` (remote
+     `https://earthengine.googlesource.com/users/Ivan_Barbera/fire_spread`; see `CLAUDE.md`'s new
+     "GEE Code Editor scripts" section). The script `Vegetation type image - CIEFAP WWF merge`
+     contains the exact logic:
+     1. Builds `burn_year_earliest` from the fire-perimeter collection, derives `bef14` — a
+        binary mask of pixels burned before 2014 (the year the ciefap imagery was taken).
+     2. Recodes the raw Lara `GRID_CODE` image via an explicit `remap()` (the same `cnum1`
+        mapping found in the Lara xlsx's `Sheet3`) and rasterizes the already-reclassified
+        ciefap vector.
+     3. **The patch**: `veg_im_ciefap.updateMask(bef14.eq(0))` masks ciefap OUT wherever
+        burned before 2014; `ImageCollection([veg_im_wwf, veg_im_ciefap_ok]).mosaic()` stacks
+        Lara as the base layer with ciefap on top — GEE's `mosaic()` falls through to the layer
+        below wherever the top layer is masked, so pre-2014-burned pixels get Lara's cover
+        instead of ciefap's. Exactly matches the user's memory.
+     4. Final asset: `projects/ivanbarbera-001/assets/vegetation_ciefap_wwf3` (a GEE-hosted
+        asset, not a local file — hence unfindable by filesystem search). Confirmed downstream:
+        `Landscapes export`, `Landscapes export BalconGut with distance` (per-fire raw exports),
+        and `Export data for ignition model and fire regime simulation (PNNH)` all reference
+        this asset (under two equivalent names:
+        `users/IvanBarbera/Fire_spread/vegetation_ciefap_wwf` and
+        `projects/ivanbarbera-001/assets/vegetation_ciefap_wwf_imported`) as their vegetation
+        source — this is exactly what produces the `veg`/`GRID_CODE` layer already baked into
+        every focal fire's raw GEE export and the PNNH landscape rasters already in the store.
+   - **Not migrated further** — per the `mapbiomas-arg-fire`/`mapbiomas-arg-fire-gee` precedent
+     (`CLAUDE.md`), GEE JS code stays in its own separate repo, not copied into this one. The two
+     R reclassification scripts remain in their original Insync folders (upstream, one-time
+     inputs to GEE assets, not part of the recurring pipeline) — not migrated here either, since
+     nothing in this repo re-runs them.
 9. **Non-public Bari-Kitzberger data risks exposure via a future store share link — UNSOLVED,
    left as an open decision on purpose (user, 2026-07-09).** `data/ignition_data/`
    (`ignition_points_pnnh_bari-kitzberger*`, `population_points_pnnh_bari-kitzberger_data.*`,

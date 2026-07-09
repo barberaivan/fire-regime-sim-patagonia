@@ -87,6 +87,21 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
 - Prefer functions over top-level scripts; keep MCMC/algorithm cores in `R/`, and keep the
   regime **simulator as a standalone function** so the production side can extract it.
 
+## GEE Code Editor scripts (separate repo)
+
+Raw per-fire and PNNH exports, and the regional vegetation raster (ciefap map, patched with
+Lara et al. 1999 cover in areas burned before 2014 — see `docs/data-prep.md` /
+`docs/migration.md` TODO #8), are built in Google Earth Engine JavaScript, **not** in this repo:
+
+- **Local**: `~/dev/fire_spread-gee/`
+- **Remote**: `https://earthengine.googlesource.com/users/Ivan_Barbera/fire_spread`
+
+Files have no extension (they're Code Editor scripts). Key ones: `Vegetation type image -
+CIEFAP WWF merge` (the vegetation mosaic), `Landscapes export` / `Landscapes export BalconGut
+with distance` (per-fire raw exports, consume the merged vegetation asset), `Export data for
+ignition model and fire regime simulation (PNNH)` (PNNH exports). This repo does not keep `.js`
+copies of GEE code — the `fire_spread-gee` repo is the source of truth.
+
 ## ⚠️ Do not share the store as a whole — see TODO #9
 
 `data/ignition_data/` (Bari-Kitzberger ignition + population data) is **not public**, but
