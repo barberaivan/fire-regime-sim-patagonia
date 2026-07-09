@@ -19,10 +19,8 @@
 library(terra)
 library(tidyverse)
 library(lubridate)
+library(FireSpread)    # land_cube
 source(file.path("R", "config.R"))
-# TODO(migration #1): drop once rast_from_mat/land_cube exported — see docs/migration.md #1
-source(file.path("..", "FireSpread", "tests", "testthat", "R_spread_functions.R"))
-# for land_cube
 source(file.path("R", "flammability_indices_functions.R"))
 # functions to compute flammability indices
 

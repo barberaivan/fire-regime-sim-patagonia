@@ -140,7 +140,8 @@ per the behavior-preserving-first approach):
    not a hard-coded loop.
 2. Split the monolithic hierarchical-fit script — algorithm core stays in `R/`, inline data
    manipulation becomes functions.
-3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — vendor / export it
+3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — **done**: `land_cube`/
+   `rast_from_mat` now live in `FireSpread/R/spread_helpers.R`, exported by the package
    (`docs/migration.md` TODO #1).
 4. Make the working-directory assumption explicit (repo root via the `.Rproj`).
 5. Replace the hardcoded WindNinja absolute path with a config value — **done**: centralized in

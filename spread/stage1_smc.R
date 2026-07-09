@@ -30,10 +30,6 @@ library(FireSpread)    # spread and similarity functions
 
 library(microbenchmark)
 
-# TODO(migration #1): drop once rast_from_mat/land_cube exported — see docs/migration.md #1
-source(file.path("..", "FireSpread", "tests", "testthat", "R_spread_functions.R"))
-# for rast_from_mat and a few constants
-
 sourceCpp(file.path("src", "sample_triplets_weighted.cpp"))
 
 # source("estimation_functions.R") # prior_dist and other stuff

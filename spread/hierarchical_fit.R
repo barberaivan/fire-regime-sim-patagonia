@@ -2841,9 +2841,6 @@ sampled_cells <- cellFromXY(pnnh_land_rast, sampled_crds)
 # get spread landscape for PNNH
 pnnh_land <- readRDS(file.path("data", "pnnh_images",
                                "pnnh_spread_landscape_urban-nonburnable.rds"))
-# import rast_from_mat
-# TODO(migration #1): drop once rast_from_mat/land_cube exported — see docs/migration.md #1
-source(file.path("..", "FireSpread", "tests", "testthat", "R_spread_functions.R"))
 wind_rast <- rast_from_mat(pnnh_land[, , "wspeed"], pnnh_land_rast$ndvi)
 
 # Extract wind and slope

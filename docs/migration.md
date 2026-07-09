@@ -433,12 +433,27 @@ confirms the new repo runs.
 
 ## Deferred TODO register
 
-1. **FireSpread helper export** — move `rast_from_mat()`, `land_cube()` + constants from
-   `FireSpread/tests/testthat/R_spread_functions.R` into `FireSpread/R/` (auto-exported by the
-   package's `exportPattern("^[[:alpha:]]+")`), `document()` + rebuild; then drop the
-   `source(…)` line from the 4 scripts that use it and rely on `library(FireSpread)`. The R
-   reference reimplementations in that file (`simulate_fire_r()`, `spread_one_cell_r()`) stay
-   test-only — the pipeline never calls them (confirmed by grep).
+1. **FireSpread helper export — RESOLVED (2026-07-09).** Moved `land_cube()`, `rast_from_mat()`,
+   and the shared constants (`distances`, `angles`, `moves`, `elev`, `wdir`, `wspeed`, `b_slope`,
+   `b_wind`) from `FireSpread/tests/testthat/R_spread_functions.R` into a new
+   `FireSpread/R/spread_helpers.R`, using `terra::`-qualified calls so the functions work via
+   `library(FireSpread)` alone (no separate `library(terra)` needed). Auto-exported by the
+   package's existing `exportPattern("^[[:alpha:]]+")` — **did not** run `devtools::document()`,
+   since `NAMESPACE` is hand-maintained (no roxygen header) and regenerating it risked wiping the
+   existing `useDynLib`/`importFrom(Rcpp, evalCpp)` lines; roxygen-style doc comments were added
+   to the new file for readability but are not processed into `man/`. Bumped `DESCRIPTION` to
+   1.4, reinstalled via `R CMD INSTALL .`, verified `land_cube`/`rast_from_mat` load and run
+   correctly via `library(FireSpread)`. Dropped the `source(file.path("..", "FireSpread",
+   "tests", "testthat", "R_spread_functions.R"))` line from all 4 scripts that used it
+   (`landscapes_preparation.R`, `stage1_smc.R`, `hierarchical_fit.R`, `simulate.R`) — added
+   `library(FireSpread)` to `landscapes_preparation.R`, which didn't already have it; the other
+   3 already did. `tests/testthat/R_spread_functions.R` was left untouched (still defines its
+   own copy for the package's own tests, plus the R reference reimplementations
+   `simulate_fire_r()`/`spread_one_cell_r()`, which stay test-only — the pipeline never calls
+   them, confirmed by grep) — the small duplication between it and the new package file is
+   harmless (test-local definitions simply shadow the package version during tests).
+   Verified: all 4 scripts still parse; `library(FireSpread)` alone provides both functions in
+   each script's actual import context.
 2. **Vegetation-equivalences `.xlsx` — RESOLVED (2026-07-09).** The original WWF/Lara file
    (`Mapa vegetación WWF - Lara et al. 1999/clases de vegetacion y equivalencias.xlsx`) was
    never actually lost — it wasn't synced to this machine's Insync, but the user found it in
