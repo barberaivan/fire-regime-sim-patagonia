@@ -39,11 +39,36 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
+# (pkgdown-template `docs/` ignore removed — docs/ holds tracked documentation; see docs/README.md)
 
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# ─── Code + Store strategy (see ~/Insync/Claude/repo-store-structure.md) ───
+# Machine-local store location, written by setup.sh
+.local-paths
+
+# Heavy inputs/outputs live outside git in the sibling "-store" folder, symlinked
+# in by setup.sh. Ignore the symlinks by their bare names (a trailing slash won't
+# match a symlink).
+data
+files
+
+# ─── LaTeX build artifacts (manuscript-spread/, manuscript-regime/) ───
+# Keep .tex/.bib and final figures in git; ignore what the compile regenerates.
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.run.xml
+*-blx.bib
