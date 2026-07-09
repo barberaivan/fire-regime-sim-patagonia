@@ -89,8 +89,19 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
 
 ## Status & migration
 
-**Skeleton stage** — structure and config are in place; canonical R/C++ code is being migrated
-from the old PhD repo `~/Insync/Fire spread modelling/fire_spread/` (blueprint: that repo's
-`INVENTORY.md`). Approach: **copy** (not move) code→repo and heavy data→store, renaming to
-canonical names, keeping originals until reads verify. The migration to-do and tech-debt list
-live in **`docs/architecture.md` → Migration status & tech debt**.
+**Migration complete (T0–T11)** — canonical R/C++ code and heavy data have been copied from the
+old PhD repo `~/Insync/Fire spread modelling/fire_spread/` (blueprint: that repo's
+`INVENTORY.md`) into this repo/store, renamed to canonical names, and verified (parse, sourcing,
+data-loading — not full multi-day fits/simulations end-to-end). Originals are kept until the new
+repo is confirmed working, then can be deleted.
+
+**Before trusting the full pipeline's output**, resolve the open items in `docs/migration.md`'s
+TODO register — most importantly **#7**: `fire_regime/simulate.R` and `probability_maps.R` now
+read the **canonical SMC-fitted** spread model (repointed 2026-07-09; structurally verified
+compatible with the legacy fit), but neither script has been **re-run/validated** against it —
+existing regime-simulation/probability-map outputs are stale until they are — and **#2**: the
+vegetation-equivalences `.xlsx` several scripts need is missing from disk. Also see
+`ignition_escape/README.md`: the "fire size" model and the ordinal-class escape model are
+abandoned/superseded, not part of the canonical ignition-escape pipeline (binary
+`escape_model.stan` is canonical). The full tech-debt and TODO list live in
+**`docs/architecture.md` → Migration status & tech debt** and **`docs/migration.md`**.

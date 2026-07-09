@@ -89,6 +89,19 @@ wrappers as the scripts do.
 
 ## Status
 
-**Skeleton** — structure and config are in place; canonical R/C++ code is being migrated
-from the old PhD repo (`~/Insync/Fire spread modelling/fire_spread/`; migration blueprint in
-its `INVENTORY.md`). See `CLAUDE.md` for conventions and the migration to-do.
+**Migration complete (T0–T11)** — all canonical R/C++ code and heavy data have been copied from
+the old PhD repo (`~/Insync/Fire spread modelling/fire_spread/`) into this repo and its store,
+with paths updated and verified (parsing, sourcing, and data-loading, not full end-to-end runs).
+The old repo's originals are untouched and kept until the new repo is confirmed working.
+
+A few items need attention before trusting the full pipeline's output — see `docs/migration.md`'s
+TODO register, especially:
+- `fire_regime/` now reads the **canonical SMC-fitted** spread model (repointed from the legacy
+  pre-SMC fit), but neither `simulate.R` nor `probability_maps.R` has been **re-run/validated**
+  against it yet — treat existing regime-simulation/probability-map outputs as stale until they
+  are (TODO #7);
+- the vegetation-equivalences `.xlsx` several scripts need is missing from disk (TODO #2);
+- the ignition-escape "fire size" model and the ordinal-class escape model are abandoned/
+  superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
+
+See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.
