@@ -210,7 +210,7 @@ for(k in 1:npost) {
 
 saveRDS(
   list(human = prob_pred_h, lightning = prob_pred_l),
-  "files/ignition_FWIZ/ignition_prob_relative_raw.rds"
+  "files/ignition/ignition_prob_relative_raw.rds"
 )
 
 # scale to max = 1

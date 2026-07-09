@@ -116,18 +116,31 @@ regime **simulator function** (`fire_regime/simulator.R`).
 
 ## Migration status & tech debt
 
-**Skeleton stage** — structure/config in place; canonical code not yet migrated. Approach:
-**copy** (not move) code→repo and heavy data→store, renaming to canonical names; keep originals
-until reads verify; delete later. Legacy `_FWIZ/_FWIZ2/_SMC` variants and `dump/` are **not**
-carried over (see old `INVENTORY.md` §6 for the full drop list); git holds the history instead.
+**Migration complete (T0–T11)** — canonical code and heavy data have been copied from the old
+repo into this one and the store, renamed to canonical names, and verified (parse, sourcing,
+data-loading through the store symlinks — not full multi-day fits/simulations run end-to-end).
+Originals in the old repo are kept until the new repo is confirmed working. Legacy
+`_FWIZ/_FWIZ2/_SMC` variants and `dump/` were **not** carried over (old `INVENTORY.md` §6); git
+holds the history instead. Full task-by-task log, every finding, and the complete TODO register
+live in **`docs/migration.md`** — the two most important open items before running the full
+pipeline:
 
-Tech-debt items to fix *during* migration (old `INVENTORY.md` §9):
+- **`fire_regime/simulate.R` and `probability_maps.R` read the legacy, pre-SMC spread model**,
+  not the canonical SMC fit `spread/hierarchical_fit.R` produces (`docs/migration.md` TODO #7) —
+  very likely the "evaluation" update the user described as still pending.
+- **The vegetation-equivalences `.xlsx`** several scripts need is missing from disk
+  (`docs/migration.md` TODO #2).
+
+Tech-debt items deferred to *after* this migration (old `INVENTORY.md` §9; not addressed here
+per the behavior-preserving-first approach):
 
 1. `landscapes_preparation.R` → a **function** that builds any landscape (focal fire *or* PNNH),
    not a hard-coded loop.
 2. Split the monolithic hierarchical-fit script — algorithm core stays in `R/`, inline data
    manipulation becomes functions.
-3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — vendor / export it.
+3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — vendor / export it
+   (`docs/migration.md` TODO #1).
 4. Make the working-directory assumption explicit (repo root via the `.Rproj`).
-5. Replace the hardcoded WindNinja absolute path with a config value.
-6. One canonical version per script; drop the suffix sprawl.
+5. Replace the hardcoded WindNinja absolute path with a config value — **done**: centralized in
+   `R/config.R` (`docs/migration.md` TODO #3 covers the remaining machine-setup step).
+6. One canonical version per script; drop the suffix sprawl — **done** during migration.

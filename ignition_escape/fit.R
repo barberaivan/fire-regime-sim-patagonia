@@ -801,9 +801,9 @@ ggplot(wsumm, aes(t, mean, ymin = lower, ymax = upper)) +
   xlab("Fortnights before ignition") +
   nice_theme()
 
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_fwi_weights.png")
+nn <- file.path("ignition_escape", "figures", "ignition_fwi_weights.png")
 ggsave(nn, width = 10, height = 9, units = "cm")
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_fwi_weights.pdf")
+nn <- file.path("ignition_escape", "figures", "ignition_fwi_weights.pdf")
 ggsave(nn, width = 10, height = 9, units = "cm")
 
 
@@ -860,10 +860,10 @@ ggplot(lam, aes(fwi, mean, ymin = lower, ymax = upper,
   nice_theme()
 
 
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_rate_fwi.png")
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_rate_fwi.pdf")
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_rate_fwi_extrap.png")
-nn <- file.path("ignition-escape_FWIZ", "figures", "ignition_rate_fwi_extrap.pdf")
+nn <- file.path("ignition_escape", "figures", "ignition_rate_fwi.png")
+nn <- file.path("ignition_escape", "figures", "ignition_rate_fwi.pdf")
+nn <- file.path("ignition_escape", "figures", "ignition_rate_fwi_extrap.png")
+nn <- file.path("ignition_escape", "figures", "ignition_rate_fwi_extrap.pdf")
 ggsave(nn, width = 12, height = 9, units = "cm")
 
 
@@ -1217,10 +1217,10 @@ ytit1 <- grid::textGrob("Relative ignition probability (%)",
 
 condplot_veg <- ggarrange2(cond_ndvi, cond_veg,
                            ncol = 1, left = ytit1, padding = unit(8, "mm"))
-ggsave("ignition-escape_FWIZ/figures/ignition_conditional_prob_veg.png",
+ggsave("ignition_escape/figures/ignition_conditional_prob_veg.png",
        width = fig_width_max, height = fig_height_max * 0.55, units = "cm",
        plot = condplot_veg)
-ggsave("ignition-escape_FWIZ/figures/ignition_conditional_prob_veg.pdf",
+ggsave("ignition_escape/figures/ignition_conditional_prob_veg.pdf",
        width = fig_width_max, height = fig_height_max * 0.55, units = "cm",
        plot = condplot_veg)
 
@@ -1233,10 +1233,10 @@ condplot_env <- ggarrange2(cond_elev, cond_north, #cond_fwi,
                            cond_roads, cond_humans,
                            ncol = 1, left = ytit2, padding = unit(8, "mm"))
 
-ggsave("ignition-escape_FWIZ/figures/ignition_conditional_prob_environment.png",
+ggsave("ignition_escape/figures/ignition_conditional_prob_environment.png",
        width = fig_width_max * 0.8, height = fig_height_max * 0.8, units = "cm",
        plot = condplot_env)
-ggsave("ignition-escape_FWIZ/figures/ignition_conditional_prob_environment.pdf",
+ggsave("ignition_escape/figures/ignition_conditional_prob_environment.pdf",
        width = fig_width_max * 0.8, height = fig_height_max * 0.8, units = "cm",
        plot = condplot_env)
 
@@ -1421,8 +1421,8 @@ ggplot(wsumm, aes(t, mean, ymin = lower, ymax = upper)) +
   xlab("Fortnights before ignition") +
   nice_theme()
 
-nn <- file.path("ignition-escape_FWIZ", "figures", "escape_fwi_weights.png")
-nn <- file.path("ignition-escape_FWIZ", "figures", "escape_fwi_weights.pdf")
+nn <- file.path("ignition_escape", "figures", "escape_fwi_weights.png")
+nn <- file.path("ignition_escape", "figures", "escape_fwi_weights.pdf")
 ggsave(nn, width = 10, height = 9, units = "cm")
 
 
@@ -1690,10 +1690,10 @@ plot_out <-
   )
 plot_out
 
-ggsave("ignition-escape_FWIZ/figures/escape.png",
+ggsave("ignition_escape/figures/escape.png",
        width = fig_width_max, height = fig_height_max, units = "cm",
        plot = plot_out)
-ggsave("ignition-escape_FWIZ/figures/escape.pdf",
+ggsave("ignition_escape/figures/escape.pdf",
        width = fig_width_max, height = fig_height_max, units = "cm",
        plot = plot_out)
 

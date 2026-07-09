@@ -307,7 +307,43 @@ light `source()` only for dependency-free libs.
         `hierarchical_model/spread_model_samples.rds` and
         `hierarchical_model_legacy_preSMC/spread_model_samples.rds` really are different files —
         and actually loading the legacy spread model object and the new shapefile (288 features).
-- [ ] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
+- [x] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
+      A repo-wide (not per-task) grep swept up **three real, previously-missed bugs** that
+      per-task audits had not caught because they weren't `data`/`files` paths:
+      - `ignition_escape/fit.R` had **8 `ggsave()`/figure-path sites** (14 raw substring
+        occurrences) still writing to the old `"ignition-escape_FWIZ/figures/..."` — a folder
+        that doesn't exist in the new repo at all. Fixed → `"ignition_escape/figures/..."`.
+      - `spread/hierarchical_fit.R` had **21 occurrences** writing to
+        `"spread/figures_FWIZ2_SMC/..."` — same issue. Fixed → `"spread/figures/..."`.
+      - `fire_regime/probability_maps.R` had one **bare-string** (not `file.path()`-split)
+        occurrence, `"files/ignition_FWIZ/ignition_prob_relative_raw.rds"`, that a
+        quoted-token grep (`"ignition_FWIZ"` as its own argument) doesn't match when the token
+        is embedded inside a larger single string. Fixed → `"files/ignition/..."`.
+      - Created `spread/figures/` and `ignition_escape/figures/` (with `.gitkeep`) so these
+        `ggsave()` calls have somewhere to write, and gitignored their contents (regenerable
+        diagnostic output, unlike the curated, committed `manuscript-*/figures/`).
+      - **Lesson for future migration-style work:** per-task grepping for the exact rename
+        tokens is necessary but not sufficient — a final repo-wide sweep for the *raw substrings*
+        (not just quoted-argument patterns) catches sites a script-local review misses,
+        especially figure/output paths that don't fit the `data`/`files` mental model.
+      - Everything else the repo-wide sweep flagged was an accepted exception: `R/config.R`'s
+        one intentional machine-local WindNinja path; loose data **filenames** correctly left
+        unrenamed (`*_FWIZ.csv`/`*_FWIZ2.csv`/`*_FWIZ.tiff` — individual files, not folders, per
+        the no-file-rename decision); a few harmless historical comments; and the two
+        deliberately-inert dead-code snippets (T6's WindNinja comment, T10's `firesmap`).
+      - **Final global verification, all pass:**
+        1. Repo-wide `/home/|_FWIZ|focal fires data` grep → only the accepted exceptions above.
+        2. `tests.*testthat` → exactly one occurrence in each of the 4 scripts that need it
+           (`stage1_smc.R`, `landscapes_preparation.R`, `hierarchical_fit.R`, `simulate.R`).
+        3. `source("R/config.R"); source("R/fortnight_functions.R");
+           source("R/flammability_indices_functions.R")` → no error.
+        4. `Rcpp::sourceCpp("src/sample_triplets_weighted.cpp")` → compiles, function callable.
+        5. **All 15 R files in the repo** `parse()` cleanly in one sweep (re-checked the 3 files
+           touched during this final pass).
+      - Updated the "Status" sections in `README.md`, `CLAUDE.md`, and `docs/architecture.md`
+        from "skeleton stage" to "migration complete", surfacing TODO #7 and #2 as the two
+        things to resolve before running the full pipeline.
+      - Did **not** merge `migrate` → `main` as part of this task — see final summary for why.
 
 ---
 

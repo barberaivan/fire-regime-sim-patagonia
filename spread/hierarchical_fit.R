@@ -836,7 +836,7 @@ p1 <- ggplot(pred1, aes(fwi, mu, ymin = mu_lower, ymax = mu_upper)) +
   xlab("FWI anomaly")
 p1
 
-# ggsave("spread/figures_FWIZ2_SMC/step_model_stan_logitnorm.png",
+# ggsave("spread/figures/step_model_stan_logitnorm.png",
 #        width = 15, height = 12, units = "cm", plot = p1)
 
 # check area ~ steps:
@@ -1642,11 +1642,11 @@ plist_long <- do.call("c", plist)
 # plot_cor <- ggarrange2(plots = plist_long, byrow = F)
 plot_cor <- egg::ggarrange(plots = plist_long, byrow = F)
 ggsave(
-  "spread/figures_FWIZ2_SMC/pairs_plot_correlations_posteriors.png",
+  "spread/figures/pairs_plot_correlations_posteriors.png",
   plot = plot_cor, width = 22, height = 20, units = "cm"
 )
 ggsave(
-  "spread/figures_FWIZ2_SMC/pairs_plot_correlations_posteriors.pdf",
+  "spread/figures/pairs_plot_correlations_posteriors.pdf",
   plot = plot_cor, width = 22, height = 20, units = "cm"
 )
 
@@ -1808,11 +1808,11 @@ ggplot(mu_df, aes(fwi, mean, ymin = eti_lower_95, ymax = eti_upper_95)) +
         axis.line = element_line(linewidth = 0.3))
 
 ggsave(
-  "spread/figures_FWIZ2_SMC/params_fwi_regression.png",
+  "spread/figures/params_fwi_regression.png",
   width = 17, height = 10, units = "cm"
 )
 ggsave(
-  "spread/figures_FWIZ2_SMC/params_fwi_regression.pdf",
+  "spread/figures/params_fwi_regression.pdf",
   width = 17, height = 10, units = "cm"
 )
 
@@ -1957,11 +1957,11 @@ fig_steps_area <- ggarrange2(
   nrow = 2
 )
 ggsave(
-  "spread/figures_FWIZ2_SMC/steps_fwi_area.png",
+  "spread/figures/steps_fwi_area.png",
   plot = fig_steps_area, width = 17, height = 15, units = "cm"
 )
 ggsave(
-  "spread/figures_FWIZ2_SMC/steps_fwi_area.pdf",
+  "spread/figures/steps_fwi_area.pdf",
   plot = fig_steps_area, width = 17, height = 15, units = "cm"
 )
 
@@ -2194,9 +2194,9 @@ ggplot(curves_df, aes(varying_val, mean,
         axis.line = element_line(linewidth = 0.3),
         legend.position = "right")
 
-ggsave("spread/figures_FWIZ2_SMC/spread_prob_curves.png",
+ggsave("spread/figures/spread_prob_curves.png",
        width = 14, height = 12, units = "cm")
-ggsave("spread/figures_FWIZ2_SMC/spread_prob_curves.pdf",
+ggsave("spread/figures/spread_prob_curves.pdf",
        width = 14, height = 12, units = "cm")
 
 
@@ -2314,10 +2314,10 @@ fi_fig <- ggarrange2(
   nrow = 2
 )
 
-ggsave("spread/figures_FWIZ2_SMC/flammability_indices.png",
+ggsave("spread/figures/flammability_indices.png",
        width = 14, height = 12, units = "cm",
        plot = fi_fig)
-ggsave("spread/figures_FWIZ2_SMC/flammability_indices.pdf",
+ggsave("spread/figures/flammability_indices.pdf",
        width = 14, height = 12, units = "cm",
        plot = fi_fig)
 
@@ -2514,10 +2514,10 @@ ggarrange2(curves_veg + theme(plot.margin = margin(b = 5, unit = "mm")),
            label.args = list(gp = gpar(size = 11)),
            nrow = 2, heights = c(3.9, 1))
 
-ggsave("spread/figures_FWIZ2_SMC/spread_prob_curves_raw_x.png",
+ggsave("spread/figures/spread_prob_curves_raw_x.png",
        width = 14, height = 18, units = "cm",
        plot = rawx_fig)
-ggsave("spread/figures_FWIZ2_SMC/spread_prob_curves_raw_x.pdf",
+ggsave("spread/figures/spread_prob_curves_raw_x.pdf",
        width = 14, height = 18, units = "cm",
        plot = rawx_fig)
 
@@ -2648,9 +2648,9 @@ ggplot(ovtable) +
   ylab("Overlap from fitted parameters") +
   xlab("Overlap from simulated parameters")
 
-ggsave("spread/figures_FWIZ2_SMC/overlap_fit_sim.png",
+ggsave("spread/figures/overlap_fit_sim.png",
        width = 9, height = 12, units = "cm")
-ggsave("spread/figures_FWIZ2_SMC/overlap_fit_sim.pdf",
+ggsave("spread/figures/overlap_fit_sim.pdf",
        width = 9, height = 12, units = "cm")
 
 
@@ -2714,9 +2714,9 @@ ggplot(res_table, aes(q_exp, q_obs, color = ranef, fill = ranef)) +
         strip.background = element_rect(color = bgcol, fill = bgcol),
         strip.text = element_text(color = "white", size = 11))
 
-ggsave("spread/figures_FWIZ2_SMC/dharma_size_fit_sim.png",
+ggsave("spread/figures/dharma_size_fit_sim.png",
        width = 15, height = 13, units = "cm")
-ggsave("spread/figures_FWIZ2_SMC/dharma_size_fit_sim.pdf",
+ggsave("spread/figures/dharma_size_fit_sim.pdf",
        width = 15, height = 13, units = "cm")
 # quitar los fuegos menores a 10 ha antes de hacer los dharma?
 
@@ -2755,9 +2755,9 @@ ggplot(qsumm, aes(fire_id, mean, ymin = hdi_lower_95, ymax = hdi_upper_95)) +
   xlab("Fire ID (increasing size)") +
   nice_theme()
 
-ggsave("spread/figures_FWIZ2_SMC/quotient_sim_obs_fire_size.png",
+ggsave("spread/figures/quotient_sim_obs_fire_size.png",
        width = 15, height = 16, units = "cm")
-ggsave("spread/figures_FWIZ2_SMC/quotient_sim_obs_fire_size.pdf",
+ggsave("spread/figures/quotient_sim_obs_fire_size.pdf",
        width = 15, height = 16, units = "cm")
 
 # The same in log
@@ -3017,10 +3017,10 @@ p1_mod <- p1 +
 (pboth <- (p1_mod + p2) + plot_layout(nrow = 2))
 
 
-ggsave("spread/figures_FWIZ2_SMC/vegetation_effects_fwi.png",
+ggsave("spread/figures/vegetation_effects_fwi.png",
        plot = pboth,
        width = 13, height = 13, units = "cm")
-ggsave("spread/figures_FWIZ2_SMC/vegetation_effects_fwi.pdf",
+ggsave("spread/figures/vegetation_effects_fwi.pdf",
        plot = pboth,
        width = 13, height = 13, units = "cm", bg = "white")
 

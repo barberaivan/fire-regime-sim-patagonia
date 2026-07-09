@@ -72,3 +72,11 @@ files
 *.synctex.gz
 *.run.xml
 *-blx.bib
+
+# ─── Diagnostic/analysis figures written directly by fitting scripts ───
+# (spread/hierarchical_fit.R, ignition_escape/fit.R) — regenerable output, not curated
+# manuscript figures (those live in manuscript-*/figures/ and ARE committed).
+spread/figures/*
+ignition_escape/figures/*
+!spread/figures/.gitkeep
+!ignition_escape/figures/.gitkeep
