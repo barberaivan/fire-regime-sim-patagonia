@@ -171,7 +171,37 @@ light `source()` only for dependency-free libs.
         fire exactly where expected: `config$windninja_dir` doesn't exist (TODO #3) and
         `config$veg_equiv_xlsx` doesn't exist (TODO #2) — the script cannot run past vegetation-
         transform/WindNinja setup until those are resolved, consistent with T4's finding.
-- [ ] **T7** — `src/sample_triplets_weighted.cpp` + `spread/stage1_smc.R`.
+- [x] **T7** — `src/sample_triplets_weighted.cpp` (no edits — no filesystem paths inside) +
+      `spread/stage1_smc.R`. Path edits: `sourceCpp()` → `src/sample_triplets_weighted.cpp`;
+      `data_dir` → `data/focal_fires/landscapes`; `target_dir` → `files/posterior_samples_stage1`
+      (3 assignment sites + the loop's partial/full-save/cleanup paths); `"flammability
+      indices"` → `"flammability_indices"`; `"focal fires data"` → `"focal_fires"` for
+      `fire_size_data.{rds,csv}` (both active reads **and** their paired commented
+      compute/cache lines — unlike T6's abandoned dead-code line, these are a live
+      compute-once-cache-forever pattern, so leaving the commented half stale would silently
+      break a future re-run of the cache-computing block).
+      - **Found and resolved a real naming collision** (see TODO #5, new): the script's tail
+        end compares its SMC output against `files/posterior_samples_stage1/` (bare name) —
+        but in the *old* repo that bare name belonged to a **different, legacy** folder: the
+        output of `sampling_fire_wise_posteriors_IMPORTANCE.R`, explicitly marked "not used" in
+        `INVENTORY.md` §6. This migration's rename map assigns that same bare name to the
+        **SMC** folder instead (dropping the `_smc` suffix, Reference B). Mechanically renaming
+        `target_dir_imp` the same way would have made the script silently **compare the SMC
+        output against itself** — a real correctness bug, not just a cosmetic one. Confirmed
+        via `INVENTORY.md` that the importance-sampling script is legacy/unused, so its data was
+        correctly never migrated. Resolution: **commented out both comparison blocks** (~30
+        lines) with an explanatory header, rather than inventing a new name for non-canonical,
+        non-migrated data or leaving a silently-wrong active reference.
+      - **Verified, going beyond parse-checking**: actually compiled
+        `sample_triplets_weighted.cpp` at its new path *and ran it* on a real weight vector
+        (correct 4×3 output); sourced the FireSpread helper (`land_cube` available);
+        `library(FireSpread)` loads with `simulate_fire_compare`/`overlap_spatial` (the
+        package functions this script's similarity functions call) both present; every data
+        dependency resolves through the store symlink — `landscapes/` (57 files, matching the
+        57 focal fires), `fire_size_data.rds`, `flammability_indices.rds`, and
+        `posterior_samples_stage1/` (58 files: 57 per-fire `full_samples_history_*.rds` + the
+        merged `samples_all_fires.rds` — exactly matching T3's copy). The multi-day SMC
+        sampling loop itself was not run end-to-end.
 - [ ] **T8** — `spread/hierarchical_fit.R`.
 - [ ] **T9** — `ignition_escape/fit.R`.
 - [ ] **T10** — `fire_regime/` (`simulate.R`, `probability_maps.R`, `plots.R`).
@@ -294,7 +324,18 @@ confirms the new repo runs.
    (statistically more correct — it'd reflect the actual model being used), or is reusing the
    legacy artifact fine because it's just an FWI standardization constant, independent of which
    fit produced it? Needs a decision when those scripts are migrated, not before.
-5. **Refactors (post-verification, not part of this migration):**
+5. **`posterior_samples_stage1` name collision — resolved during T7.** In the old repo, the
+   bare `files/posterior_samples_stage1/` belonged to the **legacy** importance-sampling stage-1
+   output (`sampling_fire_wise_posteriors_IMPORTANCE.R`, "not used" per this doc's history and
+   the old `INVENTORY.md` §6) — a *different* folder from `posterior_samples_stage1_smc/`
+   (canonical). This migration's clean-rename drops the `_smc` suffix, so the canonical SMC
+   folder now also has the bare name — colliding with the legacy folder's old identity. Since
+   the legacy data was correctly never migrated (non-canonical), `stage1_smc.R`'s tail-end
+   comparison against it (comparing SMC vs. importance-sampling overlap) was **commented out**
+   rather than silently pointed at the SMC folder itself (which would have made it compare the
+   SMC output against itself — a real bug, not just stale code). Re-derive from the archived old
+   repo if that comparison is ever needed again.
+6. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
