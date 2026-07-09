@@ -139,7 +139,38 @@ light `source()` only for dependency-free libs.
         long-running (fortnight aggregation, ~150-model-member projection loop) and were not
         executed end-to-end — only the data-loading and stan-compile surface was verified,
         consistent with the plan's verification bar.
-- [ ] **T6** — `data_prep/landscapes_preparation.R`.
+- [x] **T6** — `data_prep/landscapes_preparation.R`. The biggest script so far. Path edits:
+      `gee_dir` → `data/focal_fires/raw_gee`; `"flammability indices"` → `"flammability_indices"`
+      (2 sites); `"focal fires data"` → `"focal_fires"` (the landscapes-output write); veg xlsx
+      → `config$veg_equiv_xlsx` (+ TODO #2 comment); PNNH elevation absolute path → repo-relative
+      `file.path("data","pnnh_images",...)`; `windninja_dir` assignment → `config$windninja_dir`
+      (single source of truth, tech debt #5) — this alone doesn't cover it, though: the
+      **`system()`/`unlink()` calls had the absolute WindNinja path baked directly into the
+      shell-command string**, not routed through the `windninja_dir` variable — 3 separate
+      sites (2 active, 1 commented) rewritten to build the path from `windninja_dir` via
+      `file.path()`/`paste0()` instead. Added the required
+      `# TODO(refactor): loop → function` marker at the landscape-building loop (deferred, item
+      #5). Left one already-commented dead-code line (`"focal fires data", "wind ninja
+      files", ...`) untouched — inactive, not part of Reference C's scope.
+      - **Flagged, not fixed** (behavior-preserving): line 99's `mval <- mean(r)` looks like a
+        pre-existing inconsistency — `r` is a SpatRaster, not the numeric vector `v` extracted
+        just above it, whereas the equivalent PNNH-section code later in the same script
+        correctly uses `mean(v, na.rm = T)`. Possibly a latent bug in the original script; not
+        altered since this migration makes no logic changes.
+      - Confirmed the `raw_gee` file count is **57**, not "58" as I'd noted from memory earlier
+        in this conversation — verified against the old repo directly (also 57, byte-identical
+        filenames); my earlier count was off by one (a `find` without `-type f` had included
+        the directory itself). No copy gap — T2's copy was already complete.
+      - **Verified:** parse() OK; grep audit clean except the one intentionally-untouched dead
+        comment; actually sourced both `source()` lines (`R_spread_functions.R` — confirmed
+        `land_cube` available; `flammability_indices_functions.R`); loaded the first of the 57
+        raw GEE tifs with `terra` (7 named layers); confirmed every other data dependency
+        resolves through the store symlink (`file.exists()` — the loose CSVs/shapefile, the
+        flammability rds, the PNNH buffered raster + wind ascii grids, both pre-computed PNNH
+        landscape outputs, the focal-fire `landscapes/` output dir). Confirmed both blockers
+        fire exactly where expected: `config$windninja_dir` doesn't exist (TODO #3) and
+        `config$veg_equiv_xlsx` doesn't exist (TODO #2) — the script cannot run past vegetation-
+        transform/WindNinja setup until those are resolved, consistent with T4's finding.
 - [ ] **T7** — `src/sample_triplets_weighted.cpp` + `spread/stage1_smc.R`.
 - [ ] **T8** — `spread/hierarchical_fit.R`.
 - [ ] **T9** — `ignition_escape/fit.R`.
@@ -249,7 +280,9 @@ confirms the new repo runs.
    `data_prep/flammability_indices.R`, `fire_regime/simulate.R`) can't run past that line.
 3. **WindNinja dir** — machine-local scratch dir, absent on this machine; only needed to
    *regenerate* wind layers (already baked into the prepared landscape `.rds` files, so not a
-   blocker for most of the pipeline).
+   blocker for most of the pipeline). All uses now derive from `config$windninja_dir`
+   (`R/config.R`), including the 3 `system()`/`unlink()` shell-command strings in
+   `landscapes_preparation.R` that used to hardcode the absolute path directly (fixed in T6).
 4. **`fwi_mean_sd_spread.rds` isn't actually produced by the canonical fit** — resolved during
    T3: the `saveRDS()` for it in the canonical `hierarchical model fitting_FWIZ2_SMC.R` (line
    660) is **commented out**, so the file only exists because a legacy non-SMC run
