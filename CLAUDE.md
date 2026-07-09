@@ -104,8 +104,3 @@ existing regime-simulation/probability-map outputs are stale until they are. Als
 abandoned/superseded, not part of the canonical ignition-escape pipeline (binary
 `escape_model.stan` is canonical). The full tech-debt and TODO list live in
 **`docs/architecture.md` → Migration status & tech debt** and **`docs/migration.md`**.
-
-**TODO #2 (vegetation-equivalences `.xlsx`) is resolved** — found via Google Drive, placed at
-`data/vegetation_equivalences.xlsx`. A separate "ciefap" equivalence table (for a different
-source vegetation map, used elsewhere — not by anything in this repo) is kept alongside it at
-`data/vegetation_equivalences_ciefap.xlsx` for provenance.

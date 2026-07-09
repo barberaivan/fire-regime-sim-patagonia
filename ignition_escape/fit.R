@@ -107,7 +107,6 @@ logistic_predict <- function(pdata, xname, bname) {
 
 # Import vegetation class transforms --------------------------------------
 
-# RESOLVED (migration #2): config$veg_equiv_xlsx now resolves — see R/config.R
 dveg <- readxl::read_excel(config$veg_equiv_xlsx, sheet = "Sheet2")
 # Make urban as forest, and get zero-indexing
 dveg$cnum2[dveg$class1 == "Urban"] <- 1

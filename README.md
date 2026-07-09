@@ -103,7 +103,4 @@ TODO register, especially:
 - the ignition-escape "fire size" model and the ordinal-class escape model are abandoned/
   superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
 
-The vegetation-equivalences `.xlsx` (TODO #2) has been found and wired in — see
-`docs/migration.md` for provenance and the separate "ciefap" table kept alongside it.
-
 See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.

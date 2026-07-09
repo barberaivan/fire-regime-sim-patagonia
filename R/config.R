@@ -10,12 +10,9 @@ config <- list(
   # this path per machine; not present on this machine as of the 2026-07 migration.
   windninja_dir = "/home/ivan/windninja_cli_fire_spread_files",
 
-  # Vegetation-class equivalence table (WWF/Lara et al. 1999 map). RESOLVED (migration #2,
-  # 2026-07-09): found via Google Drive (not locally synced) and placed in the store. Schema
-  # verified against every script that reads it (sheet "Sheet2": cnum1, class1, cnum2, class2).
-  # A separate "ciefap" equivalence table (for a different source vegetation map) is also kept
-  # in the store as data/vegetation_equivalences_ciefap.xlsx for provenance — it is NOT read by
-  # any script in this repo (confirmed via repo-wide grep); it was used elsewhere (likely the
-  # separate GEE JS repo, see CLAUDE.md) to prepare the raw vegetation layers upstream of here.
+  # Vegetation-class equivalence table (WWF/Lara et al. 1999 map); sheet "Sheet2" has the
+  # cnum1/class1/cnum2/class2 crosswalk every script reads. A separate table for a different
+  # source vegetation map (ciefap) is kept alongside it at
+  # data/vegetation_equivalences_ciefap.xlsx but is not used by anything in this repo.
   veg_equiv_xlsx = file.path("data", "vegetation_equivalences.xlsx")
 )

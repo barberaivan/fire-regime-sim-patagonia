@@ -130,10 +130,6 @@ pipeline:
   script has been re-run/validated against it — existing outputs are stale until they are
   (`docs/migration.md` TODO #7).
 
-Resolved since migration: **the vegetation-equivalences `.xlsx`** (`docs/migration.md` TODO #2)
-was found via Google Drive and wired in; a separate "ciefap" table for a different source
-vegetation map is kept alongside it for provenance, unused by any script here.
-
 - **The ignition-escape "fire size" model and ordinal-class escape model are abandoned/
   superseded** — see `ignition_escape/README.md`; not touched, just flagged.
 

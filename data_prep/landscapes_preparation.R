@@ -52,7 +52,6 @@ windninja_dir <- config$windninja_dir
 
 # Import vegetation class transforms --------------------------------------
 
-# RESOLVED (migration #2): config$veg_equiv_xlsx now resolves — see R/config.R
 dveg <- readxl::read_excel(config$veg_equiv_xlsx, sheet = "Sheet2")
 
 # Make urban as forest, and get zero-indexing
