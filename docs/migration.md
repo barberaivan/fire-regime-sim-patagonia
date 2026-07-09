@@ -1,0 +1,151 @@
+# Migration checklist — fire_spread → fire-regime-sim-patagonia
+
+Living tracker for migrating canonical code + data from the old PhD monorepo
+(`~/Insync/Fire spread modelling/fire_spread/`) into this repo. Work happens in small,
+independently committable tasks (T0…T11) so a session can pick up one task, verify it, commit,
+and stop — cheap to resume later. Tick a task's checkbox in the list below when its commit lands.
+
+**Principles:**
+- **Copy, never move.** Originals in `fire_spread/` stay untouched until everything verifies.
+  Applies to the store too (heavy data is copied in, renamed as needed).
+- **Behavior-preserving now, refactor later.** No logic changes in this pass — no
+  loop→function, no splitting big scripts. Those are deferred (see TODO register).
+- **Clean-rename folder names now** (drop spaces + `_FWIZ*/_SMC` suffixes). Individual data
+  *filenames* stay as-is this pass (many near-duplicates exist; deferred).
+- **FireSpread helpers stay sourced from `../FireSpread/tests/testthat/` for now** — exporting
+  them properly from the package is TODO #1 below, done as its own small task.
+
+Verification tooling: `/usr/bin/Rscript` — `parse()` for syntax, `file.exists()` for data,
+light `source()` only for dependency-free libs.
+
+---
+
+## Task checklist
+
+- [x] **T0** — This file + `R/config.R` (machine-local/external paths in one place).
+- [ ] **T1** — `R/` libraries: `fortnight_functions.R`, `mcmc_functions_smc.R` (+
+      `mcmc_functions.R` only if needed — verify), `flammability_indices_functions.R` + its 2
+      `.rds` into `data/flammability_indices/`.
+- [ ] **T2** — Store inputs copy (`data/` folders, Reference B).
+- [ ] **T3** — Store outputs copy (`files/` folders, Reference B).
+- [ ] **T4** — `data_prep/flammability_indices.R`.
+- [ ] **T5** — `data_prep/` FWI scripts (`fwi_standardize.R`, `fwi_fortnight_matrix.R`,
+      `fwi_projections.R`).
+- [ ] **T6** — `data_prep/landscapes_preparation.R`.
+- [ ] **T7** — `src/sample_triplets_weighted.cpp` + `spread/stage1_smc.R`.
+- [ ] **T8** — `spread/hierarchical_fit.R`.
+- [ ] **T9** — `ignition_escape/fit.R`.
+- [ ] **T10** — `fire_regime/` (`simulate.R`, `probability_maps.R`, `plots.R`).
+- [ ] **T11** — Global audit (repo-wide grep + sourcing smoke tests) + close out.
+
+---
+
+## Reference A — code file map (old → new)
+
+| Old (in `fire_spread/`) | New (in repo) |
+|---|---|
+| `flammability indices/flammability_indices_functions.R` | `R/flammability_indices_functions.R` |
+| `weather/fortnight_functions.R` | `R/fortnight_functions.R` |
+| `spread/mcmc_functions.R` | `R/mcmc_functions.R` *(only if SMC needs it — verify)* |
+| `spread/mcmc_functions_SMC.R` | `R/mcmc_functions_smc.R` |
+| `spread/sample_triplets_weighted.cpp` | `src/sample_triplets_weighted.cpp` |
+| `flammability indices/flammability_indices.R` | `data_prep/flammability_indices.R` |
+| `weather/FWI standardize and aggregate by fortnight.R` | `data_prep/fwi_standardize.R` |
+| `weather/FWI fortnight matrix for spread and lengthscale estimation.R` | `data_prep/fwi_fortnight_matrix.R` |
+| `weather/FWI projections/standardize and aggregate projections by fortnight (2050 and 2090).R` | `data_prep/fwi_projections.R` |
+| `spread/landscapes_preparation.R` | `data_prep/landscapes_preparation.R` |
+| `spread/sampling_fire_wise_posteriors_(stage1)_SMC.R` | `spread/stage1_smc.R` |
+| `spread/hierarchical model fitting_FWIZ2_SMC.R` | `spread/hierarchical_fit.R` |
+| `ignition-escape_FWIZ/ignition-escape_analyses.R` | `ignition_escape/fit.R` |
+| `fire regime simulations/fire_regime_simulations_FWIZ.R` | `fire_regime/simulate.R` |
+| `fire regime simulations/fire_probability_maps_single-models_FWIZ.R` | `fire_regime/probability_maps.R` |
+| `fire regime simulations/plots.R` | `fire_regime/plots.R` |
+
+## Reference B — store folder rename map (copy canonical only)
+
+Copy into `~/Insync/fire-regime-sim-patagonia-store/…`. Only the **canonical** folder is
+copied (ignore `_OLD`, other suffix variants, and already-superseded legacy dirs).
+
+| Old relative | New relative in store |
+|---|---|
+| `data/focal fires data/` | `data/focal_fires/` |
+| `data/focal fires data/raw data from GEE/` | `data/focal_fires/raw_gee/` |
+| `data/flammability indices/` | `data/flammability_indices/` |
+| `data/pnnh_images/`, `data/protected_areas/`, `data/ignition/`, `data/fwi_projections/`, `data/fwi_daily_1998-2022/` | same (already clean) |
+| `files/hierarchical_model_FWIZ_SMC/` | `files/hierarchical_model/` |
+| `files/posterior_samples_stage1_smc/` | `files/posterior_samples_stage1/` |
+| `files/ignition_FWIZ/` | `files/ignition/` |
+| `files/fire_regime_simulation_FWIZ/` | `files/fire_regime_simulation/` |
+| `files/landscape_flammability/` | same |
+| *(external)* `~/Insync/patagonian_fires/patagonian_fires/patagonian_fires.*` | `data/patagonian_fires/` |
+| *(external, MISSING)* vegetation-equivalences `.xlsx` | `data/vegetation_equivalences.xlsx` — **TODO #2** |
+
+## Reference C — path-edit rules (apply to every migrated script)
+
+Robust string replacements; verify with grep after each file.
+
+- **Source redirects:**
+  `file.path("spread","mcmc_functions_SMC.R")` → `file.path("R","mcmc_functions_smc.R")`;
+  `file.path("flammability indices","flammability_indices_functions.R")` → `file.path("R","flammability_indices_functions.R")`;
+  `file.path("weather","fortnight_functions.R")` → `file.path("R","fortnight_functions.R")`;
+  `sourceCpp(file.path("spread","sample_triplets_weighted.cpp"))` → `…file.path("src",…)`.
+- **FireSpread source line:** keep
+  `source(file.path("..","FireSpread","tests","testthat","R_spread_functions.R"))` **unchanged**;
+  add a comment `# TODO(firespread-export): drop once rast_from_mat/land_cube exported — see docs/migration.md #1`.
+- **Data folder tokens:** `"focal fires data"`→`"focal_fires"`; `"raw data from GEE"`→`"raw_gee"`;
+  `"flammability indices"` (in *data* paths only) → `"flammability_indices"`;
+  `"hierarchical_model_FWIZ_SMC"`→`"hierarchical_model"`; `"hierarchical_model_FWIZ"`→`"hierarchical_model"`
+  ⚠️ *(simulate.R reads `_FWIZ`, fit writes `_FWIZ_SMC`; both collapse to `hierarchical_model` —
+  confirm simulate.R should use the SMC fit; see TODO #4)*;
+  `"posterior_samples_stage1_smc"`→`"posterior_samples_stage1"`; `"ignition_FWIZ"`→`"ignition"`;
+  `"fire_regime_simulation_FWIZ"`→`"fire_regime_simulation"`.
+- **Hardcoded absolute paths → `R/config.R` or store-relative:**
+  WindNinja dir `/home/ivan/windninja_cli_fire_spread_files` → `config$windninja_dir`;
+  veg xlsx `/home/ivan/Insync/…/clases de vegetacion y equivalencias.xlsx` → `config$veg_equiv_xlsx`;
+  PNNH elev absolute path → `file.path("data","pnnh_images","pnnh_data_spread_elevation_30m.tif")`;
+  external patagonian_fires absolute → `file.path("data","patagonian_fires","patagonian_fires.shp")`.
+
+---
+
+## Global verification (end state — T11)
+
+1. `grep -rnE '/home/|_FWIZ|focal fires data' <repo> --include=*.R` → only allowed TODO comments.
+2. `grep -rn 'tests.*testthat' <repo> --include=*.R` → only the one FireSpread `source()` line per script.
+3. `Rscript -e 'source("R/config.R"); source("R/fortnight_functions.R"); source("R/flammability_indices_functions.R")'` → no error.
+4. `Rscript -e 'Rcpp::sourceCpp("src/sample_triplets_weighted.cpp")'` → compiles.
+5. Every migrated script `parse()`s; every `file.path("data"/"files", …)` read target resolves
+   via the symlinks (`file.exists()` spot-checks).
+6. A cheap end-to-end smoke run when convenient — deferred, not required to close the migration.
+
+Originals in `fire_spread/` remain untouched throughout; deletion happens only after the user
+confirms the new repo runs.
+
+---
+
+## Deferred TODO register
+
+1. **FireSpread helper export** — move `rast_from_mat()`, `land_cube()` + constants from
+   `FireSpread/tests/testthat/R_spread_functions.R` into `FireSpread/R/` (auto-exported by the
+   package's `exportPattern("^[[:alpha:]]+")`), `document()` + rebuild; then drop the
+   `source(…)` line from the 4 scripts that use it and rely on `library(FireSpread)`. The R
+   reference reimplementations in that file (`simulate_fire_r()`, `spread_one_cell_r()`) stay
+   test-only — the pipeline never calls them (confirmed by grep).
+2. **Vegetation-equivalences `.xlsx` missing** — original WWF/Lara file
+   (`Mapa vegetación WWF - Lara et al. 1999/clases de vegetacion y equivalencias.xlsx`) is gone
+   from disk; only a different *ciefap* variant exists
+   (`Mapa vegetación ciefap/clases de vegetacion y equivalencias_ciefap.xlsx`). User to
+   locate/confirm the correct file → copy to `data/vegetation_equivalences.xlsx`. Until then,
+   the 4 scripts that read it (`landscapes_preparation.R`, `ignition_escape/fit.R`,
+   `data_prep/flammability_indices.R`, `fire_regime/simulate.R`) can't run past that line.
+3. **WindNinja dir** — machine-local scratch dir, absent on this machine; only needed to
+   *regenerate* wind layers (already baked into the prepared landscape `.rds` files, so not a
+   blocker for most of the pipeline).
+4. **`hierarchical_model_FWIZ` vs `_FWIZ_SMC`** — confirm `fire_regime/simulate.R` should read
+   the SMC fit once both old names collapse to the new `files/hierarchical_model`.
+5. **Refactors (post-verification, not part of this migration):**
+   - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop).
+   - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
+   - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
+   - Consider dropping `R/mcmc_functions.R` if the SMC variant turns out self-contained.
+   - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
+     migration/refactor, not up front).
