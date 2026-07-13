@@ -54,8 +54,8 @@ Simulate a large number of fires (`N ≈ 1e5–1e6`) over the PNNH landscape wit
 - Random ignition points sampled uniformly (or from a simple spatial rule
   matching observed ignition density if easy — not critical).
 - FWI sampled from the empirical KDE of the observed 250-fire dataset.
-- Posterior-mean hyperparameters (or thinned posterior draws if wanting to
-  propagate uncertainty).
+- Simulate fires using the full posterior samples of hyperparameters, 
+  not means nor thinned samples.
 
 Compare simulated vs. observed size distribution:
 
@@ -65,8 +65,9 @@ Compare simulated vs. observed size distribution:
 This is the direct analog of Morales 2015's regional test. It **is not "too
 easy"**: it detected shape mismatches in Morales 2015 (under-representation of
 small fires, over-representation of very large fires). The `γ_{0,6}` calibration
-of −0.95 in the chapter fixes the *mean* burn proportion, not the *shape* of the
-distribution. If the shape is off, that's a real finding.
+of −0.95 in the phd chapter fixes the *mean* burn proportion, not the *shape* of the
+distribution. If the shape is off, that's a real finding. Anyway, that calibration 
+applies only to the fire regime simulator, and will not be done for the spread paper.
 
 ### 2.2 Per-fire spatial signature (main test)
 
@@ -95,6 +96,9 @@ Implementation note: **do edge detection in the C++ simulator** and return pair
 indices alongside the burn raster. Edge detection during a step is essentially
 what the simulator already does. One extra output array, near-free per fire.
 For 1e5–1e6 fires this cuts pair extraction from hours to minutes.
+
+Rethink how feasible this is, I do not love the idea of modifying the 
+simulator.
 
 #### Regression
 
@@ -190,9 +194,8 @@ points + smoothers.
   `survival::clogit`.
 - Plotting: minutes.
 
-If posterior uncertainty on hyperparameters is desired, thin to ~50 posterior
-draws × ~500 simulated fires per draw. Otherwise use posterior-mean
-hyperparameters — for pattern comparison of this kind, that's sufficient.
+Always simulate fires using the full posterior samples of hyperparameters, not means
+nor thinned samples. 
 
 ---
 
@@ -239,7 +242,8 @@ is fire-science-forward. Q1 by SJR, CiteScore 5.7, open access since 2024.
 Reviewers know Rothermel, Finney, FARSITE, Cell2Fire, Morales 2015 by heart —
 no need to explain ABC for spread models or why a spatial CA matters. Recent
 neighbor: "Evaluating a simulation-based wildfire burn probability map for the
-conterminous US" (IJWF 2025).
+conterminous US" (IJWF 2025). Word count: 5000 (excluding abstract, legends and
+all that).
 
 **2. Ecological Applications** — director's pick. Aim fits *if* the applied
 framing carries. Their scope statement is strict on this: "Papers describing
