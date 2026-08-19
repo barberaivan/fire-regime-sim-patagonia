@@ -6,7 +6,7 @@ answers one question when you come back after a gap: *what's the current state, 
 next thing to do?* Update the two sections below as work progresses; don't accumulate history
 here — that's what git log and `docs/migration.md` are for.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-08-19
 
 **Open to-dos live in `docs/migration.md`'s TODO register** (items #6, #7, #9 are still
 unresolved — summarized under "Open items" below, full detail in that file).
@@ -26,6 +26,22 @@ unresolved — summarized under "Open items" below, full detail in that file).
 - The vegetation-source pipeline (Lara + ciefap merges, R-side + GEE-side mosaic) is fully
   traced and documented — `docs/migration.md` TODO #8, `CLAUDE.md`'s "GEE Code Editor scripts"
   section.
+- **Landscape preparation is refactored and split by purpose** (2026-08-19). The three
+  near-duplicate blocks became one shared recipe, `R/landscape_functions.R`, driven by two
+  scripts: `data_prep/landscapes_preparation.R` (fire-wise landscapes, for fitting) and
+  `data_prep/landscapes_simulation.R` (study-area tiles + PNNH, for simulating new fires).
+  Verified to reproduce the saved landscapes bit-for-bit — see `docs/data-prep.md`.
+- **Study-area tiles are defined on both sides but not yet exported.** `study_area_tiles()`
+  cuts the Barberá et al. 2025 study area into K = 4 latitudinal rectangles (piece → bbox →
+  10 km buffer → bbox), 95-130 x 170 km each; the rectangles are written to
+  `data/simulation_landscapes/study_area_tiles.shp`. The GEE script that exports them,
+  `Landscapes export for simulation (study area tiles)`, is written in `~/dev/fire_spread-gee/`
+  but **has not been run** — see next steps.
+- **WindNinja outputs have drifted from the saved landscapes.** The PNNH `.asc` files were
+  regenerated on 2026-07-09 by the locally built WindNinja and no longer match
+  `pnnh_spread_landscape*.rds`; the focal fires' scratch dir is empty entirely. Statistically the
+  fields agree, per-cell they don't. Detail and consequences in `docs/data-prep.md`
+  → "`wind_sd` is frozen".
 
 ### Open items carried from the migration (not yet resolved)
 
@@ -44,23 +60,31 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ## Next steps (roughly in priority order, per the user's own plan)
 
-1. **`landscapes_preparation.R` refactor** — loop → function(s), so any landscape (focal fire,
-   PNNH, or a future arbitrary ROI) can be built without a hard-coded loop. Full analysis of the
-   three current duplicate blocks and a proposed function shape is in `docs/migration.md`
-   → Refactors (item 10) → "`landscapes_preparation.R` refactor — handoff notes". Not started.
-2. **Implement the spread-paper validation** — the analyses, sampling scheme, and metrics
+1. **Run the GEE tile export.** Open `Landscapes export for simulation (study area tiles)` in
+   the Code Editor and start the 4 tasks (~500 MB each, `veg`/`ndvi`/`elevation`/`slope`/`aspect`
+   at 30 m, EPSG:5343). Check the printed tile sizes first; the script has `K` at the top if they
+   need to be smaller. Two things to confirm on opening it: the `study_area` asset path (taken
+   from the older `Landscapes export`, `users/IvanBarbera/patagonian_fires/study_area`, while the
+   other assets use the newer `projects/ivanbarbera-001/assets/` form), and that
+   `NDVI_mean_ts` has a `b_2022` band. Download the results into
+   `data/simulation_landscapes/raw_gee/`.
+2. **Build the tile landscapes.** `data_prep/landscapes_simulation.R` with
+   `do_tiles_windninja <- TRUE` for the first pass — 4 WindNinja runs at 120 m mesh, then the
+   landscapes themselves (~1.0-1.2 GB each; build and save one at a time, the script already
+   does). Nothing else needs re-running: `do_pnnh` stays `FALSE`.
+3. **Implement the spread-paper validation** — the analyses, sampling scheme, and metrics
    described in `manuscript-spread/validation-and-journal.md` (regional size distribution,
    per-fire spatial signature via edge-pair conditional logistic regression, FWI-stratified
-   version, shape metrics). This is what follows the landscape refactor: validation needs
-   large-N fire simulations over the PNNH landscape, which the refactor makes easier to drive.
-   Not started.
-3. **GEE-side generalization** — export landscape variables for any ROI, not just the fixed
-   focal-fire set + PNNH. Needs planning; likely a prerequisite (or companion) to item 1's "any
-   landscape" goal, since the R script currently assumes GEE has already exported a fixed band
-   set for a fixed set of ROIs. See `CLAUDE.md` → "GEE Code Editor scripts".
-4. **Simulate fire across the whole `patagonian_fires` study area** — the actual motivation for
-   installing WindNinja: generate new wind fields beyond the cached focal-fire/PNNH landscapes.
-   Depends on items 1 and 3 to build landscapes for arbitrary locations.
-5. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
-   needed; not urgent otherwise.
-6. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+   version, shape metrics). The tiles from steps 1-2 are the landscape it simulates over; note
+   that document assumes PNNH, which the tiles now supersede for the regional size-distribution
+   test.
+4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
+   needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
+   drift item above) unless the old `.asc` files are recovered.
+5. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+
+Deliberately **not** done, per the current scope: a general "build a landscape for any ROI"
+function. `build_landscape()` is general enough to take any raster stack with the right bands,
+but nothing automates producing that stack for an arbitrary region — the GEE side still exports a
+fixed band set for a fixed set of regions (focal fires, PNNH, the K tiles). That is the remaining
+work if arbitrary ROIs are ever needed.

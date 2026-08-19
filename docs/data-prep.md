@@ -26,13 +26,96 @@ under `data/` (heavy, in the store).
 - **Purpose:** process CMIP6 projected FWI (2050/2090) using modern-period calibration.
   _TODO: models, bias handling, calibration window._
 
-## Landscape arrays — `landscapes_preparation.R`
-- **Purpose:** build 6-layer landscape arrays (VFI, TFI, elevation, wind direction, wind speed,
-  FWI) for each focal fire **and** for PNNH (regime simulation).
-- **Refactor (tech debt #1):** make this a **function** that builds any landscape, not a loop.
-- **Depends on:** `../FireSpread` wrappers, `R/flammability_indices_functions.R`, WindNinja outputs
-  (_tech debt #5: hardcoded WindNinja path → config_).
-- **Outputs:** `data/focal_fires/landscapes/*.rds`.
+## Landscape arrays — `landscapes_preparation.R` + `landscapes_simulation.R`
+
+A landscape is a 3-D array `[row, col, layer]` with **six layers, in this order**:
+
+| Layer | Content |
+|---|---|
+| `veg` | `{0: wet forest, 1: subalpine, 2: dry forest, 3: shrubland, 4: grassland, 99: non-burnable}` |
+| `vfi` | vegetation flammability index, standardized |
+| `tfi` | topographic flammability index, standardized |
+| `elevation` | m a.s.l., **raw** — the slope term is scaled through its coefficient (`fi_params$slope_term_sd`), not through the layer |
+| `wdir` | wind direction, radians, the direction the wind comes **from** |
+| `wspeed` | wind speed / `wind_sd` |
+
+Those layer names are indexed by name downstream (`terrain_variables <- c("elevation", "wdir",
+"wspeed")` in `spread/` and `fire_regime/`), so they are part of the file format — do not rename
+them. FWI is **not** a landscape layer despite the old script header saying so: it is a
+fire-level covariate carried in the fires table read by `spread/hierarchical_fit.R`.
+
+Cells with any missing predictor are marked `veg = 99` and their layers filled with `-9999`; the
+engine skips non-burnable neighbours before reading any layer, so the fill value never enters a
+calculation.
+
+### The two kinds of landscape
+
+Both scripts drive the same recipe, `R/landscape_functions.R`. They differ only in what the
+paper needs them for:
+
+| | `landscapes_preparation.R` | `landscapes_simulation.R` |
+|---|---|---|
+| Purpose | **fit** the spread model | **simulate** new fires (size distribution) |
+| Extent | one landscape per focal fire (57) | 4 study-area tiles + PNNH |
+| Fire-wise data | ignition point, observed burned area, per-fire wind direction | none — ignitions and FWI are drawn by the simulator |
+| Urban class | → wet forest, so its burn probability tracks NDVI | → **non-burnable** (a 600-km region contains Bariloche, Esquel, El Bolsón) |
+| NDVI | previous summer's, detrended to its 2022 equivalent | tiles: 2022 as-is (already that scale); PNNH: 2021 as-is |
+| WindNinja mesh | 90 m | 120 m (region-sized DEMs do not fit 90 m in RAM) |
+| Wind direction | per fire, from the climatic table | fixed 293° |
+| Output | `data/focal_fires/landscapes/<fire_id>.rds` (list: array + fire-wise elements) | `data/simulation_landscapes/landscapes/study_area_tile_<k>.rds` (list: array + geometry); `data/pnnh_images/pnnh_spread_landscape*.rds` (bare array — that is what `fire_regime/simulate.R` reads) |
+
+Both scripts have stage flags at the top (`do_windninja`, `do_tiles`, `do_pnnh`, …) so the slow
+WindNinja pass is not re-run by accident.
+
+### Study-area tiles
+
+The study area of Barberá et al. 2025 is ~600 km of latitude — too much for one export or one
+WindNinja run. `study_area_tiles()` cuts it into `K` latitudinal pieces of equal latitudinal
+length and turns each into a rectangle:
+
+```
+piece  →  bounding box  →  10 km buffer  →  bounding box
+```
+
+Consecutive rectangles overlap by ~20 km on purpose: a fire ignited near a tile's edge still has
+room to spread. At `K = 4` the tiles are 95–130 × 170 km (18–25 Mpx at 30 m), each at or below
+the size of the PNNH landscape that already works downstream; raise `K` if one stops fitting in
+memory. As arrays they are ~1.0–1.2 GB each, so load one at a time.
+
+The **GEE twin** of this tiling is `Landscapes export for simulation (study area tiles)` in
+`~/dev/fire_spread-gee/` — it computes the same rectangles and exports `veg`, `ndvi`,
+`elevation`, `slope`, `aspect` per tile into `data/simulation_landscapes/raw_gee/`. Keep the two
+in sync. The tile rectangles are also written to `data/simulation_landscapes/study_area_tiles.shp`.
+
+One fixed wind direction over 600 km is defensible: the circular mean of the mapped fires'
+directions is 289–291° in every tile (290° overall; 293° over the 57 focal fires, which is the
+value the PNNH wind field was built with and what the tiles use).
+
+### `wind_sd` is frozen
+
+Wind speed is standardized by `wind_sd = 1.464333`, the SD pooled over the 57 focal-fire
+WindNinja runs. It is the scale the spread model was **fitted** under, so it lives as a constant
+in `R/landscape_functions.R` and every landscape — focal fire, PNNH, tile — divides by that same
+number. Recomputing it from a different set of landscapes would silently rescale the fitted wind
+coefficient. `landscapes_preparation.R` re-derives it after a WindNinja pass and warns on drift.
+
+> ⚠️ **The WindNinja outputs in `data/pnnh_images/` no longer match the saved PNNH landscapes.**
+> The `*_ang.asc`/`*_vel.asc` files were regenerated on 2026-07-09 19:39 by the WindNinja built
+> from source on this machine, while `pnnh_spread_landscape*.rds` date from 15:04 (copied from
+> the old store). The two wind fields agree statistically (circular mean 293.9 vs 293.7; median
+> speed 3.77 vs 3.74 m/s) but differ per cell by up to ~1.9 rad in complex terrain. The focal
+> fires' WindNinja scratch dir is empty, so rebuilding *those* landscapes also means a new wind
+> field. Consequence: rebuilding PNNH or the focal fires now would change results slightly
+> — `do_pnnh` therefore defaults to `FALSE`. The simulation tiles are new and unaffected.
+
+- **Verified:** `build_landscape()` + `fire_elements()` reproduce the saved landscapes
+  bit-for-bit. On PNNH and on three focal fires (`1999_25j`, `2015_47N`, `2014_1`) the `veg`,
+  `vfi`, `tfi` and `elevation` layers are zero-diff over all burnable cells, and `ig_rowcol`,
+  `burned_ids`, `burned_layer` and `counts_veg*` are `identical()`. `vfi`/`tfi` on *non-burnable*
+  cells changed from `-9999` to `0` (never read by the engine). Wind is the only real difference,
+  for the reason boxed above.
+- **Depends on:** `../FireSpread` (`land_cube`), `R/flammability_indices_functions.R`,
+  `R/landscape_functions.R`, `WindNinja_cli` on `PATH`, `config$windninja_dir`.
 
 ## Regional vegetation raster — the full chain (R here + GEE in a separate repo)
 

@@ -56,7 +56,7 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 
 **Layer 2a — preprocessing** (`data_prep/`, write back to `data/`):
 `flammability_indices.R`, `fwi_standardize.R`, `fwi_fortnight_matrix.R`, `fwi_projections.R`,
-`landscapes_preparation.R`.
+`landscapes_preparation.R`, `landscapes_simulation.R`.
 
 **Layer 2b — model fitting** (`spread/`, `ignition_escape/`, write to `files/`):
 `spread/stage1_smc.R` → `spread/hierarchical_fit.R`; `ignition_escape/fit.R`.
@@ -68,9 +68,15 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 
 ```
 R/flammability_indices_functions.R
-    ↑ sourced by: data_prep/landscapes_preparation.R, spread/hierarchical_fit.R,
-                  ignition_escape/fit.R, fire_regime/{simulate,probability_maps,plots}.R
+    ↑ sourced by: R/landscape_functions.R, data_prep/landscapes_{preparation,simulation}.R,
+                  spread/hierarchical_fit.R, ignition_escape/fit.R,
+                  fire_regime/{simulate,probability_maps,plots}.R
     (loads data/flammability_indices/*.rds at source time)
+
+R/landscape_functions.R
+    ↑ sourced by: data_prep/landscapes_preparation.R, data_prep/landscapes_simulation.R
+    (needs R/config.R + R/flammability_indices_functions.R sourced first; holds the
+     frozen wind_sd and the canonical land_names)
 
 R/fortnight_functions.R
     ↑ sourced by: data_prep/fwi_standardize.R, data_prep/fwi_fortnight_matrix.R,
@@ -80,7 +86,7 @@ R/mcmc_functions_smc.R
     ↑ sourced by: spread/hierarchical_fit.R
 
 ../FireSpread  (library + R spread wrappers)
-    ↑ used by: data_prep/landscapes_preparation.R, spread/stage1_smc.R,
+    ↑ used by: data_prep/landscapes_{preparation,simulation}.R, spread/stage1_smc.R,
                spread/hierarchical_fit.R, fire_regime/{simulate,plots}.R
 
 src/sample_triplets_weighted.cpp
@@ -97,6 +103,8 @@ Raw data (GEE exports, FWI tifs, fire shapefiles)  →  data/
     ├─ data_prep/flammability_indices.R      → data/flammability_indices/*.rds
     ├─ data_prep/fwi_standardize.R           → data/…/fwi_fortnights_*_standardized.tif
     ├─ data_prep/landscapes_preparation.R    → data/focal_fires/landscapes/*.rds  (one per fire)
+    ├─ data_prep/landscapes_simulation.R     → data/simulation_landscapes/landscapes/*.rds (one per tile)
+    │                                          data/pnnh_images/pnnh_spread_landscape*.rds
     │
     ├─ ignition_escape/fit.R                 → files/ignition/{ignition,escape}_model_samples.rds
     │
@@ -137,7 +145,11 @@ Tech-debt items deferred to *after* this migration (old `INVENTORY.md` §9; not 
 per the behavior-preserving-first approach):
 
 1. `landscapes_preparation.R` → a **function** that builds any landscape (focal fire *or* PNNH),
-   not a hard-coded loop.
+   not a hard-coded loop — **done**: the three near-duplicate blocks became
+   `build_landscape()` + friends in `R/landscape_functions.R`, driven by
+   `data_prep/landscapes_preparation.R` (fire-wise) and `data_prep/landscapes_simulation.R`
+   (study-area tiles + PNNH). Verified to reproduce the saved landscapes bit-for-bit — see
+   `docs/data-prep.md`.
 2. Split the monolithic hierarchical-fit script — algorithm core stays in `R/`, inline data
    manipulation becomes functions.
 3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — **done**: `land_cube`/
