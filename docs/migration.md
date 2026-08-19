@@ -694,7 +694,11 @@ confirms the new repo runs.
    - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
      migration/refactor, not up front).
 
-   ### `landscapes_preparation.R` refactor — handoff notes (not started)
+   ### `landscapes_preparation.R` refactor — handoff notes (DONE 2026-08-19)
+
+   > Resolved by `R/landscape_functions.R` + `data_prep/landscapes_{preparation,simulation}.R`.
+   > The analysis below is kept as the record of what the three blocks differed in; for the
+   > shape that was actually built, and how it was verified, see `docs/data-prep.md`.
 
    The script (`data_prep/landscapes_preparation.R`) currently builds landscapes in **three
    near-duplicate blocks** instead of one function:
