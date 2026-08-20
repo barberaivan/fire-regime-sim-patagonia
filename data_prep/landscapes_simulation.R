@@ -49,7 +49,7 @@ K <- 4
 
 # Wind. 293 degrees is the circular mean of the 57 focal fires' directions, and
 # what the PNNH wind field was built with; over all 232 mapped fires it is 290,
-# and it barely moves between tiles (289-291, checked below), so one fixed
+# and it barely moves between tiles (288-292, checked below), so one fixed
 # direction is defensible over the whole 600 km. 4 m/s is the regional average
 # wind speed. Region-sized DEMs do not fit a 90 m mesh — 120 m is what PNNH
 # needed and what the tiles use.
@@ -110,12 +110,12 @@ writeVector(tiles, file.path(sim_dir, "study_area_tiles.shp"), overwrite = TRUE)
 # the tiles are cropped to where the NDVI and vegetation assets have data.
 sa_proj <- project(study_area, crs(tiles))
 cat("study area covered by the tiles:",
-    round(sum(expanse(intersect(sa_proj, aggregate(tiles)))) /
+    round(sum(expanse(terra::intersect(sa_proj, aggregate(tiles)))) /
           sum(expanse(sa_proj)) * 100, 1), "%\n")
 
 ## Is one fixed wind direction defensible over 600 km of latitude?
 # Circular mean of the observed direction of the mapped fires, by tile:
-# 290, 289, 291, 291 — yes.
+# 291, 292, 288, 291 — yes.
 wind_data <- read.csv("data/climatic_data_by_fire_FWI-wind_corrected.csv")
 fires_map <- project(
   vect(file.path("data", "patagonian_fires", "patagonian_fires.shp")),

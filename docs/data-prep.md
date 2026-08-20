@@ -122,7 +122,7 @@ reads them that way):
 | `na_prop` | proportion of cells forced non-burnable by a missing predictor |
 
 One fixed wind direction over 600 km is defensible: the circular mean of the mapped fires'
-directions is 289–291° in every tile (290° overall; 293° over the 57 focal fires, which is the
+directions is 288–292° in every tile (290° overall; 293° over the 57 focal fires, which is the
 value the PNNH wind field was built with and what the tiles use).
 
 ### `wind_sd` is frozen
