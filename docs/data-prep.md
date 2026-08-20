@@ -70,31 +70,38 @@ WindNinja pass is not re-run by accident.
 ### Study-area tiles
 
 The study area of Barberá et al. 2025 is ~600 km of latitude — too much for one export or one
-WindNinja run. `study_area_tiles()` cuts it into `K` latitudinal pieces of equal latitudinal
-length and turns each into a rectangle:
+WindNinja run. It is cut into `K` latitudinal pieces of equal latitudinal length, each exported
+as a rectangle. **The tiling lives entirely in GEE**, in `Landscapes export for simulation
+(study area tiles)` (`~/dev/fire_spread-gee/`), because it depends on the assets' footprints,
+which only GEE knows. Two constraints shape the rectangles:
 
-```
-piece  →  bounding box  →  10 km buffer  →  bounding box
-```
+- **They do not overlap.** Consecutive tiles meet at a shared edge that falls on the 30 m export
+  grid, so no pixel belongs to two tiles. The cost is that a fire reaching a tile's border is cut
+  short by it — a property of the tiling, not of the landscape, and something the simulation has
+  to deal with (before 2026-08-20 the tiles were instead buffered by 10 km and overlapped by
+  ~20 km, so that edge fires had room to spread).
+- **They stay inside the data.** `ndvi` and `veg` come from finite assets whose footprints do not
+  cover the study area's bounding box, and whose edges are not axis-aligned in EPSG:5343 — a
+  rectangle fitted to the study area alone carries a wedge of NA along its border. Each tile is
+  therefore cropped to where both assets have data at *every* latitude it spans, measured by
+  probing the assets themselves. Interior NA (lakes, rock, unclassified vegetation) is untouched
+  by this and expected: `build_landscape()` turns any cell with a missing predictor into a
+  non-burnable one. The GEE console prints each tile's data fraction, so the two cases stay
+  distinguishable.
 
-Consecutive rectangles overlap by ~20 km on purpose: a fire ignited near a tile's edge still has
-room to spread. At `K = 4` the tiles are 95–130 × 170 km (18–25 Mpx at 30 m), each at or below
-the size of the PNNH landscape that already works downstream; raise `K` if one stops fitting in
-memory. As arrays they are ~1.0–1.2 GB each, so load one at a time.
+At `K = 4` the tiles are ~150 km tall and as wide as the study area is at those latitudes, each
+at or below the size of the PNNH landscape that already works downstream; raise `K` if one stops
+fitting in memory. As arrays they are ~1 GB each, so load one at a time.
 
-The **GEE twin** of this tiling is `Landscapes export for simulation (study area tiles)` in
-`~/dev/fire_spread-gee/` — it computes the same rectangles and exports `veg`, `ndvi`,
-`elevation`, `slope`, `aspect` per tile into `data/simulation_landscapes/raw_gee/`. Keep the two
-in sync. Nothing is uploaded to GEE: the rectangles are derived there from the `study_area`
-asset. Drop the downloaded files in `raw_gee/` under the names GEE gave them — the R side globs
-`study_area_tile_<k>_*.tif` and `vrt()`s them if an export came back split.
+The export writes `veg`, `ndvi`, `elevation`, `slope`, `aspect` per tile. Drop the downloaded
+files in `data/simulation_landscapes/raw_gee/` under the names GEE gave them — the R side globs
+`study_area_tile_<k>_*.tif` and `vrt()`s them if an export came back split. Nothing is uploaded
+to GEE: the rectangles are derived there from the `study_area` asset.
 
-`study_area_tiles.shp` (also written to `data/simulation_landscapes/`) is the R-side record of
-the same rectangles, not an input to GEE. Because the two sides compute them independently — GEE
-treats the polygon's edges as geodesics and then snaps the export to the 30 m grid — the
-shapefile sits within a few pixels of the exported rasters rather than exactly on them. The
-landscapes are built from the rasters' own extents, so this only matters if something later
-needs the two to coincide exactly.
+`study_area_tiles.shp` (written to `data/simulation_landscapes/`) is the R-side record of the
+tiles, read back from the exported rasters' own extents, so it coincides with them exactly. It is
+not an input to GEE. `landscapes_simulation.R` also prints how much of the study area the tiles
+cover, which cropping to the assets can leave below 100%.
 
 ### What a tile `.rds` contains
 

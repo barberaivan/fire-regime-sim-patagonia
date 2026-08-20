@@ -8,6 +8,6 @@ Planned files (migrated from the old repo):
 | File | Role |
 |------|------|
 | `flammability_indices_functions.R` | VFI/TFI computation + NDVI detrending; loads fitted index params from `data/` |
-| `landscape_functions.R` | Shared recipe for every landscape: vegetation crosswalk, WindNinja wrapper, `build_landscape()`, fire-wise elements, study-area tiling. Holds the frozen `wind_sd` |
+| `landscape_functions.R` | Shared recipe for every landscape: vegetation crosswalk, WindNinja wrapper, `build_landscape()`, fire-wise elements. Holds the frozen `wind_sd` |
 | `fortnight_functions.R` | 14-day fortnight indexing (`date2fort()`), origin fixed at 1996 for FWI compatibility |
 | `mcmc_functions_smc.R` | Core MCMC utilities for the hierarchical spread model (SMC variant) |

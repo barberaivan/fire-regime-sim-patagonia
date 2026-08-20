@@ -31,12 +31,15 @@ unresolved — summarized under "Open items" below, full detail in that file).
   scripts: `data_prep/landscapes_preparation.R` (fire-wise landscapes, for fitting) and
   `data_prep/landscapes_simulation.R` (study-area tiles + PNNH, for simulating new fires).
   Verified to reproduce the saved landscapes bit-for-bit — see `docs/data-prep.md`.
-- **Study-area tiles are defined on both sides but not yet exported.** `study_area_tiles()`
-  cuts the Barberá et al. 2025 study area into K = 4 latitudinal rectangles (piece → bbox →
-  10 km buffer → bbox), 95-130 x 170 km each; the rectangles are written to
-  `data/simulation_landscapes/study_area_tiles.shp`. The GEE script that exports them,
-  `Landscapes export for simulation (study area tiles)`, is written in `~/dev/fire_spread-gee/`
-  but **has not been run** — see next steps.
+- **Study-area tiles are defined in GEE but not yet exported.** `Landscapes export for
+  simulation (study area tiles)` (in `~/dev/fire_spread-gee/`) cuts the Barberá et al. 2025
+  study area into K = 4 latitudinal rectangles ~150 km tall, each fitted inside the region
+  where the NDVI and vegetation assets have data. They do **not** overlap (2026-08-20: the
+  10 km buffer and its ~20 km overlap are gone, and so is the R twin `study_area_tiles()`) —
+  a fire that reaches a tile's border is cut short by it, which the simulation has to handle.
+  R reads the rectangles back from the exports and records them in
+  `data/simulation_landscapes/study_area_tiles.shp`. The script has **not been run** — see
+  next steps.
 - **WindNinja outputs have drifted from the saved landscapes.** The PNNH `.asc` files were
   regenerated on 2026-07-09 by the locally built WindNinja and no longer match
   `pnnh_spread_landscape*.rds`; the focal fires' scratch dir is empty entirely. Statistically the

@@ -5,14 +5,16 @@
 #
 #   1. Study-area tiles. The whole study area of Barberá et al. (2025) — the
 #      patagonian fires mapping project — cut into K latitudinal pieces of equal
-#      latitudinal length; each piece reduced to its bounding box, buffered by
-#      10 km, and reduced to a bounding box again, so every tile is a rectangle.
-#      Consecutive tiles overlap by ~20 km on purpose: a fire ignited near a
-#      tile's edge still has room to spread. These are what the spread paper's
-#      fire-size-distribution validation simulates over.
-#      The GEE side that exports them is
-#      ~/dev/fire_spread-gee/"Landscapes export for simulation (study area tiles)"
-#      — it mirrors the tiling done by study_area_tiles() here; keep both in sync.
+#      latitudinal length, each exported as a rectangle. These are what the
+#      spread paper's fire-size-distribution validation simulates over.
+#      Consecutive tiles do not overlap: they meet at a shared edge on the 30 m
+#      grid, so no pixel belongs to two tiles, and a fire reaching a tile's
+#      border is cut short by it — something the simulation has to deal with.
+#      The tiling is decided in GEE, by
+#      ~/dev/fire_spread-gee/"Landscapes export for simulation (study area tiles)",
+#      which fits each rectangle inside the region where the NDVI and vegetation
+#      assets have data. R cannot reproduce that, so it reads the rectangles
+#      back from the exports themselves (below).
 #
 #   2. PNNH. The national park landscape, used by fire_regime/ for the regime
 #      simulations and probability maps. Kept here unchanged (it predates the
@@ -39,11 +41,11 @@ do_tiles_windninja <- FALSE   # TRUE only to regenerate the tiles' wind layers
 do_tiles <- TRUE
 do_pnnh <- FALSE              # already built; TRUE only to rebuild
 
-# Tiling. K = 4 gives tiles of ~95-130 x 170 km (18-25 Mpx at 30 m), all at or
-# below the PNNH landscape's size, which WindNinja already handles. Raise K if
-# a tile stops fitting in memory.
+# Tiling. Must match K in the GEE script; the tiles it writes are ~150 km tall
+# and as wide as the study area is there, all at or below the PNNH landscape's
+# size, which WindNinja already handles. Raise K there (and here) if a tile
+# stops fitting in memory.
 K <- 4
-tile_buffer <- 10000   # m
 
 # Wind. 293 degrees is the circular mean of the 57 focal fires' directions, and
 # what the PNNH wind field was built with; over all 232 mapped fires it is 290,
@@ -68,13 +70,48 @@ dveg <- veg_crosswalk("nonburnable")
 # Study-area tiles --------------------------------------------------------
 
 study_area <- vect(file.path("data", "patagonian_fires", "study_area.shp"))
-tiles <- study_area_tiles(study_area, k = K, buffer = tile_buffer)
+
+# GEE writes one file per tile (or several, if it had to split the export).
+tile_stack <- function(k) {
+  files <- list.files(gee_dir, full.names = TRUE,
+                      pattern = sprintf("^study_area_tile_%d_.*\\.tif$", k))
+  if (length(files) == 0) stop("No GEE export found for tile ", k)
+  img <- if (length(files) == 1) rast(files) else vrt(files)
+  band_names <- c("veg", "ndvi", "elevation", "slope", "aspect")
+  if (nlyr(img) != length(band_names)) {
+    stop("Tile ", k, " has ", nlyr(img), " bands, expected ",
+         length(band_names), " (", paste(band_names, collapse = ", "), ")")
+  }
+  names(img) <- band_names
+  return(img)
+}
+
+# The tile rectangles are read off the exports (only their headers, not their
+# values), which is where the tiling lives now.
+tile_rect <- function(k) {
+  img <- tile_stack(k)
+  r <- as.polygons(ext(img), crs = crs(img))
+  r$tile <- k
+  r$width_km <- (xmax(img) - xmin(img)) / 1000
+  r$height_km <- (ymax(img) - ymin(img)) / 1000
+  r$megapixels_30m <- ncell(img) / 1e6
+  return(r)
+}
+
+tiles <- vect(lapply(1:K, tile_rect))
 as.data.frame(tiles)
 
 # Keep the tile rectangles next to the landscapes: later scripts need them to
-# know which part of a tile is its own and which is shared with its neighbour.
+# know where on the ground each tile — and each fire simulated in it — sits.
 dir.create(sim_dir, showWarnings = FALSE, recursive = TRUE)
 writeVector(tiles, file.path(sim_dir, "study_area_tiles.shp"), overwrite = TRUE)
+
+# How much of the study area is actually tiled. Not automatically all of it:
+# the tiles are cropped to where the NDVI and vegetation assets have data.
+sa_proj <- project(study_area, crs(tiles))
+cat("study area covered by the tiles:",
+    round(sum(expanse(intersect(sa_proj, aggregate(tiles)))) /
+          sum(expanse(sa_proj)) * 100, 1), "%\n")
 
 ## Is one fixed wind direction defensible over 600 km of latitude?
 # Circular mean of the observed direction of the mapped fires, by tile:
@@ -99,21 +136,6 @@ mean_circular_deg(fires_map$direction)   # 290
 
 
 ## Stage 1 — elevation exports and WindNinja
-
-# GEE writes one file per tile (or several, if it had to split the export).
-tile_stack <- function(k) {
-  files <- list.files(gee_dir, full.names = TRUE,
-                      pattern = sprintf("^study_area_tile_%d_.*\\.tif$", k))
-  if (length(files) == 0) stop("No GEE export found for tile ", k)
-  img <- if (length(files) == 1) rast(files) else vrt(files)
-  band_names <- c("veg", "ndvi", "elevation", "slope", "aspect")
-  if (nlyr(img) != length(band_names)) {
-    stop("Tile ", k, " has ", nlyr(img), " bands, expected ",
-         length(band_names), " (", paste(band_names, collapse = ", "), ")")
-  }
-  names(img) <- band_names
-  return(img)
-}
 
 tile_elev <- file.path(wind_dir, paste0("tile_", 1:K, "_elevation_30m.tif"))
 

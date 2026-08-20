@@ -99,8 +99,8 @@ Raw per-fire and PNNH exports are built in Google Earth Engine JavaScript, **not
 Files have no extension (they're Code Editor scripts). Key ones: `Landscapes export` /
 `Landscapes export BalconGut with distance` (per-fire raw exports), `Landscapes export for
 simulation (study area tiles)` (the K latitudinal rectangles covering the whole study area, used
-to simulate new fires — mirrors `study_area_tiles()` in `R/landscape_functions.R`, keep the two
-in sync), `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports). This
+to simulate new fires — the tiling lives only there, and R reads the rectangles back from the
+exports), `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports). This
 repo does not keep `.js` copies of GEE code — the `fire_spread-gee` repo is the source of truth.
 
 **Regional vegetation raster** (the `veg` band in every raw export above) is a **cross-repo**
