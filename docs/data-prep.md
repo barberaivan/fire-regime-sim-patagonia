@@ -93,6 +93,11 @@ At `K = 4` the tiles are ~150 km tall and as wide as the study area is at those 
 at or below the size of the PNNH landscape that already works downstream; raise `K` if one stops
 fitting in memory. As arrays they are ~1 GB each, so load one at a time.
 
+Raising `K` also buys **coverage**, because the study area is a tilted band: a rectangle that has
+to stay inside the data for a whole 150 km strip cannot follow the band's drift, and gives up the
+corners. Shorter strips follow it more closely. The GEE console prints the covered share, and
+`landscapes_simulation.R` prints it again from the downloaded tiles.
+
 The export writes `veg`, `ndvi`, `elevation`, `slope`, `aspect` per tile. Drop the downloaded
 files in `data/simulation_landscapes/raw_gee/` under the names GEE gave them — the R side globs
 `study_area_tile_<k>_*.tif` and `vrt()`s them if an export came back split. Nothing is uploaded
