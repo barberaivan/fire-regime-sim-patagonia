@@ -85,7 +85,29 @@ memory. As arrays they are ~1.0–1.2 GB each, so load one at a time.
 The **GEE twin** of this tiling is `Landscapes export for simulation (study area tiles)` in
 `~/dev/fire_spread-gee/` — it computes the same rectangles and exports `veg`, `ndvi`,
 `elevation`, `slope`, `aspect` per tile into `data/simulation_landscapes/raw_gee/`. Keep the two
-in sync. The tile rectangles are also written to `data/simulation_landscapes/study_area_tiles.shp`.
+in sync. Nothing is uploaded to GEE: the rectangles are derived there from the `study_area`
+asset. Drop the downloaded files in `raw_gee/` under the names GEE gave them — the R side globs
+`study_area_tile_<k>_*.tif` and `vrt()`s them if an export came back split.
+
+`study_area_tiles.shp` (also written to `data/simulation_landscapes/`) is the R-side record of
+the same rectangles, not an input to GEE. Because the two sides compute them independently — GEE
+treats the polygon's edges as geodesics and then snaps the export to the 30 m grid — the
+shapefile sits within a few pixels of the exported rasters rather than exactly on them. The
+landscapes are built from the rasters' own extents, so this only matters if something later
+needs the two to coincide exactly.
+
+### What a tile `.rds` contains
+
+A list, not a bare array (unlike the PNNH files, which stay bare because `fire_regime/simulate.R`
+reads them that way):
+
+| Field | Content |
+|---|---|
+| `landscape` | the `[row, col, layer]` array, layers as in the table above |
+| `tile`, `n_tiles` | which tile this is, out of how many |
+| `template` | single-layer SpatRaster giving the tile's extent/resolution/CRS — **`terra::wrap()`ped**, so call `unwrap()` before use. Pair it with `rast_from_mat()` to put a simulated fire back on the ground, or to turn cell indices into coordinates |
+| `counts_veg_available` | burnable cells per vegetation type (1:5), for sampling ignitions and for burn-probability denominators |
+| `na_prop` | proportion of cells forced non-burnable by a missing predictor |
 
 One fixed wind direction over 600 km is defensible: the circular mean of the mapped fires'
 directions is 289–291° in every tile (290° overall; 293° over the 57 focal fires, which is the
