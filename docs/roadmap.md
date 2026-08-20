@@ -84,37 +84,45 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ## Next steps (roughly in priority order, per the user's own plan)
 
-1. **Design the simulation experiment.** Every *input* now exists — the four tile landscapes,
-   the fitted hierarchical posterior (`files/hierarchical_model/draws_batch_*.rds`), the observed
-   fires and their FWI. What does not exist is the experiment itself.
-   `manuscript-spread/validation-and-journal.md` has the analyses but predates the tiles, so a
-   few decisions are open, roughly in the order they block work:
+1. **~~Design the simulation experiment~~ — done (2026-08-20).** Written up in
+   `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/validation-and-journal.md`
+   updated to match. How the open questions resolved:
 
-   - **Tile-border truncation — the new one, and the most consequential.** A fire that reaches a
-     tile's edge is cut short, which biases the simulated size distribution downward, and that
-     distribution is exactly what the macro test measures. Options: discard fires that touch a
-     border; restrict ignitions to a margin inside each tile wide enough for the largest
-     plausible fire; or keep them and censor explicitly in the comparison. Decide before
-     anything runs.
-   - **Ignition sampling across four tiles.** Uniform over burnable cells pooled across tiles,
-     proportional to tile area, or matched to observed ignition density. The doc calls the
-     spatial rule "not critical" for one landscape; with four tiles it also decides how effort
-     is split between them.
-   - **PNNH -> tiles.** The doc still names PNNH for the regional size-distribution test. The
-     tiles supersede it there; update the document so the written methods match what is run.
-   - **Edge-pair extraction.** The doc proposes doing edge detection inside the C++ simulator
-     and immediately doubts it ("I do not love the idea of modifying the simulator"). Settle it:
-     R-side extraction at ~5-50 ms/fire is minutes-to-hours at 1e5-1e6 fires, against a change
-     to `FireSpread`. Decide once, since it sets the simulator's output contract.
-   - **Journal framing** (applied vs fire-science, section 7) — independent of the code, but it
-     decides how the validation is written up.
+   - **Tile-border truncation** — gone, not managed. Each fire runs on its own
+     `(2·steps+1)²` sublandscape, and the 8-neighbour automaton cannot leave that square in
+     `steps` steps, so no fire is ever cut short. The cost is that the rule removes cells near
+     tile borders, more of them the larger `steps` is; drawing `steps` *before* the ignition
+     cell (and choosing the tile ∝ the cells that admit that margin) keeps the `steps`
+     distribution exact. Rejecting and redrawing would have reintroduced the bias.
+   - **Ignition sampling across four tiles** — uniform over tile ∩ study area ∩ burnable, tile
+     chosen ∝ eligible area at the drawn margin. Supersedes an equal `nsim/4` split, which
+     would over-sample tile 4 by ~50 %.
+   - **PNNH → tiles** — done in both documents.
+   - **Edge-pair extraction** — stays in R, `FireSpread` untouched. Measured 49 ms/fire.
+     The 1:1 pairing was also replaced by a donor-centred conditional logit, which is
+     materially better powered.
+   - **Journal framing** — still open, still independent of the code.
 
-2. **Implement it.** Nothing of this exists yet: `spread/` holds only `stage1_smc.R` and
-   `hierarchical_fit.R`. Needed are a simulation driver over the tiles (sampling ignitions, FWI
-   from the empirical KDE and a uniform variant, full posterior draws rather than means) and the
-   three analyses — size distribution, per-fire `clogit` spatial signature, FWI-stratified
-   version — plus the shape metrics. Simulation is the dominant cost: hours at 1e5 fires,
-   overnight at 1e6. Smoke-test at small `nsim` before the real run, as with TODO #7.
+2. **Implement and run it.** Written and pilot-tested (3 908 fires, 3 min 20 s on 14 cores):
+   `R/spread_validation_functions.R`, `spread/validation_ignition_cells.R` (already run — its
+   output is in `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R`
+   (`n_target = 50 000`, well under an hour). Cost is not a constraint: the earlier
+   "hours at 1e5, overnight at 1e6" estimate was an order of magnitude pessimistic.
+
+   Still to write: the **analysis and plotting** script consuming
+   `files/spread_validation/simulated_fires.rds` — size-distribution Q-Q, shape metrics against
+   all 238 mapped polygons, signature distributions conditioned on `log10(area)`, and the
+   FWI-stratified version.
+
+   Two findings from the pilot that shape the write-up:
+   - Observed fires are elongated (median 2.2-2.6) and wind-aligned (49-70 % within 30° of the
+     113/293° axis); simulated fires are rounder (1.5) and randomly oriented (~0.29). The
+     clearest discrepancy found so far.
+   - The macro size test is confounded by focal-fire selection: the five spread hyperparameters
+     are informed only by the 57 fires with a landscape, whose median is 388 ha against 47.5 ha
+     for the full record. Report it with the mechanism stated; analyses 2-4 condition on size
+     and are unaffected.
+
 3. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.

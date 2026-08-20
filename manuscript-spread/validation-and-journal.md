@@ -49,13 +49,24 @@ this paper. Mention it as a limitation in one sentence and move on.
 
 ### 2.1 Regional size distribution (macro test)
 
-Simulate a large number of fires (`N ≈ 1e5–1e6`) over the PNNH landscape with:
+Simulate fires over the **four study-area tiles** (not PNNH — the tiles
+supersede it here; they cover 99.1% of the mapped study area, which is the
+domain the observed record is complete over). Target `N = 50 000` fires of at
+least 10 ha. Settled design, implemented in `spread/validation_simulate.R` and
+documented in `docs/spread.md` → *Stage 3 — validation*:
 
-- Random ignition points sampled uniformly (or from a simple spatial rule
-  matching observed ignition density if easy — not critical).
-- FWI sampled from the empirical KDE of the observed 250-fire dataset.
-- Simulate fires using the full posterior samples of hyperparameters, 
-  not means nor thinned samples.
+- Ignition points uniform over tile ∩ study area ∩ burnable, but drawn **after**
+  `steps`, with the tile chosen ∝ the cells that admit a margin of `steps`. That
+  keeps every fire inside its own sublandscape (so no fire is truncated by a
+  tile border) without biasing the `steps` distribution downward.
+- FWI **resampled with replacement** from the 233 mapped fires rather than from
+  a KDE — it matches the observed marginal exactly and needs no bandwidth.
+- Full posterior samples of the hyperparameters, and a new random effect per
+  fire; not means, not thinned samples, never a fitted fire's random effect.
+- Fires below **10 ha are discarded**: the mapping records nothing smaller
+  (observed minimum 10.1 ha), so they have no observed counterpart. About 56% of
+  proposals fall below it, so the run oversamples in passes until the target is
+  met, keeping the discarded sizes for reporting.
 
 Compare simulated vs. observed size distribution:
 
@@ -92,13 +103,17 @@ polygons):
 Rasterize observed polygons at the simulator's 30 m resolution (they were built
 from Landsat, so this is exact). Compute pairs once for observed fires.
 
-Implementation note: **do edge detection in the C++ simulator** and return pair
-indices alongside the burn raster. Edge detection during a step is essentially
-what the simulator already does. One extra output array, near-free per fire.
-For 1e5–1e6 fires this cuts pair extraction from hours to minutes.
+Implementation note: **settled — extraction stays in R, the simulator is not
+modified.** Measured at 49 ms per fire on average over the 57 focal fires and
+0.45 s for the largest (300 k cells), which is minutes at the run's scale. There
+is no case for changing `FireSpread`'s output contract.
 
-Rethink how feasible this is, I do not love the idea of modifying the 
-simulator.
+Also settled: the 1:1 pairing below is **replaced by a donor-centred scheme** —
+one stratum per burned edge cell, members = its burnable neighbours, response =
+burned. That is literally the simulator's own Bernoulli trial set, and on the 57
+observed fires it resolves the `vfi` signature clearly (standardized effect 0.24,
+84% > 0) where the 1:1 pairing leaves it at noise (0.06, 54% > 0). See
+`docs/spread.md`.
 
 #### Regression
 
@@ -133,13 +148,14 @@ This tests the model's most distinctive structural claim — that spatial
 coefficients change with FWI (slope effect down, wind effect up as FWI rises).
 This is what distinguishes our hierarchical model from Morales 2015's flat one.
 
-Run **two simulated datasets** for this:
+Two simulated datasets were envisaged for this:
 
-- FWI drawn from the empirical KDE (matches observed marginal distribution;
-  used for the size and marginal signature tests).
-- FWI drawn uniformly across the modeled FWI range (used for the stratified
-  test, so high-FWI strata have coverage where observed data is sparse; tests
-  whether the simulator extrapolates sensibly).
+- FWI resampled from the observed fires (matches the observed marginal; used for
+  the size, shape and marginal signature tests). **This is the one being run.**
+- FWI drawn uniformly across the modeled FWI range, so high-FWI strata have
+  coverage where observed data is sparse. **Deferred — not part of the current
+  run.** Revisit once the stratified test has been done with the resampled
+  dataset; run it only if the top FWI stratum turns out to be starved.
 
 ---
 
@@ -164,7 +180,21 @@ spatial FWI complications.
 
 ---
 
-## 4. Shape metrics (cheap complement)
+## 4. Shape metrics (promoted: a primary analysis, not a complement)
+
+**Why promoted.** No edge-based regression can test the wind term. Around a
+fire's perimeter the donor→receiver direction is the outward normal, hence
+isotropic by construction, and the already-burned neighbours of an edge donor
+are systematically the ones the fire arrived *from* — upwind — which cancels the
+true effect. Both the 1:1 and the donor-centred schemes return a flat,
+zero-centred `wind` coefficient on the observed fires (median 0.00, 51% > 0).
+Orientation and elongation carry that signal instead, and carry it strongly:
+51% of observed fires lie within 30° of the 113/293° wind axis (70% of those
+over 1000 ha) against 33% expected at random.
+
+These metrics also need no landscape, only a rasterized polygon, so the observed
+reference can be **all 238 mapped fires across every size class** rather than
+only the 57 focal ones. That makes this the best-powered of the analyses.
 
 All computable from burned-cell coordinates in raster space. **Do not
 vectorize** — vectorization is 50–100× slower and tells us nothing more.
