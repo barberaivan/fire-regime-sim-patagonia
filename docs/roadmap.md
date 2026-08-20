@@ -52,6 +52,15 @@ unresolved — summarized under "Open items" below, full detail in that file).
   The tiles cover **99.1 %** of the study area, and the per-tile circular mean of the mapped
   fires' wind direction (291, 292, 288, 291) confirms the single fixed 293 degrees used for all
   four wind fields. No tile came close to the 2 % NA warning threshold.
+
+  The tiles are deliberately **broader than the study area** — 70,158 km2 of tile against
+  29,158 km2 of study area, so roughly 2-3x. Nothing is clipped or NA'd at the study-area
+  boundary: the GEE script uses `study_area` only as a map layer for drawing the rectangles by
+  eye, and the burnable fraction outside the study area matches the fraction inside (90.4 vs
+  90.6 %, 82.3 vs 81.0 %, 76.5 vs 77.7 %, 86.1 vs 81.0 %). Fires can therefore spread past the
+  study area; they are stopped only by a tile's own border. `landscapes_simulation.R`'s
+  `terra::intersect()` line is a one-way coverage *check* (is any of the study area untiled?),
+  not a crop.
 - **WindNinja outputs have drifted from the saved landscapes.** The PNNH `.asc` files were
   regenerated on 2026-07-09 by the locally built WindNinja and no longer match
   `pnnh_spread_landscape*.rds`; the focal fires' scratch dir is empty entirely. Statistically the
@@ -75,16 +84,41 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ## Next steps (roughly in priority order, per the user's own plan)
 
-1. **Implement the spread-paper validation** — the analyses, sampling scheme, and metrics
-   described in `manuscript-spread/validation-and-journal.md` (regional size distribution,
-   per-fire spatial signature via edge-pair conditional logistic regression, FWI-stratified
-   version, shape metrics). The four tiles are the landscape it simulates over; note that
-   document assumes PNNH, which the tiles now supersede for the regional size-distribution
-   test.
-2. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
+1. **Design the simulation experiment.** Every *input* now exists — the four tile landscapes,
+   the fitted hierarchical posterior (`files/hierarchical_model/draws_batch_*.rds`), the observed
+   fires and their FWI. What does not exist is the experiment itself.
+   `manuscript-spread/validation-and-journal.md` has the analyses but predates the tiles, so a
+   few decisions are open, roughly in the order they block work:
+
+   - **Tile-border truncation — the new one, and the most consequential.** A fire that reaches a
+     tile's edge is cut short, which biases the simulated size distribution downward, and that
+     distribution is exactly what the macro test measures. Options: discard fires that touch a
+     border; restrict ignitions to a margin inside each tile wide enough for the largest
+     plausible fire; or keep them and censor explicitly in the comparison. Decide before
+     anything runs.
+   - **Ignition sampling across four tiles.** Uniform over burnable cells pooled across tiles,
+     proportional to tile area, or matched to observed ignition density. The doc calls the
+     spatial rule "not critical" for one landscape; with four tiles it also decides how effort
+     is split between them.
+   - **PNNH -> tiles.** The doc still names PNNH for the regional size-distribution test. The
+     tiles supersede it there; update the document so the written methods match what is run.
+   - **Edge-pair extraction.** The doc proposes doing edge detection inside the C++ simulator
+     and immediately doubts it ("I do not love the idea of modifying the simulator"). Settle it:
+     R-side extraction at ~5-50 ms/fire is minutes-to-hours at 1e5-1e6 fires, against a change
+     to `FireSpread`. Decide once, since it sets the simulator's output contract.
+   - **Journal framing** (applied vs fire-science, section 7) — independent of the code, but it
+     decides how the validation is written up.
+
+2. **Implement it.** Nothing of this exists yet: `spread/` holds only `stage1_smc.R` and
+   `hierarchical_fit.R`. Needed are a simulation driver over the tiles (sampling ignitions, FWI
+   from the empirical KDE and a uniform variant, full posterior draws rather than means) and the
+   three analyses — size distribution, per-fire `clogit` spatial signature, FWI-stratified
+   version — plus the shape metrics. Simulation is the dominant cost: hours at 1e5 fires,
+   overnight at 1e6. Smoke-test at small `nsim` before the real run, as with TODO #7.
+3. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.
-3. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+4. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
 
 Deliberately **not** done, per the current scope: a general "build a landscape for any ROI"
 function. `build_landscape()` is general enough to take any raster stack with the right bands,
