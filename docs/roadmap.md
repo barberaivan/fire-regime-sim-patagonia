@@ -6,7 +6,7 @@ answers one question when you come back after a gap: *what's the current state, 
 next thing to do?* Update the two sections below as work progresses; don't accumulate history
 here — that's what git log and `docs/migration.md` are for.
 
-**Last updated:** 2026-08-20
+**Last updated:** 2026-08-21
 
 **Open to-dos live in `docs/migration.md`'s TODO register** (items #6, #7, #9 are still
 unresolved — summarized under "Open items" below, full detail in that file).
@@ -61,6 +61,30 @@ unresolved — summarized under "Open items" below, full detail in that file).
   study area; they are stopped only by a tile's own border. `landscapes_simulation.R`'s
   `terra::intersect()` line is a one-way coverage *check* (is any of the study area untiled?),
   not a crop.
+- **The spread model's validation is designed, implemented and half-run** (2026-08-21). Design
+  in `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/validation-and-journal.md`
+  updated to match. Code: `R/spread_validation_functions.R`,
+  `spread/validation_ignition_cells.R` (run — output in
+  `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (smoke-tested,
+  not yet run at full size).
+
+  - **All 185 GEE export tasks succeeded** — the 184 fires with unknown ignition point, plus the
+    `2015_41` focal smoke test. In Drive folder `raw data from GEE signature`, prefix
+    `fire_signature_raw_`, **not downloaded yet**. Two interchangeable drivers live in
+    `~/dev/fire_spread-gee/`: the Code Editor script and `python/export_signature_landscapes.py`.
+    Use the Python one for batches — the Code Editor's "run all tasks" plug-in gave up after 129
+    of 184 (all 129 succeeded, so it was a transport failure, not a code one) and the Python
+    driver is re-runnable, skipping fires whose task already exists.
+  - **The GEE assets migrated** to `projects/ivanbarbera-001/assets/` and the scripts follow the
+    tiles script's paths. Verified live: the migrated NDVI and vegetation rasters are
+    pixel-identical to the legacy ones at 30 m, band order unchanged, and the legacy
+    `patagonian_fires_spread` still resolves with its 241 features (it has no cloud-project twin
+    — `projects/.../patagonian_fires` has only 238).
+  - **Headline finding, already solid from the pilot:** the simulator cannot reproduce fire
+    shape. Observed fires are elongated and wind-aligned, simulated ones are round and randomly
+    oriented, and this is structural rather than a tuning or coding failure — see
+    `docs/spread.md` → *Why the model cannot make an elongated fire*.
+
 - **WindNinja outputs have drifted from the saved landscapes.** The PNNH `.asc` files were
   regenerated on 2026-07-09 by the locally built WindNinja and no longer match
   `pnnh_spread_landscape*.rds`; the focal fires' scratch dir is empty entirely. Statistically the
@@ -82,85 +106,95 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ---
 
-## Next steps (roughly in priority order, per the user's own plan)
+## Next steps
 
-1. **~~Design the simulation experiment~~ — done (2026-08-20).** Written up in
-   `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/validation-and-journal.md`
-   updated to match. How the open questions resolved:
+**Where the spread paper's validation stands (2026-08-21).** The design is settled and written
+up (`docs/spread.md` → *Stage 3 — validation*). Both sides of the comparison are code-complete
+and smoke-tested; what is left is one download, one short script, one long run, and the analysis.
 
-   - **Tile-border truncation** — gone, not managed. Each fire runs on its own
-     `(2·steps+1)²` sublandscape, and the 8-neighbour automaton cannot leave that square in
-     `steps` steps, so no fire is ever cut short. The cost is that the rule removes cells near
-     tile borders, more of them the larger `steps` is; drawing `steps` *before* the ignition
-     cell (and choosing the tile ∝ the cells that admit that margin) keeps the `steps`
-     distribution exact. Rejecting and redrawing would have reintroduced the bias.
-   - **Ignition sampling across four tiles** — uniform over tile ∩ study area ∩ burnable, tile
-     chosen ∝ eligible area at the drawn margin. Supersedes an equal `nsim/4` split, which
-     would over-sample tile 4 by ~50 %.
-   - **PNNH → tiles** — done in both documents.
-   - **Edge-pair extraction** — stays in R, `FireSpread` untouched. Measured 49 ms/fire.
-     The 1:1 pairing was also replaced by a donor-centred conditional logit, which is
-     materially better powered.
-   - **Journal framing** — still open, still independent of the code.
+```
+   simulated side                     observed side
+   ──────────────                     ─────────────
+   [A] full 50k run  ─── ready        57 focal fires ─── already on disk
+       (unblocked, ~1-1.5 h)          184 others ─── exported ✅, NOT downloaded
+                                            │
+                                            ▼
+                                      [B] R loop → landscapes
+                                            │
+                                            ▼
+                                      [C] observed signature (241 fires)
+                    └────────────┬──────────┘
+                                 ▼
+                          [D] analysis + figures
+```
 
-2. **Implement and run it.** Written and pilot-tested (3 908 fires, 3 min 20 s on 14 cores):
-   `R/spread_validation_functions.R`, `spread/validation_ignition_cells.R` (already run — its
-   output is in `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R`
-   (`n_target = 50 000`, well under an hour). Cost is not a constraint: the earlier
-   "hours at 1e5, overnight at 1e6" estimate was an order of magnitude pessimistic.
+### A. Run the full simulation — **do this next, it is unblocked**
 
-   Still to write: the **analysis and plotting** script consuming
-   `files/spread_validation/simulated_fires.rds` — size-distribution Q-Q, shape metrics against
-   all 238 mapped polygons, signature distributions conditioned on `log10(area)`, and the
-   FWI-stratified version.
+`spread/validation_simulate.R` is written, and was re-smoke-tested on 2026-08-21 *after* the
+switch to the `vfi`/`tfi`-only signature: 400 requested → 510 fires ≥ 10 ha from 1 190 proposals
+in 60 s, all conditional logits converged, output schema correct. Acceptance is ~43 %, so
+`n_target = 50 000` needs ~117 000 proposals, roughly **1–1.5 h on 14 cores**.
 
-   **Headline finding from the pilot:** observed fires are elongated (median 2.2-2.6) and
-   wind-aligned (49-70 % within 30° of the 113/293° axis); simulated fires are rounder (~1.5)
-   and randomly oriented (~0.29). Investigated as a suspected bug and cleared — wind layers,
-   the MVLN-to-parameter chain and the engine's wind term all check out (a synthetic-landscape
-   test has fires travelling toward `wdir - 180` within 1.4°), and the gap survives when each
-   focal fire is simulated with its own fitted random effect at its own ignition point
-   (elongation 1.58 vs 2.42) even though size is reproduced there (512 vs 434 ha). Full record
-   in `docs/spread.md` -> *The elongation gap, and why it is not a bug*.
+```bash
+cd ~/dev/fire-regime-sim-patagonia
+nohup Rscript spread/validation_simulate.R > files/spread_validation/run.log 2>&1 &
+```
 
-   The `steps` distribution is **not** the problem: all 235 fires inform it and the population
-   draws reproduce the fitted values (median 40 vs 31, mean 92 vs 89). Round fires burn more
-   area than elongated ones for the same reach, so the shape gap and the inflated size
-   distribution are one finding, not two. An earlier note here blaming focal-fire selection for
-   the size mismatch was wrong and has been removed.
+Writes `files/spread_validation/simulated_fires.rds` — one summary row per fire (size, shape
+metrics, `b_vfi`/`b_tfi`, ignition location, drawn parameters) plus `small_sizes` for the
+sub-10-ha fires. Nothing else depends on it, so start it and do B meanwhile.
 
-3. **Reduced landscapes for the 184 fires without an ignition point** — needed so the spatial
-   signature is not restricted to the 57 focal fires (median 388 ha against 47.5 ha for the full
-   record). The signature now uses only `vfi` and `tfi` (the directional terms are unmeasurable
-   on observed fires, whose burn order is unknown), so these landscapes need three layers and no
-   WindNinja.
-   - **The 57 focal fires need nothing.** Their existing `data/focal_fires/landscapes/*.rds`
-     already carry `veg`, `vfi`, `tfi` and the burned layer. Read them off disk.
-   - **GEE — SUBMITTED 2026-08-21.** All 184 export tasks are in flight (plus one focal
-     smoke test, `2015_41`). The Code Editor's "run all tasks" plug-in had managed 129 of them
-     before the browser died — all 129 succeeded, so that was a transport failure, not a code
-     one — and the remaining 55 were submitted from the Python driver
-     `~/dev/fire_spread-gee/python/export_signature_landscapes.py`, which is re-runnable
-     (`--status`, `--resubmit-failed`) and is the one to use for a whole batch. Files land in
-     Drive folder "raw data from GEE signature" with prefix `fire_signature_raw_`.
-     Code Editor script
-     `~/dev/fire_spread-gee/"Landscapes export for signature validation (fires without ignition
-     point)"` (committed there as `ea47e15`): exports the **184** non-focal features of
-     `patagonian_fires_spread`, each as its own bounding box + 150 m instead of the big landscape
-     rectangle, so the exports stay small. Same bands, same CRS; Drive folder
-     "raw data from GEE signature", prefix `fire_signature_raw_`. Kept separate from
-     `"Landscapes export"` so the 57 fitting landscapes stay reproducible. The 57 are excluded by
-     an explicit `fire_id` list taken from the landscape filenames — `ig_points.distinct("Name")`
-     has only 53 entries and does not reproduce the set.
-   - **Asset vintage — checked, fine.** The scripts read the migrated cloud-project assets
-     (`NDVI_mean_ts_1998-2022`, `vegetation_ciefap_wwf_imported`), the focal landscapes came from
-     the legacy ones. Compared directly on 2026-08-21 at 30 m over a test fire:
-     `max|old - new| = 0` for both. Band order is unchanged too; NDVI is still selected by name
-     (`b_<year>`) rather than positionally, since relying on the order is needless risk.
-     `patagonian_fires_spread` still resolves at its legacy path with 241 features.
-   - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer arrays
-     from those 184 exports, with the **same `veg_crosswalk("forest")`** the focal landscapes
-     used — otherwise the observed set is built two different ways.
+### B. Build the 184 reduced landscapes — blocked on the download
+
+**All 185 export tasks SUCCEEDED** (the 184 targets plus the `2015_41` focal smoke test), in
+Drive folder `raw data from GEE signature`, files named `fire_signature_raw_<fire_id>.tif`.
+They are **not downloaded yet** — that folder is not in Insync's selective sync. Either add it,
+or download and unzip into:
+
+```
+data/signature_landscapes/raw_gee/      <- the 184 .tif (new)
+data/signature_landscapes/landscapes/   <- the 184 .rds this step writes
+```
+
+mirroring `data/focal_fires/` and `data/simulation_landscapes/`. Then write a second loop in
+`data_prep/landscapes_preparation.R` that, per fire: reads the tif, computes `vfi` from
+`veg` + detrended `ndvi_prev`, `tfi` from `elevation`/`slope`/`aspect`, and saves a list with the
+three layers plus the rasterized `burned` band. Reuses `build_landscape()`; **no WindNinja, no
+ignition point, no `steps`**.
+
+> Two things this loop must get right, or the observed set is inconsistent:
+> - **`veg_crosswalk("forest")`** — urban → wet forest, the convention the 57 focal landscapes
+>   used. *Not* the `"nonburnable"` one the simulation tiles use.
+> - **NDVI detrending** — the focal landscapes detrend the previous summer's NDVI to its 2022
+>   equivalent, which is why the export carries both `ndvi_prev` and `ndvi_22`. Do the same.
+>
+> The asset-vintage worry is closed: the migrated NDVI and vegetation rasters were compared
+> against the legacy ones at 30 m and are pixel-identical (`max|old − new| = 0`), band order
+> unchanged.
+
+### C. Observed signature for all 241 fires — blocked on B
+
+Run `donor_strata()` + `edge_clogit()` (`R/spread_validation_functions.R`) over the 57 focal
+landscapes *and* the 184 new ones, and `fire_shape()` over all 238 mapped polygons. Already
+proven on the 57: all converged, `vfi` median 0.578 (86 % > 0), `tfi` 1.881 (65 % > 0), both
+strengthening with fire size.
+
+### D. Analysis and figures — blocked on A and C
+
+The only piece with no code yet. Consumes `simulated_fires.rds` and the observed tables:
+size-distribution Q-Q in `log10(area)`, shape metrics against all 238 polygons by size class,
+signature distributions conditioned on `log10(area)`, and the FWI-stratified version. Plot style
+in `manuscript-spread/validation-and-journal.md` §3 — simulated as 2-D density, observed as
+points, GAM smoothers on both.
+
+**The headline result is already visible in the pilot and will not change:** observed fires are
+elongated (median 2.2–2.6) and wind-aligned (49–70 % within 30° of the 113/293° axis), simulated
+fires are rounder (~1.5) and randomly oriented (~0.29). It is structural — the automaton's
+spread *rate* is isotropic, so the head fire cannot outrun the flanks, capping elongation at the
+half-lobe bound of 1.89–2.0 regardless of the wind coefficient. Full argument and the evidence
+that it is not a bug in `docs/spread.md` → *Why the model cannot make an elongated fire*.
+
+### Then
 
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
