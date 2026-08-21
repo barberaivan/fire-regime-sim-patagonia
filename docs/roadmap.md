@@ -133,9 +133,13 @@ unresolved — summarized under "Open items" below, full detail in that file).
    restricted to the 57 with a known ignition point. The signature now uses only `vfi` and `tfi`
    (the directional terms are unmeasurable on observed fires, whose burn order is unknown), so
    these landscapes need three layers and no WindNinja.
-   - **GEE, not yet done:** in `~/dev/fire_spread-gee/"Landscapes export"`, drop the filter that
-     restricts `fires`/`landscapes` to those present in `ig_points`, and loop the full
-     `patagonian_fires_landscapes` collection. Same bands, same projection, same naming.
+   - **GEE — written, ready to run.** New script
+     `~/dev/fire_spread-gee/"Landscapes export for signature validation (all fires)"`
+     (committed there as `1c9ae54`): loops all 241 features of `patagonian_fires_spread`, no
+     `ig_points` filter, and exports the fire's own bounding box + 150 m instead of the big
+     landscape rectangle, so the 241 exports stay small. Same bands, same CRS; writes to Drive
+     folder "raw data from GEE signature" with prefix `fire_signature_raw_`. Kept separate from
+     `"Landscapes export"` so the 57 fitting landscapes stay reproducible.
    - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer
      arrays from those exports.
 

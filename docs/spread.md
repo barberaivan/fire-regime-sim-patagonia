@@ -219,9 +219,64 @@ in order:
    2.42, wind-aligned fraction 0.33 (i.e. random) against 0.49.
 
 So the gap survives with the right parameters, on the right landscapes, at the right ignition
-points. It is a property of the fitted model, not of the tiles, the ignition rule or the code.
-Consistent with this, the stage-1/2 fit achieves a median spatial overlap of 0.53 — location and
-footprint are matched, anisotropy is not, and the overlap statistic is not sensitive to it.
+points. It is a property of the fitted model, not of the tiles, the ignition
+rule or the code. Consistent with this, the stage-1/2 fit achieves a median spatial overlap of
+0.53 — location and footprint are matched, anisotropy is not, and the overlap statistic is not
+sensitive to it.
+
+#### Why the model cannot make an elongated fire
+
+**The automaton's spread *rate* is isotropic; only its spread *probability* is directional.**
+The front advances at most one cell per step in each of the eight directions, and the wind term
+`cos(angle_k − wdir) · wspeed · b_wind` changes *whether* a neighbour ignites, never *how fast*
+the front moves. So the downwind front can never outrun the flanks — which is exactly what makes
+a real fire a cigar.
+
+Once the wind term is strong enough to matter it drives downwind `p → 1` and upwind `p → 0`.
+Downwind *and lateral* cells then both burn essentially every step, so the burned set is the
+downwind half of the Chebyshev ball of radius `steps` — a half-lobe whose principal-axis
+elongation is fixed by geometry:
+
+- half-disc: `sqrt((R²/4) / (R²/4 − (4R/3π)²))` = **1.892**
+- half-square (the Chebyshev reachable set): **2.0**
+
+Measured on a flat synthetic landscape (`vfi = tfi = 0`, uniform wind), sweeping the no-wind
+spread probability `p0` against `b_wind`, elongation never escapes that bound:
+
+| `p0` \ `b_wind` | 0 | 1 | 2 | 4 | 8 |
+|---|---|---|---|---|---|
+| 0.05 | – | 1.58 | 1.51 | 1.66 | 1.84 |
+| 0.20 | 2.14 | 1.39 | 1.62 | 1.79 | 1.84 |
+| 0.50 | 1.01 | 1.60 | 1.84 | 1.83 | 1.84 |
+| 0.90 | 1.00 | 1.05 | 1.31 | 1.92 | 1.85 |
+
+Note the columns: **raising `b_wind` does not raise elongation.** Past `b_wind ≈ 4` every row
+collapses onto 1.83–1.85 regardless of the base flammability — the wind term has saturated and
+the shape is pure geometry.
+
+The one regime that does produce cigars is marginal propagation, where `p` is low enough that
+the *effective* front speed differs between downwind and lateral. With `upper_limit = 0.5`,
+`p0 = 0.05`, `b_wind = 2` the simulator reaches elongation **4.99** — but the fire is 931 cells,
+84 ha. **The model can be elongated or large, not both.**
+
+And the fitted fires sit firmly in the saturated regime: the fitted `wind` coefficient has median
+4.90, so the downwind-to-upwind logit swing `2 · b_wind · wspeed` has median 25, and **82 % of
+fires exceed a swing of 6** — more than enough to pin `p` at 0 and 1.
+
+Against that ceiling, **63 % of the 238 mapped fires are more elongated than the model can be
+(1.9), rising to 79 % among fires over 1000 ha**; the observed distribution runs 1.33 / 2.20 /
+3.80 at the 10th / 50th / 90th percentiles, with a maximum of 8.0.
+
+This is the paper's main negative result, and it is a structural statement rather than a
+tuning failure: no value of the fitted parameters can fix it. Reproducing fire shape would need
+a term the model does not have — either a front that advances more than one cell per step
+downwind (rate anisotropy), or a spread probability capped well below 1 combined with a much
+larger `steps` budget, so that the front speed itself becomes directional. Worth one paragraph
+in the discussion as a concrete direction, not a fix attempted here.
+
+A secondary contributor worth naming: the wind field is spatially uniform in direction and
+near-constant in magnitude (WindNinja at 4 m/s), in both fitting and simulation, so the fitted
+coefficient has no way to express the day-to-day gustiness that drives real head-fire runs.
 
 **This is also the likely explanation for the size mismatch**, and it supersedes the
 focal-selection story written here earlier, which was wrong. The `steps` distribution is fine:
