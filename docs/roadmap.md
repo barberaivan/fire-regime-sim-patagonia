@@ -128,21 +128,31 @@ and smoke-tested; what is left is one download, one short script, one long run, 
                           [D] analysis + figures
 ```
 
-### A. Run the full simulation — **do this next, it is unblocked**
+### A. Run the full simulation — **LAUNCHED 2026-08-21, ~1–1.5 h**
 
-`spread/validation_simulate.R` is written, and was re-smoke-tested on 2026-08-21 *after* the
-switch to the `vfi`/`tfi`-only signature: 400 requested → 510 fires ≥ 10 ha from 1 190 proposals
-in 60 s, all conditional logits converged, output schema correct. Acceptance is ~43 %, so
-`n_target = 50 000` needs ~117 000 proposals, roughly **1–1.5 h on 14 cores**.
+Running in tmux session `spread_sim`, logging to `files/spread_validation/run.log`:
 
 ```bash
 cd ~/dev/fire-regime-sim-patagonia
-nohup Rscript spread/validation_simulate.R > files/spread_validation/run.log 2>&1 &
+tmux new-session -d -s spread_sim -c ~/dev/fire-regime-sim-patagonia \
+  "stdbuf -oL -eL Rscript spread/validation_simulate.R 2>&1 | tee files/spread_validation/run.log; exec bash"
 ```
+
+Smoke-tested twice: on 2026-08-21 after the switch to the `vfi`/`tfi`-only signature, and again
+after the wind-elongation columns were added (300 requested → 370 fires from 892 proposals,
+41.5 % acceptance, no NAs in the new columns). `n_target = 50 000` therefore needs ~120 000
+proposals.
 
 Writes `files/spread_validation/simulated_fires.rds` — one summary row per fire (size, shape
 metrics, `b_vfi`/`b_tfi`, ignition location, drawn parameters) plus `small_sizes` for the
 sub-10-ha fires. Nothing else depends on it, so start it and do B meanwhile.
+
+**The shape columns carry both elongations** (see `docs/spread.md` → *The analyses* §2):
+direction-free `elongation`, which is all the observed side can supply, and `elong_wind` along
+each fire's own terrain-steered mean wind. The covariance entries `cov_ee`/`cov_nn`/`cov_en` are
+saved too, so `elongation_along()` can measure against any other axis — notably the fixed 293° —
+without re-running. Already visible in the smoke test: median `elong_wind` **0.97**, i.e. the
+simulated fires are, if anything, very slightly stretched *across* the wind rather than along it.
 
 ### B. Build the 184 reduced landscapes — blocked on the download
 

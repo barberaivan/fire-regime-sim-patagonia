@@ -169,6 +169,30 @@ simulate_one <- function(p, land) {
   land_sub <- list(veg = veg, vfi = nd[, , "vfi"], tfi = nd[, , "tfi"])
 
   shape <- fire_shape(idx)
+
+  # Wind, and elongation relative to it. WindNinja steers the field by terrain,
+  # so a fire's own wind is not the fixed 293 degrees the tiles were driven with
+  # and has to be averaged out of the landscape it burned. Two averages: over the
+  # burned cells, the wind the fire actually experienced and the axis
+  # `elong_wind` is measured against; and over the whole sublandscape, which is
+  # fixed before the fire runs and so is free of any feedback from its shape.
+  # `rbar` says how much either mean is worth — a scattered field has no
+  # meaningful direction. Only the simulated fires get these; the 184 observed
+  # fires with no ignition point were exported without a wind layer, which is why
+  # `elongation` (direction-free) is kept alongside.
+  wdir_m <- terrain[, , "wdir"]
+  wind_burn <- circ_mean(wdir_m[idx])
+  wind_land <- circ_mean(wdir_m)
+  wind <- c(
+    elong_wind = elongation_along(shape["cov_ee"], shape["cov_nn"],
+                                  shape["cov_en"], wind_burn["mean"]),
+    wdir_burn_deg = unname(wind_burn["mean"]) * 180 / pi,
+    wdir_burn_rbar = unname(wind_burn["rbar"]),
+    wdir_land_deg = unname(wind_land["mean"]) * 180 / pi,
+    wdir_land_rbar = unname(wind_land["rbar"]),
+    wspeed_burn = mean(terrain[, , "wspeed"][idx], na.rm = TRUE)
+  )
+
   st <- donor_strata(idx, land_sub, max_strata = max_strata)
   cl <- if (is.null(st)) {
     stats::setNames(rep(NA_real_, 7),
@@ -179,7 +203,7 @@ simulate_one <- function(p, land) {
 
   list(row = c(unlist(p[c("post", "fwi_id", "fwi_z", par_names, "tile",
                           "ig_row", "ig_col")]),
-               shape, cl))
+               shape, wind, cl))
 }
 
 run_chunk <- function(rows, land) {

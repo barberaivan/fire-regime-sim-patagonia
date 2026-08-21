@@ -105,6 +105,23 @@ rasterized polygon — so the observed reference is **all 238 mapped fires acros
 class**, not just the 57 focal ones. Sub-millisecond per fire. This is where the wind term is
 actually tested (see below).
 
+Two elongations, not one. `elongation` is **direction-free** — the ratio of the principal axes,
+however the fire happens to point — and is the only one both sides of the comparison can supply,
+because the 184 observed fires without an ignition point were exported with no wind layer.
+`elong_wind` is elongation **along the wind axis**: spread along it over spread across it, so
+below 1 means the fire stretched *across* the wind, and it can never exceed `elongation`. It is
+computed for the simulated fires only.
+
+The axis it is measured against is the **circular mean of `wdir` over the cells the fire burned**,
+not the fixed 293° the tiles were driven with: WindNinja steers the field by terrain, and in the
+smoke test the per-fire mean ranged over 261–335°. The sublandscape's circular mean is recorded
+too (`wdir_land_deg`) — fixed before the fire runs, so free of any feedback from its shape — with
+the mean resultant length `rbar` of each, which says whether the field was coherent enough for a
+mean direction to mean anything. `fire_shape()` also returns the burned cells' covariance entries
+(`cov_ee`/`cov_nn`/`cov_en`), from which `elongation_along()` recovers elongation against *any*
+reference axis after the fact — including the fixed 293° needed to treat the simulated fires
+exactly as the observed ones must be treated — without re-running the simulation.
+
 **3. Per-fire spatial signature.** For each fire, a **donor-centred conditional logit**: one
 stratum per burned cell with at least one burnable unburned neighbour, members = that cell's
 burnable neighbours, response = burned. This is literally the simulator's own Bernoulli trial

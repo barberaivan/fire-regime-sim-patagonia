@@ -166,18 +166,30 @@ edge_clogit <- function(s) {
 
 #' Shape metrics from the burned cells
 #'
-#' All in raster space, all sub-millisecond. `orientation` is the bearing of the
-#' leading principal axis in degrees (mod 180), directly comparable to the fixed
-#' 293-degree wind the landscapes were built with: fire runs along the
-#' 113/293 axis, so orientation near 113 means wind-aligned.
+#' All in raster space, all sub-millisecond. `elongation` is direction-free —
+#' the ratio of the two principal axes, whatever way the fire happens to point —
+#' and `orientation` is the bearing of the leading axis in degrees (mod 180).
+#' The observed fires without an ignition point have no wind layer, so those two
+#' are all their side of the comparison can offer: alignment has to be judged
+#' against the fixed 293-degree wind the landscapes were built with (fire runs
+#' along the 113/293 axis, so orientation near 113 means wind-aligned).
+#'
+#' `cov_ee`/`cov_nn`/`cov_en` are the burned cells' covariance entries in
+#' east/north cell units. They are returned so that elongation along *any*
+#' reference axis can be recomputed afterwards with `elongation_along()` without
+#' re-running the simulation — the fixed 293 degrees for comparability with the
+#' observed fires, or a simulated fire's own mean wind.
 fire_shape <- function(idx, cell_area_ha = 0.09) {
   n <- nrow(idx)
   if (n == 0) return(NULL)
   xy <- cbind(as.numeric(idx[, 2]), -as.numeric(idx[, 1]))   # east, north
 
   elong <- orient <- fill <- NA_real_
+  sxx <- syy <- sxy <- NA_real_
   if (n >= 3) {
-    e <- eigen(stats::cov(xy), symmetric = TRUE)
+    S <- stats::cov(xy)
+    sxx <- S[1, 1]; syy <- S[2, 2]; sxy <- S[1, 2]
+    e <- eigen(S, symmetric = TRUE)
     lam <- pmax(e$values, 0)
     if (lam[2] > 0) elong <- sqrt(lam[1] / lam[2])
     v <- e$vectors[, 1]
@@ -215,7 +227,47 @@ fire_shape <- function(idx, cell_area_ha = 0.09) {
     compactness = if (per > 0) 4 * pi * n / per^2 else NA_real_,
     elongation = elong,
     orientation = orient,
-    hull_fill = fill)
+    hull_fill = fill,
+    cov_ee = sxx,
+    cov_nn = syy,
+    cov_en = sxy)
+}
+
+
+#' Elongation along a given reference axis
+#'
+#' Takes the covariance entries `fire_shape()` returns and the axis' compass
+#' bearing in radians, and gives the spread along that axis over the spread
+#' across it. Unlike `fire_shape()`'s `elongation`, this one is signed by
+#' direction: a value below 1 means the fire is stretched *across* the axis, and
+#' it can never exceed the direction-free `elongation`, which it equals only when
+#' the fire's own principal axis happens to coincide with the reference.
+#'
+#' The axis is unsigned, so it makes no difference whether `bearing` is the
+#' direction the wind comes from or the one it blows toward.
+elongation_along <- function(cov_ee, cov_nn, cov_en, bearing) {
+  if (anyNA(c(cov_ee, cov_nn, cov_en, bearing))) return(NA_real_)
+  u <- c(sin(bearing), cos(bearing))          # compass bearing -> (east, north)
+  w <- c(u[2], -u[1])                         # the perpendicular
+  S <- matrix(c(cov_ee, cov_en, cov_en, cov_nn), 2, 2)
+  v_along <- drop(t(u) %*% S %*% u)
+  v_across <- drop(t(w) %*% S %*% w)
+  if (v_across <= 0 || v_along < 0) return(NA_real_)
+  unname(sqrt(v_along / v_across))
+}
+
+
+#' Circular mean of an angle field, with its concentration
+#'
+#' `angles` in radians. Returns the mean direction in radians on [0, 2*pi) and
+#' `rbar`, the mean resultant length: 1 if every cell points the same way, near 0
+#' if the field is so terrain-scattered that no single direction represents it.
+#' NA cells (the landscapes carry a few tenths of a percent) are dropped.
+circ_mean <- function(angles) {
+  s <- mean(sin(angles), na.rm = TRUE)
+  cc <- mean(cos(angles), na.rm = TRUE)
+  if (is.na(s) || is.na(cc)) return(c(mean = NA_real_, rbar = NA_real_))
+  c(mean = atan2(s, cc) %% (2 * pi), rbar = sqrt(s^2 + cc^2))
 }
 
 
