@@ -115,8 +115,8 @@ and smoke-tested; what is left is one download, one short script, one long run, 
 ```
    simulated side                     observed side
    ──────────────                     ─────────────
-   [A] full 50k run  ─── ready        57 focal fires ─── already on disk
-       (unblocked, ~1-1.5 h)          184 others ─── exported ✅, NOT downloaded
+   [A] full run ─── DONE ✅           57 focal fires ─── already on disk
+       64,836 fires, 15 min           184 others ─── exported ✅, NOT downloaded
                                             │
                                             ▼
                                       [B] R loop → landscapes
@@ -128,31 +128,52 @@ and smoke-tested; what is left is one download, one short script, one long run, 
                           [D] analysis + figures
 ```
 
-### A. Run the full simulation — **LAUNCHED 2026-08-21, ~1–1.5 h**
+### A. Run the full simulation — **DONE 2026-08-21**
 
-Running in tmux session `spread_sim`, logging to `files/spread_validation/run.log`:
+`files/spread_validation/simulated_fires.rds` (12.8 MB) holds **64,836 fires ≥ 10 ha** from
+148,649 proposals — 43.6 % acceptance, so the single pass overshot `n_target = 50 000` and no
+second pass was needed. **15 minutes on 14 cores**, not the 1–1.5 h estimated. 83,813 proposals
+fell below the 10 ha threshold (52.5 % of them burned one cell); their sizes are in `small_sizes`.
+Log kept at `files/spread_validation/run.log`. To reproduce:
 
 ```bash
-cd ~/dev/fire-regime-sim-patagonia
 tmux new-session -d -s spread_sim -c ~/dev/fire-regime-sim-patagonia \
   "stdbuf -oL -eL Rscript spread/validation_simulate.R 2>&1 | tee files/spread_validation/run.log; exec bash"
 ```
 
-Smoke-tested twice: on 2026-08-21 after the switch to the `vfi`/`tfi`-only signature, and again
-after the wind-elongation columns were added (300 requested → 370 fires from 892 proposals,
-41.5 % acceptance, no NAs in the new columns). `n_target = 50 000` therefore needs ~120 000
-proposals.
+Health of the output: every conditional logit that was fitted converged, and only **14 fires of
+64,836** (0.02 %) have an NA signature, where `donor_strata()` found nothing to fit. Fires split
+13,987 / 18,348 / 19,941 / 12,560 across tiles 1–4. Sizes run 12.8 ha at the 5th percentile to
+454,279 ha at the maximum, median 151 ha.
 
-Writes `files/spread_validation/simulated_fires.rds` — one summary row per fire (size, shape
-metrics, `b_vfi`/`b_tfi`, ignition location, drawn parameters) plus `small_sizes` for the
-sub-10-ha fires. Nothing else depends on it, so start it and do B meanwhile.
-
-**The shape columns carry both elongations** (see `docs/spread.md` → *The analyses* §2):
+**Both elongations are in the output** (see `docs/spread.md` → *The analyses* §2):
 direction-free `elongation`, which is all the observed side can supply, and `elong_wind` along
 each fire's own terrain-steered mean wind. The covariance entries `cov_ee`/`cov_nn`/`cov_en` are
-saved too, so `elongation_along()` can measure against any other axis — notably the fixed 293° —
-without re-running. Already visible in the smoke test: median `elong_wind` **0.97**, i.e. the
-simulated fires are, if anything, very slightly stretched *across* the wind rather than along it.
+saved too, so `elongation_along()` can measure against any other axis without re-running — the
+fixed 293° column below was produced that way, post hoc.
+
+| size class | n | median area | `elongation` | `elong_wind` | vs fixed 293° |
+|---|---|---|---|---|---|
+| 10–100 ha | 28,069 | 30 ha | 1.56 | 0.99 | 1.00 |
+| 100–1000 ha | 21,313 | 287 ha | 1.47 | 0.98 | 0.97 |
+| > 1000 ha | 15,454 | 3,258 ha | 1.47 | 0.94 | 0.93 |
+
+**This sharpens the headline result.** The simulated fires are not merely rounder than observed
+ones — along the wind they are not elongated *at all*: median `elong_wind` 0.976 overall, and it
+*falls* as fires get bigger, so the largest ones are slightly stretched **across** the wind.
+Orientation agrees: 27.8 % fall within 30° of the 113/293 axis, marginally *below* the 33.3 %
+a uniformly random orientation would give. The wind term is not producing a head fire. Full
+argument in `docs/spread.md` → *Why the model cannot make an elongated fire*.
+
+Terrain steering is real and worth keeping in mind for D: `wdir` averaged over a fire's burned
+cells has a 5–95 % range of **277–311°** around the 293° the tiles were driven with, though the
+per-fire fields are highly coherent (median `rbar` 0.99).
+
+One thing for D to check rather than assume: the simulated signature medians are `b_vfi`
+1.39 / 1.42 / 1.74 by size class and `b_tfi` −2.45 / −0.57 / −0.18, against the 57 focal fires'
+observed 0.578 and 1.881. Both look displaced, and `b_tfi` has the wrong sign for small fires —
+but the observed pilot was not conditioned on size, which is exactly what D's size-conditioned
+comparison is for. Do not read the gap off these two numbers.
 
 ### B. Build the 184 reduced landscapes — blocked on the download
 
@@ -189,17 +210,21 @@ landscapes *and* the 184 new ones, and `fire_shape()` over all 238 mapped polygo
 proven on the 57: all converged, `vfi` median 0.578 (86 % > 0), `tfi` 1.881 (65 % > 0), both
 strengthening with fire size.
 
-### D. Analysis and figures — blocked on A and C
+### D. Analysis and figures — **A is done; now blocked on C alone**
 
-The only piece with no code yet. Consumes `simulated_fires.rds` and the observed tables:
+The only piece with no code yet. Consumes `simulated_fires.rds` (on disk since 2026-08-21) and
+the observed tables:
 size-distribution Q-Q in `log10(area)`, shape metrics against all 238 polygons by size class,
 signature distributions conditioned on `log10(area)`, and the FWI-stratified version. Plot style
 in `manuscript-spread/validation-and-journal.md` §3 — simulated as 2-D density, observed as
 points, GAM smoothers on both.
 
-**The headline result is already visible in the pilot and will not change:** observed fires are
-elongated (median 2.2–2.6) and wind-aligned (49–70 % within 30° of the 113/293° axis), simulated
-fires are rounder (~1.5) and randomly oriented (~0.29). It is structural — the automaton's
+**The headline result is already visible and will not change:** observed fires are elongated
+(median 2.2–2.6) and wind-aligned (49–70 % within 30° of the 113/293° axis), simulated fires are
+rounder (median 1.50 over all 64,836) and randomly oriented (27.8 % within 30°, against 33.3 %
+for uniform). The full run adds the sharper version: measured **along the wind**, the simulated
+fires are not elongated at all — median `elong_wind` 0.976, falling to 0.94 above 1000 ha. It is
+structural — the automaton's
 spread *rate* is isotropic, so the head fire cannot outrun the flanks, capping elongation at the
 half-lobe bound of 1.89–2.0 regardless of the wind coefficient. Full argument and the evidence
 that it is not a bug in `docs/spread.md` → *Why the model cannot make an elongated fire*.
