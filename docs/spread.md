@@ -107,23 +107,64 @@ actually tested (see below).
 
 **3. Per-fire spatial signature.** For each fire, a **donor-centred conditional logit**: one
 stratum per burned cell with at least one burnable unburned neighbour, members = that cell's
-burnable neighbours, response = burned, predictors computed source→target exactly as
-`spread_one_cell_prob()` does (`vfi`/`tfi` at the target, `slope = sin(atan(Δz/dist))` uphill
-only, `wind = cos(angle_k − wdir_source)·wspeed_source`). This is literally the simulator's own
-Bernoulli trial set; holding the donor fixed conditions out the fire, the weather and the donor
-itself, and the shared intercept drops out. Fitted with `survival::clogit(method = "exact")` —
-strata have up to 8 members and often several cases, where Breslow/Efron genuinely differ.
-Donors subsampled to 1500 per fire. Compare the *distribution* of coefficients (and of
-standardized partial effects `β·sd(x)`, comparable across predictors) between observed and
-simulated, conditioning on `log10(area)`.
+burnable neighbours, response = burned. This is literally the simulator's own Bernoulli trial
+set; holding the donor fixed conditions out the fire, the weather and the donor itself, and the
+shared intercept drops out. Fitted with `survival::clogit(method = "exact")` — strata have up to
+8 members and often several cases, where Breslow/Efron genuinely differ. Donors subsampled to
+1500 per fire.
+
+**Predictors: `vfi` and `tfi` only, both in one multiple regression.** The slope and wind terms
+of `spread_one_cell_prob()` are *directional* — they depend on which cell the fire actually
+arrived from — and for an observed fire the burn order is unknown, so the donor is a guess at
+the arrival direction, not a measurement. Including them would compare something computable for
+simulated fires against something not computable for observed ones. Their omission costs
+nothing: an edge contrast has no power for them anyway (see below). Multiple rather than
+univariate, because `vfi` and `tfi` are correlated through vegetation and topography and the
+univariate coefficients would each absorb part of the other's effect.
+
+Coefficients are reported **on the original predictor scale**. `edge_clogit()` standardizes
+per fire for numerical conditioning and divides the estimates back by the scale; centring
+cancels in a conditional likelihood, so only the scale has to be undone.
+
+Because the predictors no longer depend on the donor, **the landscape needs only `veg`, `vfi`
+and `tfi`** — no elevation layer, no wind field, no WindNinja. That is what makes it feasible
+to run the signature on **all ~235 mapped fires**, not just the 57 with a known ignition point,
+which removes the size-bias of the focal subsample from this analysis. See *Reduced landscapes*
+below.
 
 This replaces the 1:1 "one unburned edge cell + one random burned neighbour" pairing in
 `validation-and-journal.md` §2.2, which was tested and is strictly weaker: on the 57 observed
-fires it gives a near-zero, high-variance signature for `vfi` (median 0.06, 54 % > 0) where the
-donor-centred version resolves it clearly (0.24, 84 % > 0).
+fires it leaves the `vfi` signature at noise where the donor-centred version resolves it.
+Observed values (57 focal fires, original scale, all converged):
+
+| | median | IQR | frac > 0 | < 100 ha | 100–1000 ha | > 1000 ha |
+|---|---|---|---|---|---|---|
+| `vfi` | 0.578 | [0.20, 1.18] | 0.86 | 0.06 | 0.78 | 0.59 |
+| `tfi` | 1.881 | [−1.01, 4.05] | 0.65 | 0.15 | 1.55 | 2.53 |
+
+Both strengthen with fire size, so the comparison must condition on `log10(area)`. Note these
+are *edge-local summary statistics*, not estimates of the model's β (the fitted per-fire values
+are an order of magnitude larger: `vfi` median 11.9, `tfi` 4.5). What matters is whether
+observed and simulated distributions of the statistic agree.
 
 Edge extraction stays **in R** — measured at 49 ms/fire mean over the 57 focal fires, 0.45 s for
 the largest (300 k cells). There is no case for modifying `FireSpread`'s output contract.
+
+### Reduced landscapes for all mapped fires
+
+The signature needs `veg`, `vfi`, `tfi` and the rasterized burn polygon for every mapped fire.
+`vfi` needs vegetation + NDVI; `tfi` needs elevation + slope + aspect — so the **GEE band set is
+unchanged**, only the fire selection is. What is skipped on the R side is WindNinja, which is
+what made the fire-wise landscapes slow.
+
+- **GEE** (`~/dev/fire_spread-gee/"Landscapes export"`): the script currently filters `fires`
+  and `landscapes` down to those present in `ig_points` (the 57). Drop that filter and loop the
+  full `patagonian_fires_landscapes` collection. Same bands, same projection, same naming.
+  _Not yet done — this edit lives in the other repo and the export has to be launched from the
+  Code Editor._
+- **R** (`data_prep/landscapes_preparation.R`): a second loop, after the fire-wise one, that
+  builds and saves the three-layer arrays. No wind, no ignition point, no `steps`; the burned
+  layer comes from the export's `burned` band.
 
 **4. FWI-stratified version.** Repeat 2 and 3 within FWI quartiles — the model's most
 distinctive structural claim is that spatial coefficients move with FWI. The second simulated
@@ -133,30 +174,74 @@ to be starved at high FWI.
 
 ### What each test can and cannot diagnose
 
-**The wind term cannot be tested by any edge-based regression.** Around a fire's perimeter the
-donor→receiver direction is the outward normal, so it is isotropic by construction, and the
-already-burned neighbours of an edge donor are systematically the ones the fire arrived *from* —
-i.e. upwind — which cancels the true effect. Both the 1:1 and the donor-centred schemes return a
-flat, zero-centred `wind` coefficient on the observed fires (median 0.00, 51 % > 0). Wind is
-tested through **orientation and elongation** instead, where the observed signal is strong. This
-promotes the shape metrics from "cheap complement" to a primary analysis.
+**No edge-based regression can test the wind or slope terms.** Two reasons, and they compound.
+First, both terms are *directional*: they are functions of which cell the fire arrived from, and
+for an observed fire the burn order is unknown, so there is nothing to measure. Second, even
+granting a donor, the contrast has no power — around a perimeter the donor→receiver direction is
+the outward normal, hence isotropic by construction, and an edge donor's already-burned
+neighbours are systematically the ones the fire arrived *from*, i.e. upwind, which cancels the
+true effect. Measured on the 57 observed fires, both the 1:1 and the donor-centred schemes
+return a flat, zero-centred `wind` coefficient (median 0.00, 51 % > 0). Wind and slope are
+tested through **fire shape** instead, where the observed signal is strong. This promotes the
+shape metrics from "cheap complement" to a primary analysis.
 
-**The macro test is confounded by how the focal fires were chosen.** The five spread
-hyperparameters are informed only by the 57 fires that have a landscape and an identified
-ignition point, and those are a strongly size-biased subsample — median **388 ha** against
-**47.5 ha** for the full 233-fire record, holding 74 % of all burned area. Only `steps` also
-learns from the other 177, through the `log(area) ~ log(steps)` regression. So a fire drawn from
-the population is a draw from the *focal-fire* population, and the simulated size distribution
-sits high against the full record by construction. Two supporting checks:
+### The elongation gap, and why it is not a bug
 
-- At the **observed** ignition points with new random effects (`metrics_table.rds`), the model
-  slightly *under*-predicts the focal fires (median 258 ha vs 434 ha; PIT median 0.28).
-- Uniform ignition makes fires *smaller*, not larger (median 258 → 154 ha).
+The pilot showed simulated fires far rounder and less wind-aligned than observed ones. Since
+FireSpread is known to be able to produce strongly elongated fires, this was investigated as a
+suspected coding error before being accepted as a result. **It is not a bug.** What was checked,
+in order:
 
-So the over-prediction is in the parameter population, not in the ignition rule or the tiles.
-Report the macro test against both references, state the mechanism, and note that it is the
-same bias the regime paper's γ₀ = −0.95 recalibration absorbs. It does not affect analyses 2–4,
-which condition on fire size.
+1. **Wind layers.** `wspeed` (divided by the frozen `wind_sd = 1.464333`) has median 2.575 in
+   tile 3 and 2.547–2.645 across focal-fire landscapes; `wdir` is in radians, median 5.114 rad
+   = 293° in the tiles and 277–323° across focal fires. Tiles and fitting landscapes are on the
+   same scale. (Masked cells carry −9999 in the non-`veg` layers; they are `veg == 99` so the
+   automaton never reads them, and `donor_strata()` excludes them.)
+2. **The MVLN → parameter chain.** Drawing from the population and applying
+   `invlogit_scaled` reproduces the fitted per-fire random effects closely — intercept, `vfi`,
+   `tfi`, `slope` and `wind` quantiles all line up (e.g. `wind` median 3.58 simulated against
+   4.90 fitted). No logit-scale or bounds error. Note `draws$ranef` row 6 (`steps`) is stored on
+   the **natural** scale while rows 1–5 are on the logit scale — a trap worth remembering.
+3. **The engine's wind term, in isolation.** On a synthetic flat landscape (`vfi = tfi = 0`,
+   constant elevation, uniform wind) the burned centroid travels toward `(wdir − 180) mod 360`
+   for every direction tested, to within 1.4°:
+
+   | wdir (from) | 0 | 45 | 90 | 135 | 180 | 225 | 270 | 293 | 315 |
+   |---|---|---|---|---|---|---|---|---|---|
+   | expected travel | 180 | 225 | 270 | 315 | 0 | 45 | 90 | 113 | 135 |
+   | observed travel | 180.4 | 225.1 | 270.6 | 314.8 | 1.0 | 45.6 | 90.0 | 111.6 | 135.0 |
+
+   The convention is right too: `nb_angle[k]` is the compass bearing of the direction the fire
+   comes *from*, so `cos(angle_k − wdir)` peaks when the fire moves downwind.
+4. **Fitted parameters on their own landscapes.** Simulating each focal fire with its own fitted
+   random effect at its own ignition point (159 runs over 53 fires) reproduces **size** well —
+   median 512 ha simulated against 434 ha observed — but not shape: elongation 1.58 against
+   2.42, wind-aligned fraction 0.33 (i.e. random) against 0.49.
+
+So the gap survives with the right parameters, on the right landscapes, at the right ignition
+points. It is a property of the fitted model, not of the tiles, the ignition rule or the code.
+Consistent with this, the stage-1/2 fit achieves a median spatial overlap of 0.53 — location and
+footprint are matched, anisotropy is not, and the overlap statistic is not sensitive to it.
+
+**This is also the likely explanation for the size mismatch**, and it supersedes the
+focal-selection story written here earlier, which was wrong. The `steps` distribution is fine:
+all 235 fires inform it, and the population draws reproduce the fitted values closely —
+
+| | 5 % | 25 % | 50 % | 75 % | 95 % | mean |
+|---|---|---|---|---|---|---|
+| fitted `steps`, all 235 | 8 | 18 | 31 | 92 | 349 | 89 |
+| simulated `steps` (MVLN) | 5 | 15 | 40 | 103 | 368 | 92 |
+
+Given a correct `steps` budget, a fire that spreads as a round blob burns more area than one
+that spreads as an elongated cigar with the same reach. So the roundness and the inflated size
+distribution are one finding, not two, and the arrow points from shape to size. Anything that
+recovers realistic anisotropy would be expected to pull the size distribution down with it.
+
+Worth stating in the paper as the main negative result, with the caveat that the fixed,
+spatially uniform wind field (one direction, near-constant magnitude, WindNinja at 4 m/s) is a
+plausible contributor: real fire-day winds are stronger and gustier than the field the model was
+both fitted and simulated under, so the fitted `wind` coefficient has no way to express the
+day-to-day variation that produces real elongation.
 
 Also flag once, per `validation-and-journal.md` §6.3: the simulator's edges lump "spread
 refused" and "step budget exhausted", a lumped stand-in for suppression and weather-event end.
@@ -197,12 +282,15 @@ focal-selection caveat above does not drive them:
 | elongation, > 1000 ha | 2.59 | 1.46 |
 | within 30° of the wind axis, > 1000 ha | 0.70 | 0.24 (0.33 = random) |
 | compactness, 200–1000 ha | 0.045 | 0.236 |
-| signature `slope` (β·sd, > 100 ha) | 0.20 | 0.19 |
-| signature `vfi` (β·sd, > 100 ha) | 0.28 | 0.86 |
-| signature `tfi` (β·sd, > 100 ha) | 1.72 | 0.19 |
+| signature `vfi` (> 100 ha) | see table above | to be recomputed |
+| signature `tfi` (> 100 ha) | see table above | to be recomputed |
 
 Observed fires are elongated and wind-aligned at every size class; simulated fires are rounder
-and randomly oriented. `slope` matches well, `vfi` is over-weighted and `tfi` under-weighted.
+and randomly oriented — the headline result. The signature rows predate the switch to a
+`vfi`/`tfi`-only multiple regression on the original scale and to the full ~235-fire observed
+reference; they must be recomputed once the reduced landscapes exist. Under the earlier
+four-predictor standardized version, `slope` matched well, `vfi` was over-weighted and `tfi`
+under-weighted.
 
 ## Refactor targets
 - Split inline data manipulation out of the fitting script into functions (tech debt #2).

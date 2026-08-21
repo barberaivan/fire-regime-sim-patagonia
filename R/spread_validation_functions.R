@@ -35,31 +35,42 @@ fire_box <- function(idx, n_row, n_col, pad = 1L) {
 }
 
 
-#' Donor-centred strata of a fire, with the spread model's own predictors
+#' Donor-centred strata of a fire, with the non-directional predictors
 #'
 #' One stratum per burned cell that has at least one burnable unburned
 #' neighbour; the stratum's members are that cell's burnable neighbours, and the
-#' response is whether each of them burned. This is literally the simulator's
-#' own Bernoulli trial set, and holding the donor fixed within a stratum is what
-#' identifies the target-cell predictors while conditioning out everything about
-#' the fire, the donor and the weather.
+#' response is whether each of them burned. This is the simulator's own
+#' Bernoulli trial set, and holding the donor fixed within a stratum conditions
+#' out everything about the fire, the donor and the weather. The shared
+#' intercept is conditioned out by the stratum too.
 #'
-#' Predictors match `spread_one_cell_prob()` exactly: `vfi`/`tfi` at the target
-#' cell, `slope = sin(atan(dz / dist))` counted only uphill, and
-#' `wind = cos(angle_k - wdir_source) * wspeed_source`. The shared intercept is
-#' conditioned out by the stratum.
+#' **Only `vfi` and `tfi`, at the target cell.** The slope and wind terms of
+#' `spread_one_cell_prob()` are directional — they depend on which cell the fire
+#' actually came from — and for an observed fire the burn order is unknown, so
+#' the donor is a guess at the arrival direction rather than a measurement.
+#' Including them would compare a quantity we can compute for simulated fires
+#' against one we cannot compute for observed ones. Their omission costs
+#' nothing: an edge-based contrast has no power for them anyway (around a
+#' perimeter the donor→receiver direction is the outward normal, hence
+#' isotropic, and an edge donor's burned neighbours are systematically the ones
+#' the fire arrived from). Wind and slope are tested through fire shape instead.
+#'
+#' Because the predictors no longer depend on the donor, the landscape needs
+#' only `veg`, `vfi` and `tfi` — no elevation and no wind field. That is what
+#' makes it feasible to build reduced landscapes for all mapped fires, not just
+#' the 57 with a known ignition point.
 #'
 #' Strata whose members all burned, or none of which burned, carry no
 #' conditional information and are dropped.
 #'
 #' @param idx n x 2 integer matrix of burned {row, col}.
-#' @param land named list of landscape matrices: veg, vfi, tfi, elevation,
-#'   wdir, wspeed (see `land_matrices()`).
+#' @param land named list of landscape matrices: veg, vfi, tfi (see
+#'   `land_matrices()`). Extra layers are ignored.
 #' @param max_strata subsample donors to at most this many. The regression gains
 #'   almost nothing past a couple of thousand strata and the largest fires have
 #'   hundreds of thousands.
 #' @return list with `strat` (integer stratum id), `y` (burned) and `x`
-#'   (n x 4 predictor matrix), or NULL if the fire has no usable edge.
+#'   (n x 2 predictor matrix), or NULL if the fire has no usable edge.
 donor_strata <- function(idx, land, max_strata = 1500) {
   n_row <- nrow(land$veg); n_col <- ncol(land$veg)
   if (nrow(idx) == 0) return(NULL)
@@ -86,22 +97,15 @@ donor_strata <- function(idx, land, max_strata = 1500) {
 
   vfi <- land$vfi[b$r1:b$r2, b$c1:b$c2]
   tfi <- land$tfi[b$r1:b$r2, b$c1:b$c2]
-  ele <- land$elevation[b$r1:b$r2, b$c1:b$c2]
-  wdr <- land$wdir[b$r1:b$r2, b$c1:b$c2]
-  wsp <- land$wspeed[b$r1:b$r2, b$c1:b$c2]
-  don <- cbind(di, dj)
 
   parts <- vector("list", 8)
   for (k in 1:8) {
     tg <- cbind(di + nb_moves["row", k], dj + nb_moves["col", k])
     keep <- veg[tg] != 99
     if (!any(keep)) next
-    dz <- ele[tg] - ele[don]
     parts[[k]] <- cbind(
       strat = sel, y = as.integer(B[tg]),
-      vfi = vfi[tg], tfi = tfi[tg],
-      slope = ifelse(dz > 0, sin(atan(dz / nb_dist[k])), 0),
-      wind = cos(nb_angle[k] - wdr[don]) * wsp[don])[keep, , drop = FALSE]
+      vfi = vfi[tg], tfi = tfi[tg])[keep, , drop = FALSE]
   }
   d <- do.call(rbind, parts)
   d <- d[rowSums(!is.finite(d)) == 0, , drop = FALSE]
@@ -112,11 +116,11 @@ donor_strata <- function(idx, land, max_strata = 1500) {
   d <- d[mixed, , drop = FALSE]
   if (nrow(d) < 40L || length(unique(d[, "strat"])) < 10L) return(NULL)
 
-  list(strat = d[, "strat"], y = d[, "y"], x = d[, 3:6, drop = FALSE])
+  list(strat = d[, "strat"], y = d[, "y"], x = d[, 3:4, drop = FALSE])
 }
 
 
-#' Conditional logit over donor strata
+#' Conditional logit over donor strata — vfi and tfi together
 #'
 #' A thin wrapper on `survival::clogit`. Strata here have up to eight members
 #' and often several cases, where the exact conditional likelihood and the
@@ -124,23 +128,39 @@ donor_strata <- function(idx, land, max_strata = 1500) {
 #' rather than a hand-rolled approximation — at ~0.1 s per fire including
 #' extraction it is affordable, and it keeps the statistic standard.
 #'
+#' Multiple regression, not one predictor at a time: `vfi` and `tfi` are
+#' correlated through vegetation and topography, and the univariate coefficients
+#' would each absorb part of the other's effect.
+#'
+#' Coefficients are returned **on the original predictor scale**. The fit itself
+#' standardizes the predictors per fire, purely for numerical conditioning, and
+#' back-transforms by dividing by the scale. Centring cancels in a conditional
+#' likelihood (a constant shifts every member of a stratum equally), so only the
+#' scale has to be undone. `sdx_*` is kept so a standardized version can still
+#' be reconstructed downstream if it is ever wanted for plotting.
+#'
 #' Fires whose strata separate return large coefficients; they are flagged
 #' rather than dropped, since the same thing happens to observed fires with few
 #' strata and the analysis conditions on fire size anyway.
 edge_clogit <- function(s) {
-  d <- data.frame(y = s$y, strat = s$strat, s$x)
-  fit <- try(survival::clogit(y ~ vfi + tfi + slope + wind + strata(strat),
+  nm <- c("vfi", "tfi")
+  sdx <- apply(s$x, 2, stats::sd)
+  sdx[!is.finite(sdx) | sdx <= 0] <- 1
+  xs <- scale(s$x, center = TRUE, scale = sdx)
+
+  d <- data.frame(y = s$y, strat = s$strat, xs)
+  fit <- try(survival::clogit(y ~ vfi + tfi + strata(strat),
                               data = d, method = "exact"), silent = TRUE)
-  nm <- c("vfi", "tfi", "slope", "wind")
   if (inherits(fit, "try-error")) {
-    out <- c(stats::setNames(rep(NA_real_, 4), nm), converged = 0)
+    out <- c(stats::setNames(rep(NA_real_, 2), nm), converged = 0)
   } else {
-    out <- c(coef(fit)[nm], converged = as.numeric(!is.null(fit$iter)))
+    out <- c(coef(fit)[nm] / sdx[nm],          # back to the original scale
+             converged = as.numeric(!is.null(fit$iter)))
   }
   c(out,
     n_strata = length(unique(s$strat)),
     n_rows = nrow(s$x),
-    stats::setNames(apply(s$x, 2, stats::sd), paste0("sdx_", nm)))
+    stats::setNames(sdx[nm], paste0("sdx_", nm)))
 }
 
 

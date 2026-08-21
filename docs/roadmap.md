@@ -114,19 +114,35 @@ unresolved — summarized under "Open items" below, full detail in that file).
    all 238 mapped polygons, signature distributions conditioned on `log10(area)`, and the
    FWI-stratified version.
 
-   Two findings from the pilot that shape the write-up:
-   - Observed fires are elongated (median 2.2-2.6) and wind-aligned (49-70 % within 30° of the
-     113/293° axis); simulated fires are rounder (1.5) and randomly oriented (~0.29). The
-     clearest discrepancy found so far.
-   - The macro size test is confounded by focal-fire selection: the five spread hyperparameters
-     are informed only by the 57 fires with a landscape, whose median is 388 ha against 47.5 ha
-     for the full record. Report it with the mechanism stated; analyses 2-4 condition on size
-     and are unaffected.
+   **Headline finding from the pilot:** observed fires are elongated (median 2.2-2.6) and
+   wind-aligned (49-70 % within 30° of the 113/293° axis); simulated fires are rounder (~1.5)
+   and randomly oriented (~0.29). Investigated as a suspected bug and cleared — wind layers,
+   the MVLN-to-parameter chain and the engine's wind term all check out (a synthetic-landscape
+   test has fires travelling toward `wdir - 180` within 1.4°), and the gap survives when each
+   focal fire is simulated with its own fitted random effect at its own ignition point
+   (elongation 1.58 vs 2.42) even though size is reproduced there (512 vs 434 ha). Full record
+   in `docs/spread.md` -> *The elongation gap, and why it is not a bug*.
 
-3. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
+   The `steps` distribution is **not** the problem: all 235 fires inform it and the population
+   draws reproduce the fitted values (median 40 vs 31, mean 92 vs 89). Round fires burn more
+   area than elongated ones for the same reach, so the shape gap and the inflated size
+   distribution are one finding, not two. An earlier note here blaming focal-fire selection for
+   the size mismatch was wrong and has been removed.
+
+3. **Reduced landscapes for all ~235 mapped fires** — needed so the spatial signature is not
+   restricted to the 57 with a known ignition point. The signature now uses only `vfi` and `tfi`
+   (the directional terms are unmeasurable on observed fires, whose burn order is unknown), so
+   these landscapes need three layers and no WindNinja.
+   - **GEE, not yet done:** in `~/dev/fire_spread-gee/"Landscapes export"`, drop the filter that
+     restricts `fires`/`landscapes` to those present in `ig_points`, and loop the full
+     `patagonian_fires_landscapes` collection. Same bands, same projection, same naming.
+   - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer
+     arrays from those exports.
+
+4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.
-4. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+5. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
 
 Deliberately **not** done, per the current scope: a general "build a landscape for any ROI"
 function. `build_landscape()` is general enough to take any raster stack with the right bands,

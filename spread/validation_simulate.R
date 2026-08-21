@@ -164,19 +164,18 @@ simulate_one <- function(p, land) {
   if (size * 0.09 < min_area_ha) return(list(small = size))
 
   idx <- t(fire$burned_ids) + 1L      # FireSpread is zero-indexed
-  land_sub <- list(veg = veg, vfi = nd[, , "vfi"], tfi = nd[, , "tfi"],
-                   elevation = terrain[, , "elevation"],
-                   wdir = terrain[, , "wdir"], wspeed = terrain[, , "wspeed"])
+  # The signature uses only the non-directional predictors, so the reduced
+  # landscape is all donor_strata() needs.
+  land_sub <- list(veg = veg, vfi = nd[, , "vfi"], tfi = nd[, , "tfi"])
 
   shape <- fire_shape(idx)
   st <- donor_strata(idx, land_sub, max_strata = max_strata)
   cl <- if (is.null(st)) {
-    stats::setNames(rep(NA_real_, 11),
-                    c("vfi", "tfi", "slope", "wind", "converged",
-                      "n_strata", "n_rows",
-                      paste0("sdx_", c("vfi", "tfi", "slope", "wind"))))
+    stats::setNames(rep(NA_real_, 7),
+                    c("vfi", "tfi", "converged", "n_strata", "n_rows",
+                      "sdx_vfi", "sdx_tfi"))
   } else edge_clogit(st)
-  names(cl)[1:4] <- paste0("b_", names(cl)[1:4])
+  names(cl)[1:2] <- paste0("b_", names(cl)[1:2])
 
   list(row = c(unlist(p[c("post", "fwi_id", "fwi_z", par_names, "tile",
                           "ig_row", "ig_col")]),
