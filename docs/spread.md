@@ -180,10 +180,27 @@ not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because 
 split in two after the ignition points were drawn, so it does not reproduce the set. 241 − 57 =
 **184**.
 
-> **Homogeneity trap.** The focal landscapes were built with urban → wet forest
-> (`veg_crosswalk("forest")`, the fitting convention), *not* the non-burnable convention used
-> for the simulation tiles. The 184 must use the same crosswalk, or the observed side of the
-> comparison is built two different ways.
+> **Homogeneity traps.** Splitting the observed set across two vintages creates two ways to
+> build it inconsistently, and both must be closed:
+>
+> 1. **Vegetation crosswalk.** The focal landscapes used urban → wet forest
+>    (`veg_crosswalk("forest")`, the fitting convention), *not* the non-burnable convention used
+>    for the simulation tiles. The 184 must use `"forest"`.
+> 2. **GEE asset vintage.** The focal fires were exported from the legacy
+>    `users/IvanBarbera/Fire_spread/vegetation_ciefap_wwf` and `NDVI_mean_ts`; those assets have
+>    since migrated to `projects/ivanbarbera-001/assets/vegetation_ciefap_wwf_imported` and
+>    `NDVI_mean_ts_1998-2022`, which is what the new script reads. Whether the migrated rasters
+>    are identical is unverified. The script has a `test_ids` switch that re-exports one or two
+>    *focal* fires so they can be diffed against `data/focal_fires/raw_gee/fire_data_raw_<id>.tif`
+>    — run that before launching the 184.
+>
+> The NDVI migration also changed how bands are addressed: the new asset names them `b_<year>`,
+> whereas `"Landscapes export"` selects positionally (`select([year - 1998])`). Selecting by name
+> is not optional — positional indexing would silently take the wrong year if the order differs.
+>
+> `patagonian_fires_spread` keeps its legacy path: it has no cloud-project twin, and
+> `projects/ivanbarbera-001/assets/patagonian_fires` holds only 238 features, missing
+> `1999_1546963766`, `2003_1215845321` and `2014_-1075171770`.
 
 **4. FWI-stratified version.** Repeat 2 and 3 within FWI quartiles — the model's most
 distinctive structural claim is that spatial coefficients move with FWI. The second simulated

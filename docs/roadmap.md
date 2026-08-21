@@ -145,6 +145,13 @@ unresolved — summarized under "Open items" below, full detail in that file).
      `"Landscapes export"` so the 57 fitting landscapes stay reproducible. The 57 are excluded by
      an explicit `fire_id` list taken from the landscape filenames — `ig_points.distinct("Name")`
      has only 53 entries and does not reproduce the set.
+   - **Check the asset vintage first.** The script now reads the migrated cloud-project assets
+     (`NDVI_mean_ts_1998-2022`, `vegetation_ciefap_wwf_imported`) that the tiles script uses,
+     selecting NDVI bands by name (`b_<year>`) rather than positionally as `"Landscapes export"`
+     did. The focal landscapes came from the legacy assets, and whether the migrated rasters are
+     identical is unverified — use the script's `test_ids` switch to re-export one or two focal
+     fires and diff them against `data/focal_fires/raw_gee/fire_data_raw_<id>.tif` before
+     launching the 184.
    - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer arrays
      from those 184 exports, with the **same `veg_crosswalk("forest")`** the focal landscapes
      used — otherwise the observed set is built two different ways.
