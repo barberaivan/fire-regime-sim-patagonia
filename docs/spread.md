@@ -162,9 +162,14 @@ everything the signature needs — `data/focal_fires/landscapes/*.rds` carry `ve
 and the burned layer in the same arrays used for fitting. Only the remaining fires are exported.
 
 - **The 57 focal fires** — read straight off disk. Nothing to re-export.
-- **The 184 fires with unknown ignition point** — GEE script
-  `~/dev/fire_spread-gee/"Landscapes export for signature validation (fires without ignition
-  point)"` (committed there as `ea47e15`). **Written, not yet run.** Exports each fire's own
+- **The 184 fires with unknown ignition point** — two interchangeable drivers in
+  `~/dev/fire_spread-gee/`: the Code Editor script `"Landscapes export for signature validation
+  (fires without ignition point)"` and its Python twin
+  `python/export_signature_landscapes.py`. **Prefer the Python one for the whole batch** — the
+  Code Editor's "run all tasks" plug-in gives up partway (it submitted 129 of 184 before the
+  browser died; nothing was wrong with the exports, all 129 succeeded), while the Python driver
+  submits from outside the browser, derives the fire list at run time so it cannot drift, and
+  skips fires whose task already exists so it is re-runnable. Exports each fire's own
   bounding box + 150 m rather than the pre-computed landscape rectangle — the analysis is
   edge-local, so that is all it needs. Same bands, same `EPSG:5343`; Drive folder
   `raw data from GEE signature`, file prefix `fire_signature_raw_`. Deliberately a **separate
@@ -180,26 +185,26 @@ not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because 
 split in two after the ignition points were drawn, so it does not reproduce the set. 241 − 57 =
 **184**.
 
-> **Homogeneity traps.** Splitting the observed set across two vintages creates two ways to
-> build it inconsistently, and both must be closed:
+> **Homogeneity trap.** Splitting the observed set across two vintages could have made it
+> inconsistent in two ways. One is real and must be honoured; the other was checked and is not a
+> problem.
 >
-> 1. **Vegetation crosswalk.** The focal landscapes used urban → wet forest
+> 1. **Vegetation crosswalk — real.** The focal landscapes used urban → wet forest
 >    (`veg_crosswalk("forest")`, the fitting convention), *not* the non-burnable convention used
 >    for the simulation tiles. The 184 must use `"forest"`.
-> 2. **GEE asset vintage.** The focal fires were exported from the legacy
->    `users/IvanBarbera/Fire_spread/vegetation_ciefap_wwf` and `NDVI_mean_ts`; those assets have
->    since migrated to `projects/ivanbarbera-001/assets/vegetation_ciefap_wwf_imported` and
->    `NDVI_mean_ts_1998-2022`, which is what the new script reads. Whether the migrated rasters
->    are identical is unverified. The script has a `test_ids` switch that re-exports one or two
->    *focal* fires so they can be diffed against `data/focal_fires/raw_gee/fire_data_raw_<id>.tif`
->    — run that before launching the 184.
+> 2. **GEE asset vintage — checked, no problem.** The focal fires were exported from the legacy
+>    `users/IvanBarbera/Fire_spread/{vegetation_ciefap_wwf, NDVI_mean_ts}`, the 184 from the
+>    migrated `projects/ivanbarbera-001/assets/{vegetation_ciefap_wwf_imported,
+>    NDVI_mean_ts_1998-2022}`. Compared directly on 2026-08-21 over a test fire at 30 m:
+>    `max|old − new| = 0` for both vegetation and NDVI. The migrated rasters are pixel-identical
+>    and the band order is unchanged, so the two vintages are interchangeable.
 >
-> The NDVI migration also changed how bands are addressed: the new asset names them `b_<year>`,
-> whereas `"Landscapes export"` selects positionally (`select([year - 1998])`). Selecting by name
-> is not optional — positional indexing would silently take the wrong year if the order differs.
+> The new NDVI asset does name its bands `b_<year>`, and selection is by name — positional
+> indexing happens to give the same answer here (index 16 is `b_2014` in both), but relying on
+> that is needless risk.
 >
-> `patagonian_fires_spread` keeps its legacy path: it has no cloud-project twin, and
-> `projects/ivanbarbera-001/assets/patagonian_fires` holds only 238 features, missing
+> `patagonian_fires_spread` keeps its legacy path, verified still resolving with its 241
+> features. `projects/ivanbarbera-001/assets/patagonian_fires` has only 238, missing
 > `1999_1546963766`, `2003_1215845321` and `2014_-1075171770`.
 
 **4. FWI-stratified version.** Repeat 2 and 3 within FWI quartiles — the model's most

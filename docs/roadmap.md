@@ -136,7 +136,14 @@ unresolved — summarized under "Open items" below, full detail in that file).
    WindNinja.
    - **The 57 focal fires need nothing.** Their existing `data/focal_fires/landscapes/*.rds`
      already carry `veg`, `vfi`, `tfi` and the burned layer. Read them off disk.
-   - **GEE — written, ready to run.** New script
+   - **GEE — SUBMITTED 2026-08-21.** All 184 export tasks are in flight (plus one focal
+     smoke test, `2015_41`). The Code Editor's "run all tasks" plug-in had managed 129 of them
+     before the browser died — all 129 succeeded, so that was a transport failure, not a code
+     one — and the remaining 55 were submitted from the Python driver
+     `~/dev/fire_spread-gee/python/export_signature_landscapes.py`, which is re-runnable
+     (`--status`, `--resubmit-failed`) and is the one to use for a whole batch. Files land in
+     Drive folder "raw data from GEE signature" with prefix `fire_signature_raw_`.
+     Code Editor script
      `~/dev/fire_spread-gee/"Landscapes export for signature validation (fires without ignition
      point)"` (committed there as `ea47e15`): exports the **184** non-focal features of
      `patagonian_fires_spread`, each as its own bounding box + 150 m instead of the big landscape
@@ -145,13 +152,12 @@ unresolved — summarized under "Open items" below, full detail in that file).
      `"Landscapes export"` so the 57 fitting landscapes stay reproducible. The 57 are excluded by
      an explicit `fire_id` list taken from the landscape filenames — `ig_points.distinct("Name")`
      has only 53 entries and does not reproduce the set.
-   - **Check the asset vintage first.** The script now reads the migrated cloud-project assets
-     (`NDVI_mean_ts_1998-2022`, `vegetation_ciefap_wwf_imported`) that the tiles script uses,
-     selecting NDVI bands by name (`b_<year>`) rather than positionally as `"Landscapes export"`
-     did. The focal landscapes came from the legacy assets, and whether the migrated rasters are
-     identical is unverified — use the script's `test_ids` switch to re-export one or two focal
-     fires and diff them against `data/focal_fires/raw_gee/fire_data_raw_<id>.tif` before
-     launching the 184.
+   - **Asset vintage — checked, fine.** The scripts read the migrated cloud-project assets
+     (`NDVI_mean_ts_1998-2022`, `vegetation_ciefap_wwf_imported`), the focal landscapes came from
+     the legacy ones. Compared directly on 2026-08-21 at 30 m over a test fire:
+     `max|old - new| = 0` for both. Band order is unchanged too; NDVI is still selected by name
+     (`b_<year>`) rather than positionally, since relying on the order is needless risk.
+     `patagonian_fires_spread` still resolves at its legacy path with 241 features.
    - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer arrays
      from those 184 exports, with the **same `veg_crosswalk("forest")`** the focal landscapes
      used — otherwise the observed set is built two different ways.

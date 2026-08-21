@@ -103,7 +103,9 @@ to simulate new fires — the tiling lives only there, and R reads the rectangle
 exports), `Landscapes export for signature validation (fires without ignition point)` (reduced
 landscapes for the **184** fires the focal export never covered — fire bounds + 150 m instead of
 the big rectangle; the spread paper's validation needs only `veg`/`vfi`/`tfi` and the burn mask,
-so no ignition point and no WindNinja, and the 57 focal landscapes are reused as they are),
+so no ignition point and no WindNinja, and the 57 focal landscapes are reused as they are; it
+has a **Python twin**, `python/export_signature_landscapes.py`, which is the one to use for a
+whole batch — the Code Editor's "run all tasks" plug-in gives up partway through 184),
 `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports).
 This repo does not keep `.js` copies of GEE code — the `fire_spread-gee` repo is the source of
 truth.
