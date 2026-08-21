@@ -100,10 +100,11 @@ Files have no extension (they're Code Editor scripts). Key ones: `Landscapes exp
 `Landscapes export BalconGut with distance` (per-fire raw exports), `Landscapes export for
 simulation (study area tiles)` (the K latitudinal rectangles covering the whole study area, used
 to simulate new fires — the tiling lives only there, and R reads the rectangles back from the
-exports), `Landscapes export for signature validation (all fires)` (reduced landscapes for **all
-241** mapped fire polygons — fire bounds + 150 m instead of the big rectangle; the spread paper's
-validation needs only `veg`/`vfi`/`tfi` and the burn mask, so no ignition point and no
-WindNinja), `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports).
+exports), `Landscapes export for signature validation (fires without ignition point)` (reduced
+landscapes for the **184** fires the focal export never covered — fire bounds + 150 m instead of
+the big rectangle; the spread paper's validation needs only `veg`/`vfi`/`tfi` and the burn mask,
+so no ignition point and no WindNinja, and the 57 focal landscapes are reused as they are),
+`Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports).
 This repo does not keep `.js` copies of GEE code — the `fire_spread-gee` repo is the source of
 truth.
 

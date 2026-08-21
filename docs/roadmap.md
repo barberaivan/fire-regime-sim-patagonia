@@ -129,19 +129,25 @@ unresolved — summarized under "Open items" below, full detail in that file).
    distribution are one finding, not two. An earlier note here blaming focal-fire selection for
    the size mismatch was wrong and has been removed.
 
-3. **Reduced landscapes for all ~235 mapped fires** — needed so the spatial signature is not
-   restricted to the 57 with a known ignition point. The signature now uses only `vfi` and `tfi`
-   (the directional terms are unmeasurable on observed fires, whose burn order is unknown), so
-   these landscapes need three layers and no WindNinja.
+3. **Reduced landscapes for the 184 fires without an ignition point** — needed so the spatial
+   signature is not restricted to the 57 focal fires (median 388 ha against 47.5 ha for the full
+   record). The signature now uses only `vfi` and `tfi` (the directional terms are unmeasurable
+   on observed fires, whose burn order is unknown), so these landscapes need three layers and no
+   WindNinja.
+   - **The 57 focal fires need nothing.** Their existing `data/focal_fires/landscapes/*.rds`
+     already carry `veg`, `vfi`, `tfi` and the burned layer. Read them off disk.
    - **GEE — written, ready to run.** New script
-     `~/dev/fire_spread-gee/"Landscapes export for signature validation (all fires)"`
-     (committed there as `1c9ae54`): loops all 241 features of `patagonian_fires_spread`, no
-     `ig_points` filter, and exports the fire's own bounding box + 150 m instead of the big
-     landscape rectangle, so the 241 exports stay small. Same bands, same CRS; writes to Drive
-     folder "raw data from GEE signature" with prefix `fire_signature_raw_`. Kept separate from
-     `"Landscapes export"` so the 57 fitting landscapes stay reproducible.
-   - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer
-     arrays from those exports.
+     `~/dev/fire_spread-gee/"Landscapes export for signature validation (fires without ignition
+     point)"` (committed there as `ea47e15`): exports the **184** non-focal features of
+     `patagonian_fires_spread`, each as its own bounding box + 150 m instead of the big landscape
+     rectangle, so the exports stay small. Same bands, same CRS; Drive folder
+     "raw data from GEE signature", prefix `fire_signature_raw_`. Kept separate from
+     `"Landscapes export"` so the 57 fitting landscapes stay reproducible. The 57 are excluded by
+     an explicit `fire_id` list taken from the landscape filenames — `ig_points.distinct("Name")`
+     has only 53 entries and does not reproduce the set.
+   - **R:** a second loop in `data_prep/landscapes_preparation.R` building the three-layer arrays
+     from those 184 exports, with the **same `veg_crosswalk("forest")`** the focal landscapes
+     used — otherwise the observed set is built two different ways.
 
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the

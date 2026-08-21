@@ -76,25 +76,36 @@ burn order is unknown, so they cannot be measured on the observed side at all.
 
 Dropping them drops both expensive requirements at once:
 
-- **no ignition point**, so the set covers **all 241** features of `patagonian_fires_spread`
-  rather than the 57 focal fires — which matters, because the focal fires have a median area of
-  ~388 ha against ~47.5 ha for the full record, and the signature would otherwise inherit that
-  size bias;
+- **no ignition point**, so the observed set can cover all 241 features of
+  `patagonian_fires_spread` rather than the 57 focal fires — which matters, because the focal
+  fires have a median area of ~388 ha against ~47.5 ha for the full record, and the signature
+  would otherwise inherit that size bias;
 - **no wind field**, so no WindNinja — the slow stage of `landscapes_preparation.R`.
+
+Only **184** fires are actually exported. The other 57 are the focal fires, whose existing
+`data/focal_fires/landscapes/*.rds` already carry `veg`, `vfi`, `tfi` and the burned layer — the
+signature reads those off disk unchanged, so re-exporting them would be waste.
 
 | | reduced (validation) |
 |---|---|
-| GEE script | `Landscapes export for signature validation (all fires)` — **written, not yet run** |
+| GEE script | `Landscapes export for signature validation (fires without ignition point)` — **written, not yet run** |
+| Covers | the **184** fires with unknown ignition point; the 57 focal ones are reused as they are |
 | Extent | each fire's own bounding box + 150 m, not the landscape rectangle |
 | Raw exports | Drive `raw data from GEE signature`, prefix `fire_signature_raw_` |
 | Layers kept | `veg`, `vfi`, `tfi`, plus the rasterized burn mask |
 | WindNinja | none |
 | R side | second loop in `landscapes_preparation.R` — **still to write** |
 
+The script excludes the 57 by an explicit `fire_id` list taken from the landscape **filenames**,
+not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because some fires were
+split in two after the ignition points were drawn.
+
 Elevation, slope and aspect are still *exported*, because `tfi` is computed from them, but no
-elevation layer is kept — nothing downstream reads it. Kept as a separate GEE script rather than
-an edit to `Landscapes export`, so re-running that one still reproduces exactly the 57
-landscapes the spread model was fitted on.
+elevation layer is kept — nothing downstream reads it. Build the 184 with the **same
+`veg_crosswalk("forest")`** the focal landscapes used, or the observed set is not homogeneous.
+
+Kept as a separate GEE script rather than an edit to `Landscapes export`, so re-running that one
+still reproduces exactly the 57 landscapes the spread model was fitted on.
 
 ### Study-area tiles
 

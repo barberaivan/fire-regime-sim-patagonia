@@ -128,9 +128,9 @@ cancels in a conditional likelihood, so only the scale has to be undone.
 
 Because the predictors no longer depend on the donor, **the landscape needs only `veg`, `vfi`
 and `tfi`** — no elevation layer, no wind field, no WindNinja. That is what makes it feasible
-to run the signature on **all ~235 mapped fires**, not just the 57 with a known ignition point,
-which removes the size-bias of the focal subsample from this analysis. See *Reduced landscapes*
-below.
+to run the signature on **all 241 mapped fire polygons**, not just the 57 with a known ignition
+point, which removes the size-bias of the focal subsample from this analysis. See *Reduced
+landscapes* below.
 
 This replaces the 1:1 "one unburned edge cell + one random burned neighbour" pairing in
 `validation-and-journal.md` §2.2, which was tested and is strictly weaker: on the 57 observed
@@ -150,25 +150,40 @@ observed and simulated distributions of the statistic agree.
 Edge extraction stays **in R** — measured at 49 ms/fire mean over the 57 focal fires, 0.45 s for
 the largest (300 k cells). There is no case for modifying `FireSpread`'s output contract.
 
-### Reduced landscapes for all mapped fires
+### Reduced landscapes for the fires without an ignition point
 
 The signature needs `veg`, `vfi`, `tfi` and the rasterized burn polygon for every mapped fire.
 `vfi` needs vegetation + NDVI; `tfi` needs elevation + slope + aspect — so the **GEE band set is
 unchanged**, only the fire selection is. What is skipped on the R side is WindNinja, which is
 what made the fire-wise landscapes slow.
 
-- **GEE — written, not yet run.** `~/dev/fire_spread-gee/"Landscapes export for signature
-  validation (all fires)"` (committed there as `1c9ae54`). It loops all **241** features of
-  `patagonian_fires_spread` with no `ig_points` filter, and exports each **fire's own bounding
-  box + 150 m** rather than the pre-computed landscape rectangle — the analysis is edge-local,
-  so that is all it needs, and it keeps 241 exports small. Same bands, same `EPSG:5343`; Drive
-  folder `raw data from GEE signature`, file prefix `fire_signature_raw_`. A `skip_focal` flag
-  (default `false`) can exclude the 57 already exported. Deliberately a **separate script** from
-  `"Landscapes export"`, so the provenance of the 57 fitting landscapes stays reproducible.
-- **R — still to write.** A second loop in `data_prep/landscapes_preparation.R` building and
-  saving the three-layer arrays. No WindNinja, no ignition point, no `steps`; the burned layer
-  comes from the export's `burned` band, and `vfi`/`tfi` reuse `build_landscape()`'s
-  computation unchanged.
+The observed set is assembled from **two sources**, because the 57 focal fires already have
+everything the signature needs — `data/focal_fires/landscapes/*.rds` carry `veg`, `vfi`, `tfi`
+and the burned layer in the same arrays used for fitting. Only the remaining fires are exported.
+
+- **The 57 focal fires** — read straight off disk. Nothing to re-export.
+- **The 184 fires with unknown ignition point** — GEE script
+  `~/dev/fire_spread-gee/"Landscapes export for signature validation (fires without ignition
+  point)"` (committed there as `ea47e15`). **Written, not yet run.** Exports each fire's own
+  bounding box + 150 m rather than the pre-computed landscape rectangle — the analysis is
+  edge-local, so that is all it needs. Same bands, same `EPSG:5343`; Drive folder
+  `raw data from GEE signature`, file prefix `fire_signature_raw_`. Deliberately a **separate
+  script** from `"Landscapes export"`, so the provenance of the 57 fitting landscapes stays
+  reproducible.
+- **R — still to write.** A second loop in `data_prep/landscapes_preparation.R` building the
+  three-layer arrays from those 184 exports. No WindNinja, no ignition point, no `steps`; the
+  burned layer comes from the export's `burned` band, and `vfi`/`tfi` reuse `build_landscape()`
+  unchanged.
+
+The script excludes the 57 by an explicit `fire_id` list taken from the landscape **filenames**,
+not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because some fires were
+split in two after the ignition points were drawn, so it does not reproduce the set. 241 − 57 =
+**184**.
+
+> **Homogeneity trap.** The focal landscapes were built with urban → wet forest
+> (`veg_crosswalk("forest")`, the fitting convention), *not* the non-burnable convention used
+> for the simulation tiles. The 184 must use the same crosswalk, or the observed side of the
+> comparison is built two different ways.
 
 **4. FWI-stratified version.** Repeat 2 and 3 within FWI quartiles — the model's most
 distinctive structural claim is that spatial coefficients move with FWI. The second simulated
