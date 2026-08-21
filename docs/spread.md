@@ -157,14 +157,18 @@ The signature needs `veg`, `vfi`, `tfi` and the rasterized burn polygon for ever
 unchanged**, only the fire selection is. What is skipped on the R side is WindNinja, which is
 what made the fire-wise landscapes slow.
 
-- **GEE** (`~/dev/fire_spread-gee/"Landscapes export"`): the script currently filters `fires`
-  and `landscapes` down to those present in `ig_points` (the 57). Drop that filter and loop the
-  full `patagonian_fires_landscapes` collection. Same bands, same projection, same naming.
-  _Not yet done — this edit lives in the other repo and the export has to be launched from the
-  Code Editor._
-- **R** (`data_prep/landscapes_preparation.R`): a second loop, after the fire-wise one, that
-  builds and saves the three-layer arrays. No wind, no ignition point, no `steps`; the burned
-  layer comes from the export's `burned` band.
+- **GEE — written, not yet run.** `~/dev/fire_spread-gee/"Landscapes export for signature
+  validation (all fires)"` (committed there as `1c9ae54`). It loops all **241** features of
+  `patagonian_fires_spread` with no `ig_points` filter, and exports each **fire's own bounding
+  box + 150 m** rather than the pre-computed landscape rectangle — the analysis is edge-local,
+  so that is all it needs, and it keeps 241 exports small. Same bands, same `EPSG:5343`; Drive
+  folder `raw data from GEE signature`, file prefix `fire_signature_raw_`. A `skip_focal` flag
+  (default `false`) can exclude the 57 already exported. Deliberately a **separate script** from
+  `"Landscapes export"`, so the provenance of the 57 fitting landscapes stays reproducible.
+- **R — still to write.** A second loop in `data_prep/landscapes_preparation.R` building and
+  saving the three-layer arrays. No WindNinja, no ignition point, no `steps`; the burned layer
+  comes from the export's `burned` band, and `vfi`/`tfi` reuse `build_landscape()`'s
+  computation unchanged.
 
 **4. FWI-stratified version.** Repeat 2 and 3 within FWI quartiles — the model's most
 distinctive structural claim is that spatial coefficients move with FWI. The second simulated

@@ -67,6 +67,35 @@ paper needs them for:
 Both scripts have stage flags at the top (`do_windninja`, `do_tiles`, `do_pnnh`, …) so the slow
 WindNinja pass is not re-run by accident.
 
+### A third kind — reduced landscapes for the validation _(planned)_
+
+The spread paper's validation adds a third set, much lighter than the other two. Its per-fire
+"spatial signature" (`docs/spread.md` → *Stage 3 — validation*) is an edge-local conditional
+logit on `vfi` and `tfi` only: the slope and wind terms are directional, and an observed fire's
+burn order is unknown, so they cannot be measured on the observed side at all.
+
+Dropping them drops both expensive requirements at once:
+
+- **no ignition point**, so the set covers **all 241** features of `patagonian_fires_spread`
+  rather than the 57 focal fires — which matters, because the focal fires have a median area of
+  ~388 ha against ~47.5 ha for the full record, and the signature would otherwise inherit that
+  size bias;
+- **no wind field**, so no WindNinja — the slow stage of `landscapes_preparation.R`.
+
+| | reduced (validation) |
+|---|---|
+| GEE script | `Landscapes export for signature validation (all fires)` — **written, not yet run** |
+| Extent | each fire's own bounding box + 150 m, not the landscape rectangle |
+| Raw exports | Drive `raw data from GEE signature`, prefix `fire_signature_raw_` |
+| Layers kept | `veg`, `vfi`, `tfi`, plus the rasterized burn mask |
+| WindNinja | none |
+| R side | second loop in `landscapes_preparation.R` — **still to write** |
+
+Elevation, slope and aspect are still *exported*, because `tfi` is computed from them, but no
+elevation layer is kept — nothing downstream reads it. Kept as a separate GEE script rather than
+an edit to `Landscapes export`, so re-running that one still reproduces exactly the 57
+landscapes the spread model was fitted on.
+
 ### Study-area tiles
 
 The study area of Barberá et al. 2025 is ~600 km of latitude — too much for one export or one

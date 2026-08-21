@@ -100,8 +100,12 @@ Files have no extension (they're Code Editor scripts). Key ones: `Landscapes exp
 `Landscapes export BalconGut with distance` (per-fire raw exports), `Landscapes export for
 simulation (study area tiles)` (the K latitudinal rectangles covering the whole study area, used
 to simulate new fires — the tiling lives only there, and R reads the rectangles back from the
-exports), `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports). This
-repo does not keep `.js` copies of GEE code — the `fire_spread-gee` repo is the source of truth.
+exports), `Landscapes export for signature validation (all fires)` (reduced landscapes for **all
+241** mapped fire polygons — fire bounds + 150 m instead of the big rectangle; the spread paper's
+validation needs only `veg`/`vfi`/`tfi` and the burn mask, so no ignition point and no
+WindNinja), `Export data for ignition model and fire regime simulation (PNNH)` (PNNH exports).
+This repo does not keep `.js` copies of GEE code — the `fire_spread-gee` repo is the source of
+truth.
 
 **Regional vegetation raster** (the `veg` band in every raw export above) is a **cross-repo**
 pipeline: `data_prep/vegetation_lara_merge.R` and `data_prep/vegetation_ciefap_merge.R` (in
