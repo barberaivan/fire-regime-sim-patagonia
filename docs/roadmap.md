@@ -231,6 +231,13 @@ that it is not a bug in `docs/spread.md` → *Why the model cannot make an elong
 
 ### Then
 
+**Manuscript (started 2026-08-26).** `manuscript-spread/ijwf/` is initialised for the target
+journal — *International Journal of Wildland Fire*, Research Article. Rules extracted with their
+sources in `manuscript-spread/IJWF_guidelines/IWJF_guidelines.md`; build with `make` in
+`manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). Writing can start
+before D is finished — Introduction, study area and methods do not depend on the validation
+results.
+
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.
