@@ -1,0 +1,189 @@
+%==============================================================================
+%  Paper 1 — the fire spread model (fitting + validation)
+%  Target: International Journal of Wildland Fire (CSIRO Publishing)
+%  Type:   RESEARCH ARTICLE
+%
+%  ---------------------------------------------------------------------------
+%  COMPLIANCE SUMMARY — full rules + sources in ../IJWF_guidelines/IWJF_guidelines.md
+%  ---------------------------------------------------------------------------
+%   [ ] MAIN TEXT   <= 6000 words, Introduction -> Conclusion ONLY.
+%                   Excluded: title, abstract, references, figure captions, tables.
+%                   Check with:  make words
+%   [ ] ABSTRACT    <= 200 words, STRUCTURED, exactly these labels, in order:
+%                   Background; Aims; Methods; Key results; Conclusions; Implications.
+%                   No citations, equations, lists, tables or figures.
+%   [ ] KEYWORDS    >= 8 (checklist says "eight or more"). Also work them into
+%                   the title and the abstract.
+%   [ ] ONLINE SUMMARY  50-80 words, 3 sentences, jargon-free (optional for IJWF,
+%                   but cheap and it is what shows up on the article landing page).
+%   [ ] LINE NUMBERS  required, continuous -> class option `linenum` (below).
+%   [ ] STATEMENTS  Data availability + Conflicts of interest + Declaration of
+%                   funding are COMPULSORY. AI declaration if AI was used.
+%   [ ] SPECIES     scientific name + authority at first mention, then be consistent.
+%   [ ] UNITS       SI; one convention for rates (m s$^{-1}$ or m/s) throughout.
+%   [ ] STATS       report package citations AND version numbers; state assumptions.
+%   [ ] REFERENCES  Harvard (CSIRO). Full journal names, DOIs, >=3 authors then
+%                   et al., no ellipses. Style file: samplebib.bst.
+%   [ ] SUBMISSION  ScholarOne, cover letter, >= 3 suggested reviewers (no recent
+%                   collaborators / same institution), preprint link if any.
+%
+%  NOTE: IJWF accepts FORMAT-FREE submission — the production team applies journal
+%  style after acceptance. We use the CSIRO class anyway so the layout, the word
+%  budget and the reference style are honest from the start.
+%==============================================================================
+
+\documentclass[ResearchPaper,linenum]{CSIRO_LaTeX_Template}
+
+% --- Harvard punctuation: (Smith 2024; Doe 2025) — no comma before the year ----
+\bibpunct{(}{)}{;}{a}{}{;}
+
+\graphicspath{{figures/}{../figures/}}
+
+\begin{document}
+
+\journaltype{Research Article}
+\jwebadd{https://doi.org/10.1071/WFxxxxx}
+\journalname{International Journal of Wildland Fire}
+
+%------------------------------------------------------------------------------
+% TITLE — accurate, informative, brief; no abbreviations or formulae;
+%         include keywords in it where possible.        [not counted in the 6000]
+%------------------------------------------------------------------------------
+\title{TITLE — a concise, informative title containing the main keywords}
+
+\versorh{Barbera}                                  % verso running head (author)
+\rectorh{International Journal of Wildland Fire}   % recto running head
+
+%------------------------------------------------------------------------------
+% AUTHORS — full first and last names. Corresponding author gets *.
+% ORCID: required for the submitting author, recommended for all. Co-authors MUST
+% link their ORCID to their ScholarOne account BEFORE acceptance (cannot be added later).
+%------------------------------------------------------------------------------
+\author[A,*\orc{0000-0000-0000-0000}]{Iv\'an Barbera}
+% \author[B\orc{0000-0000-0000-0000}]{Co Author}
+
+\affil[A]{Department, university/workplace, city, state, country}{\auorc{0000-0000-0000-0000}{}}
+% \affil[B]{Department, university/workplace, city, state, country}{\auorc{0000-0000-0000-0000}{}}
+
+\corau{*Correspondence to: Email: ivanbarbera93@gmail.com}
+
+%------------------------------------------------------------------------------
+% ABSTRACT — HARD LIMIT 200 WORDS. Structured, these six labels, this order.
+% No citations, no equations, no lists. Include the keywords. Define any
+% abbreviation here AND again at first use in the body.
+%------------------------------------------------------------------------------
+%TC:ignore
+\begin{abstract}
+\textbf{Background.} One or two sentences of context.
+\textbf{Aims.} What this study set out to do.
+\textbf{Methods.} How it was done.
+\textbf{Key results.} What was found.
+\textbf{Conclusions.} What it means.
+\textbf{Implications.} Why it matters beyond this study.
+\end{abstract}
+
+%------------------------------------------------------------------------------
+% KEYWORDS — EIGHT OR MORE. Alphabetical is the usual CSIRO presentation.
+%------------------------------------------------------------------------------
+\begin{keywords}
+keyword 1, keyword 2, keyword 3, keyword 4, keyword 5, keyword 6, keyword 7, keyword 8.
+\end{keywords}
+%TC:endignore
+
+\maketitle
+
+%==============================================================================
+%  THE 6000-WORD BUDGET STARTS HERE AND ENDS AT THE END OF THE CONCLUSION.
+%  Everything between %TC:ignore ... %TC:endignore is excluded from `make words`.
+%==============================================================================
+
+\section{Introduction}
+
+Text.
+
+\section{Materials and methods}
+
+% Report software with version numbers and cite the packages; state the
+% assumptions behind every statistical method.
+% Species: scientific name + authority at first mention.
+
+\subsection{Study area}
+
+\subsection{The spread model}
+
+\subsection{Parameter estimation}
+
+\subsection{Validation}
+
+\section{Results}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+%==============================================================================
+%  END OF THE 6000-WORD BUDGET.
+%==============================================================================
+%TC:ignore
+
+%------------------------------------------------------------------------------
+% ONLINE SUMMARY — 50-80 words, exactly three sentences, for non-experts:
+%   1. engage the reader / why this area matters
+%   2. the problem addressed + the main discovery
+%   3. the bigger picture (implications, impact)
+% Optional image alongside it (needs permission + photographer credit).
+%------------------------------------------------------------------------------
+\begin{onlinesummarytext}[Online Summary Text:]
+Sentence one. Sentence two. Sentence three.
+\end{onlinesummarytext}
+
+\section{Supplementary material}
+
+Refer to it in the text as `Table S1 and Fig. S1, available as Supplementary material'.
+Supplementary items are numbered separately from the main text and submitted as separate
+file(s). The model's statistical detail belongs here rather than in the main text.
+
+\section{Acknowledgements}
+
+%------------------------------------------------------------------------------
+% REFERENCES — Harvard (CSIRO). BibTeX with the class's own style file.
+% natbib is loaded by the class in authoryear mode:
+%   \citep{key}     -> (Smith 2024)
+%   \citet{key}     -> Smith (2024)
+%   \citep[p.~6]{k} -> (Smith 2024, p. 6)
+%   several keys in ONE \citep{a,b} -> chronological order, ';' separated
+% Multiple keys in one \citep must be listed in CHRONOLOGICAL order — natbib does
+% not sort them for us, the class loads it without the `sort` option.
+% Reminder: full journal names (never abbreviated), DOIs where available,
+% >= 3 author names then et al., never ellipses.
+% ijwf.bst is our patched copy of the CSIRO samplebib.bst — see README.md here.
+%------------------------------------------------------------------------------
+\bibliographystyle{ijwf}
+\bibliography{references}
+
+%------------------------------------------------------------------------------
+% COMPULSORY AUTHOR STATEMENTS
+%------------------------------------------------------------------------------
+\begin{framedbox}
+
+\boxsection{Data availability (compulsory)}
+Code: \url{https://github.com/barberaivan/fire-regime-sim-patagonia} and the spread engine
+\url{https://github.com/barberaivan/FireSpread}. State where the data are, or why they are not
+available. Examples: \url{https://www.publish.csiro.au/journals/publishingpolicies\#6}
+
+\boxsection{Conflicts of interest (compulsory)}
+The authors declare that they have no conflicts of interest.
+
+\boxsection{Declaration of funding (compulsory)}
+Include every funding source and grant numbers where available. If none: `This research did not
+receive any specific funding.'
+
+\boxsection{Author contributions (optional)}
+
+\boxsection{Declaration of use of AI (if applicable)}
+See \url{https://www.publish.csiro.au/journals/publishingpolicies\#2}
+
+\end{framedbox}
+%TC:endignore
+
+\end{document}
