@@ -58,10 +58,21 @@ model/statistical detail. Keep them in sync, not duplicated.
 
 ## Prior work — PhD thesis
 
-The **older version** of these models is described in the PhD thesis, **chapter 4 (`04_modelos`)
-and its supplementary**: <https://github.com/barberaivan/phd-thesis-fire-patagonia>
-(local clone `~/dev/phd-thesis-fire-patagonia`). Read it for background, but note what has
-**changed since** and must not be assumed current:
+When the user says **"the thesis"**, this is it: Barberá (2025), *El fuego en el norte de la
+Patagonia Andina…*, UNCo — <https://github.com/barberaivan/phd-thesis-fire-patagonia>, **local
+clone `~/dev/phd-thesis-fire-patagonia`** (the place to read it; it is not in the Insync folder).
+In Spanish, LaTeX sources under `tex/secciones/`, plain text and meant to be ingested directly:
+
+| Read | For |
+|------|-----|
+| `tex/secciones/04_modelos.tex` + `tex/secciones/09_append_modelos.tex` | **chapter 4 + its supplementary** — the older version of ignition/escape/spread and the regime simulator; the main source for both manuscripts |
+| `tex/secciones/03_patrones.tex` + `08_append_patrones.tex` | landscape-scale burn-probability patterns (published: Fire Ecology 2025, doi 10.1186/s42408-025-00353-8) |
+| `tex/secciones/02_palitos.tex` + `07_append_palitos.tex` | site-scale fuel moisture / microclimate (published: Agric. For. Meteorol. 2023, doi 10.1016/j.agrformet.2022.109289) |
+| `tex/secciones/01_introduccion.tex`, `05_discusion.tex`, `00_resumen_ingles.tex` | framing, and the English summary |
+| `tex/bibliografia.bib` | the thesis bibliography — reuse entries in the manuscripts |
+| `barbera-thesis-2025.pdf` | the defended PDF (233 pp), for figures/layout |
+
+Read it for background, but note what has **changed since** and must not be assumed current:
 - the **spread parameter estimation method** changed (thesis → this repo's ABC-SMC + hierarchical fit);
 - the **spread model evaluation** is going to change;
 - in the regime paper, **a few functions in the spatial ignition model will change**.

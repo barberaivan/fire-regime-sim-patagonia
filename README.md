@@ -27,9 +27,11 @@ Each code folder has its own short `README.md`; the full detail lives in **[`doc
 (start with [`docs/architecture.md`](docs/architecture.md) for the module map and dependency
 tree). Scripts assume the **repo root** as the working directory (open the `.Rproj`).
 
-The **older version** of these models is documented in the PhD thesis (chapter 4 + supplementary):
-<https://github.com/barberaivan/phd-thesis-fire-patagonia>. Several methods have changed since —
-see `CLAUDE.md`.
+The **older version** of these models is documented in the PhD thesis, Barberá (2025), chapter 4
+(`tex/secciones/04_modelos.tex`) + its appendix (`09_append_modelos.tex`):
+<https://github.com/barberaivan/phd-thesis-fire-patagonia> (local clone
+`~/dev/phd-thesis-fire-patagonia`). Several methods have changed since — see `CLAUDE.md` →
+*Prior work — PhD thesis* for the chapter-by-chapter map and what is no longer current.
 
 ---
 
