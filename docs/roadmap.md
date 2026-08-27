@@ -6,7 +6,7 @@ answers one question when you come back after a gap: *what's the current state, 
 next thing to do?* Update the two sections below as work progresses; don't accumulate history
 here — that's what git log and `docs/migration.md` are for.
 
-**Last updated:** 2026-08-21
+**Last updated:** 2026-08-27
 
 **Open to-dos live in `docs/migration.md`'s TODO register** (items #6, #7, #9 are still
 unresolved — summarized under "Open items" below, full detail in that file).
@@ -242,6 +242,15 @@ results.
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.
 5. **TODO #9 decision** (see above) — resolve before sharing the store, not urgent otherwise.
+
+6. **Redesign the season simulator before the TODO #7 re-run** — design note in
+   `docs/fire-regime.md` → *Computational redesign of the season simulator*. `simulate.R` stalls
+   at 2–3 workers because it carries a mutable full landscape (`pnnh_land_dyn`) that forking
+   copies per worker; the engine only ever reads the clip, so the burned state can be a small
+   mask stamped into the clip instead, leaving `pnnh_land` read-only and shared. Also covers the
+   quadratic accumulators, whether the season loop should move to C++, and what changes once a
+   simulation is 100 sequential seasons with vegetation updating. Steps 1–3 of its *Order of
+   work* are cheap and should precede the multi-day re-run.
 
 Deliberately **not** done, per the current scope: a general "build a landscape for any ROI"
 function. `build_landscape()` is general enough to take any raster stack with the right bands,
