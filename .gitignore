@@ -77,6 +77,12 @@ files
 manuscript-spread/**/build/
 manuscript-regime/**/build/
 
+# A compile launched without -outdir (e.g. LaTeX Workshop) drops the PDF next to
+# the .tex. The manuscript PDF is build output, not a source — the guidelines and
+# template PDFs elsewhere in these folders stay tracked.
+manuscript-spread/*/spread-paper.pdf
+manuscript-regime/*/regime-paper.pdf
+
 # ─── Diagnostic/analysis figures written directly by fitting scripts ───
 # (spread/hierarchical_fit.R, ignition_escape/fit.R) — regenerable output, not curated
 # manuscript figures (those live in manuscript-*/figures/ and ARE committed).

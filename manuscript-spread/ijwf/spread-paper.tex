@@ -4,7 +4,7 @@
 %  Type:   RESEARCH ARTICLE
 %
 %  ---------------------------------------------------------------------------
-%  COMPLIANCE SUMMARY — full rules + sources in ../IJWF_guidelines/IWJF_guidelines.md
+%  COMPLIANCE SUMMARY — full rules + sources in guidelines/IWJF_guidelines.md
 %  ---------------------------------------------------------------------------
 %   [ ] MAIN TEXT   <= 6000 words, Introduction -> Conclusion ONLY.
 %                   Excluded: title, abstract, references, figure captions, tables.
@@ -49,7 +49,7 @@
 % TITLE — accurate, informative, brief; no abbreviations or formulae;
 %         include keywords in it where possible.        [not counted in the 6000]
 %------------------------------------------------------------------------------
-\title{TITLE — a concise, informative title containing the main keywords}
+\title{Fitting a hierarchical fire spread model with Approximate Bayesian Computation}
 
 \versorh{Barbera}                                  % verso running head (author)
 \rectorh{International Journal of Wildland Fire}   % recto running head
@@ -99,7 +99,7 @@ keyword 1, keyword 2, keyword 3, keyword 4, keyword 5, keyword 6, keyword 7, key
 
 \section{Introduction}
 
-Text.
+Bla bla. 
 
 \section{Materials and methods}
 
@@ -107,19 +107,47 @@ Text.
 % assumptions behind every statistical method.
 % Species: scientific name + authority at first mention.
 
+[
+Claude, write all this section based on the thesis. 
+I think the study area there only points out to the previous chapter, and mentions that ignition and scape models are based on the PNNH. 
+That should not be so. 
+Here, make a brief description of the study area, and cite the paper Barberá et al. 2025, from which the fire maps were obtained.
+Zero mention to the PNNH area, that's out of scope.
+]
+
 \subsection{Study area}
 
 \subsection{The spread model}
 
+[
+Claude, note some variables must be renamed to english:
+IIT e IIV son TFI and VFI (topographic flammability index and vegetation flammability index).
+Check if we need more renaming.
+]
+
 \subsection{Parameter estimation}
+
+[Claude, the fire-wise posteriors (1st step) were estimated differently from the thesis. 
+Here we used SMC with DE-MCMC moves, so check the code and add the corresponding citations for those 2 methods (I think they are mentioned in the code). 
+The second stage, the hierarchical fit, is just like in the thesis.]
 
 \subsection{Validation}
 
+[Claude, This is completely new, not in the thesis.
+Base this on the validation .md and on the code. 
+Perhaps we still have to decide what to show here from what was done, the code may still differ a bit from what was written in the .md. Note those discrepancies in the comments.]
+
 \section{Results}
+
+Bla.
 
 \section{Discussion}
 
+Bla.
+
 \section{Conclusion}
+
+Bla.
 
 %==============================================================================
 %  END OF THE 6000-WORD BUDGET.
@@ -144,6 +172,8 @@ Supplementary items are numbered separately from the main text and submitted as 
 file(s). The model's statistical detail belongs here rather than in the main text.
 
 \section{Acknowledgements}
+
+[Claude, here thank people who provided ignition data besides Marcelo Bari, as he will be a coauthor. That is probably mentioned in the chapter 4 of the thesis and maybe in agradecimientos too.]
 
 %------------------------------------------------------------------------------
 % REFERENCES — Harvard (CSIRO). BibTeX with the class's own style file.

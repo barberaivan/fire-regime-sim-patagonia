@@ -4,7 +4,7 @@ Paper 1 — the fire spread model — formatted for the **International Journal 
 (CSIRO Publishing), **Research Article**.
 
 The rules this folder implements are extracted, with sources, in
-[`../IJWF_guidelines/IWJF_guidelines.md`](../IJWF_guidelines/IWJF_guidelines.md).
+[`guidelines/IWJF_guidelines.md`](guidelines/IWJF_guidelines.md).
 The `.tex` header repeats the ones you have to keep honouring while writing.
 
 ## Files
@@ -21,7 +21,7 @@ The `.tex` header repeats the ones you have to keep honouring while writing.
 | `build/` | everything the compile generates — gitignored |
 
 The pristine CSIRO template (class, `samplebib.bst`, Word template, author guide) is in
-`../IJWF_guidelines/CSIRO_LaTeX_Author_Template.zip`.
+`guidelines/CSIRO_LaTeX_Author_Template.zip`.
 
 ## Building
 
@@ -56,7 +56,7 @@ under 6000.
 
 `ijwf.bst` is `samplebib.bst` (CSIRO's own, which their author guide admits is "similar to
 sample style but not exactly the same") patched to reproduce the examples in
-`../IJWF_guidelines/Harvard-refs-styly-examples.pdf`:
+`guidelines/Harvard-refs-styly-examples.pdf`:
 
 - authors as `Povh LF, Willers N, Fleming PA` — no comma between surname and initials, no stops
   in initials, no "and"/"&" before the last author

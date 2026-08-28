@@ -99,6 +99,11 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
   `barberaivan/FireSpread`). Scripts source its R wrappers and `library(FireSpread)`.
 - Prefer functions over top-level scripts; keep MCMC/algorithm cores in `R/`, and keep the
   regime **simulator as a standalone function** so the production side can extract it.
+- **Notes to Claude inside the manuscripts.** In the `.tex` sources, a bracketed block that
+  starts with `[Claude, …]` is an instruction from Iván about what to write there — not text of
+  the paper. The `[` is sometimes alone on its own line; that means the same thing. Read them,
+  write the requested prose in their place, and delete the block once it is honoured (keep it,
+  or leave a `%` comment, if the instruction still needs a decision from him).
 
 ## GEE Code Editor scripts (separate repo)
 

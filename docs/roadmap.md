@@ -233,7 +233,7 @@ that it is not a bug in `docs/spread.md` → *Why the model cannot make an elong
 
 **Manuscript (started 2026-08-26).** `manuscript-spread/ijwf/` is initialised for the target
 journal — *International Journal of Wildland Fire*, Research Article. Rules extracted with their
-sources in `manuscript-spread/IJWF_guidelines/IWJF_guidelines.md`; build with `make` in
+sources in `manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
 `manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). Writing can start
 before D is finished — Introduction, study area and methods do not depend on the validation
 results.

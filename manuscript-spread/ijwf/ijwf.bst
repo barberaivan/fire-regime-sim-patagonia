@@ -2,7 +2,7 @@
 %% Harvard reference style. Derived from samplebib.bst (shipped with the CSIRO
 %% LaTeX Author Template), patched to match the published examples in
 %% https://connectsci.au/DocumentLibrary/Harvard-refs.pdf
-%% See ../IJWF_guidelines/IWJF_guidelines.md, section 11.
+%% See guidelines/IWJF_guidelines.md, section 11.
 %% CSIRO requires a MODIFIED .bst to be submitted together with the sources.
 
 ENTRY

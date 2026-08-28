@@ -5,14 +5,14 @@ LaTeX sources for **paper 1 — the fire spread model** (fitting procedure + val
 ```
 manuscript-spread/
 ├── ijwf/               # the manuscript, formatted for the target journal  ← write here
-├── IJWF_guidelines/    # the journal's rules, extracted + the original CSIRO template/PDFs
+│   └── guidelines/     # the journal's rules, extracted + the original CSIRO template/PDFs
 ├── figures/            # publication-ready figures (committed)
 └── validation-and-journal.md   # validation strategy + journal-targeting notes
 ```
 
 **Target journal: *International Journal of Wildland Fire*** (CSIRO Publishing), Research
 Article — 6000 words, 200-word structured abstract, ≥8 keywords. The rules, with their sources,
-are in [`IJWF_guidelines/IWJF_guidelines.md`](IJWF_guidelines/IWJF_guidelines.md); how to build
+are in [`ijwf/guidelines/IWJF_guidelines.md`](ijwf/guidelines/IWJF_guidelines.md); how to build
 the thing is in [`ijwf/README.md`](ijwf/README.md).
 
 The folder is named for the journal, not for the format: if the paper is ever retargeted, that
