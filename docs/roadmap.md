@@ -175,23 +175,35 @@ observed 0.578 and 1.881. Both look displaced, and `b_tfi` has the wrong sign fo
 but the observed pilot was not conditioned on size, which is exactly what D's size-conditioned
 comparison is for. Do not read the gap off these two numbers.
 
-### B. Build the 184 reduced landscapes — blocked on the download
+### B. Build the 184 reduced landscapes — **the export and the download are done; the R loop is not**
 
-**All 185 export tasks SUCCEEDED** (the 184 targets plus the `2015_41` focal smoke test), in
-Drive folder `raw data from GEE signature`, files named `fire_signature_raw_<fire_id>.tif`.
-They are **not downloaded yet** — that folder is not in Insync's selective sync. Either add it,
-or download and unzip into:
+**Exports: done.** All 185 tasks SUCCEEDED (the 184 targets plus the `2015_41` focal smoke
+test), submitted by `~/dev/fire_spread-gee/python/export_signature_landscapes.py`.
+
+**Download: done (2026-08-28).** The 184 `.tif` are on disk, verified against the collection —
+every target present, none missing, no duplicate files:
 
 ```
-data/signature_landscapes/raw_gee/      <- the 184 .tif (new)
-data/signature_landscapes/landscapes/   <- the 184 .rds this step writes
+data/signature_landscapes/raw_gee/      <- the 184 .tif                   DONE
+data/signature_landscapes/smoke_test/   <- fire_signature_raw_2015_41.tif, the focal
+                                           smoke test; diff it against
+                                           data/focal_fires/raw_gee/fire_data_raw_2015_41.tif
+                                           if the vintages are ever doubted again. Not input.
+data/signature_landscapes/landscapes/   <- the 184 .rds this step writes  TO DO
 ```
 
-mirroring `data/focal_fires/` and `data/simulation_landscapes/`. Then write a second loop in
-`data_prep/landscapes_preparation.R` that, per fire: reads the tif, computes `vfi` from
-`veg` + detrended `ndvi_prev`, `tfi` from `elevation`/`slope`/`aspect`, and saves a list with the
-three layers plus the rasterized `burned` band. Reuses `build_landscape()`; **no WindNinja, no
-ignition point, no `steps`**.
+> A warning for anyone re-running the export: `--status` in that script collapses tasks by
+> description and reports the best state per name, so a **re-submission of an already-finished
+> batch looks like "185 SUCCEEDED" while 122 duplicates sit in the queue**. On 2026-08-28 a
+> second full wave was launched by mistake and had to be cancelled by hand. Check
+> `ee.data.listOperations()` for live states before resubmitting anything.
+
+**What is left: the R loop.** Write a second loop in `data_prep/landscapes_preparation.R` that,
+per fire, reads the tif, computes `vfi` from `veg` + detrended `ndvi_prev`, `tfi` from
+`elevation`/`slope`/`aspect`, and saves a list with the three layers plus the rasterized
+`burned` band into `data/signature_landscapes/landscapes/<fire_id>.rds` — mirroring
+`data/focal_fires/`. Reuses `build_landscape()`; **no WindNinja, no ignition point, no
+`steps`**.
 
 > Two things this loop must get right, or the observed set is inconsistent:
 > - **`veg_crosswalk("forest")`** — urban → wet forest, the convention the 57 focal landscapes
@@ -203,7 +215,7 @@ ignition point, no `steps`**.
 > against the legacy ones at 30 m and are pixel-identical (`max|old − new| = 0`), band order
 > unchanged.
 
-### C. Observed signature for all 241 fires — blocked on B
+### C. Observed signature for all 241 fires — blocked on B's R loop
 
 Run `donor_strata()` + `edge_clogit()` (`R/spread_validation_functions.R`) over the 57 focal
 landscapes *and* the 184 new ones, and `fire_shape()` over all 238 mapped polygons. Already
