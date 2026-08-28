@@ -109,18 +109,8 @@ Bla bla.
 % Report software with version numbers and cite the packages; state the
 % assumptions behind every statistical method.
 % Species: scientific name + authority at first mention.
-%
-% FIGURES THIS SECTION COULD CITE — none are cited yet, so nothing here forces a
-% number. IJWF numbers figures in order of FIRST CITATION, so anything cited from
-% Methods takes the low numbers and pushes the results figures down; that is why
-% the three candidates below are left as TODO comments in the text rather than as
-% \ref{}s. See designing.txt for the planned results figures.
-%   (a) study area: extent, elevation, vegetation types, the mapped fires, and the
-%       57 with a known ignition point highlighted
-%   (b) schematic of the spread model (the 8-neighbour Bernoulli step) and of the
-%       two-stage estimation, incl. the flammability indices
-%   (c) the validation experiment: how simulated and observed fires are made
-%       comparable (tiles, 10 ha threshold, donor strata, shape axes)
+
+[Claude, make and add the study area figure].
 
 \subsection{Study area}
 
@@ -161,29 +151,15 @@ fire-prone years are those with warm summers preceded by dry springs
 
 \subsection{Data}
 
-% [Claude → Iván] I added this subsection: the four you listed left the data
-% sources with nowhere to go, and putting them inside "The spread model" made that
-% subsection do two jobs. Merge it back into "Study area" if you prefer.
-
 Fires were taken from the atlas of \citet{barbera_patterns}, which maps every fire
 $\ge$\,10\,ha in the study area over the 24 fire seasons from July 1998 to June 2022
-from Landsat imagery at 30\,m resolution. Fitting the spread model requires the
-ignition point as well as the final perimeter, and the ignition point could be
-established for 57 fires, supplied by fire management personnel and by a
-lightning-ignition database. The remaining 178 mapped fires were used to  % TODO cite the study-area figure here if one is included
-inform the parameters that control simulated fire size, as described below.
-
-% [Claude → Iván] the fire counts do not agree across sources and one of them has to
-% be corrected before submission:
-%   235 = 57 + 178   the fires that entered the hierarchical fit (thesis, and
-%                    spread/hierarchical_fit.R: J1 = 57, J2 = 178)
-%   233              distinct fires in the FWI-by-fire csv (two fires were split
-%                    after the fact, so the model has 235 rows for 233 fires)
-%   238              polygons used for the shape metrics
-%   241              features in data/patagonian_fires_spread.shp (241 - 57 = 184,
-%                    the fires exported for the signature analysis)
-% docs/spread.md records all four. Decide which is "the mapped record" for this
-% paper and make the Data, Validation and Results text agree.
+from Landsat imagery at 30\,m resolution. Weather data were available for 235 of them, and
+those are the fires used here. Fitting the spread model requires the ignition point as well
+as the final perimeter, and the ignition point could be established for 57 fires, supplied
+by fire management personnel and by a lightning-ignition database.
+% TODO cite the study-area figure here once it exists
+The remaining 178 fires were used to inform the parameters that control simulated fire
+size, as described below.
 
 The model uses five groups of predictors, all resolved to the 30\,m grid:
 
@@ -233,17 +209,6 @@ Space and time are discrete throughout: the landscape is a rectangular grid of
 years running from 1 July to 30 June and named after the month in which they end.
 
 \subsection{The spread model}
-
-% [Claude → Iván] renamings applied here, beyond IIV → VFI and IIT → TFI:
-%   quincena → fortnight;  pasos → steps ($\kappa$);  solapamiento → overlap;
-%   orientación norte → northness;  bosque húmedo/subalpino/seco → wet/subalpine/dry
-%   forest;  matorral → shrubland;  pastizal → grassland;
-%   "previa redundante" → surrogate prior (and it is now simply uniform, see below);
-%   "parámetros ajustados/simulados" → fitted / simulated parameters.
-% Symbol changes to avoid clashes that the thesis tolerated: the flammability-index
-% coefficients are $a_v$, $b_v$, $c_v$ (the thesis called them $\alpha_v$, $\beta_v$,
-% $\omega_v$, which collided with the spread coefficients $\beta$); aspect is $\Phi$
-% (the thesis used $L$, which collided with the vector of lower bounds $\mathbf{L}$).
 
 \subsubsection*{Flammability indices}
 
@@ -433,23 +398,6 @@ respectively.
 
 \subsection{Parameter estimation}
 
-% [Claude → Iván] this is the subsection that departs most from the thesis. What
-% changed, all of it read off spread/stage1_smc.R rather than from the chapter:
-%   - stage 1 is ABC-SMC with DE-MCMC moves, not the adaptive rejection sampler;
-%   - the surrogate prior is now simply uniform over [L, U] (logistic on the
-%     unconstrained scale), so the thesis's "redundant priors" and the fitted
-%     skew-normal proposal are gone, and with them the 50 000-simulation
-%     exploration phase used to build them;
-%   - distance is 1 - overlap directly; the per-fire normalization by T_f (the 99th
-%     percentile of overlap found during exploration) is gone, and so is the
-%     exponential-quadratic kernel. The kernel is now K(d) = (1 - d) I(d <= eps),
-%     i.e. the overlap itself truncated at the current tolerance;
-%   - the tolerance is chosen adaptively by bisection at each iteration to halve
-%     the effective sample size, instead of being fixed in advance.
-% Stage 2 is unchanged from the thesis, as you said.
-% CHECK BEFORE SUBMISSION: the R version (4.2.0 is what the thesis reported) and
-% the FireSpread / terra / survival versions actually used for the final run.
-
 Fitting the spread model is hard because the cell-to-cell spread events $y_{ijk}$ are not
 observed. At best the ignition point and the final perimeter of a fire are known; how the
 fire moved from cell to cell is not, and could not be recorded, since fire advances
@@ -486,15 +434,15 @@ The full hierarchical model could not be sampled directly: the parameters are ma
 kernel is stochastic, and it varies abruptly with $\boldsymbol{\beta}$, which makes
 conventional MCMC prohibitively expensive. We therefore fitted it in two stages, following
 \citet{lunn2013fully}: stage 1 samples the posterior of $\boldsymbol{\beta}_f$ separately
-for each fire under a surrogate prior, and stage 2 combines those samples to estimate the
-hyperparameters, discounting the surrogate prior in the process. Splitting the model this
+for each fire under a placeholder prior, and stage 2 combines those samples to estimate the
+hyperparameters, discounting the placeholder prior in the process. Splitting the model this
 way lets the difficult step --- sampling $\boldsymbol{\beta}_f$ --- be handled with
 whatever algorithm suits it.
 
 \subsubsection*{Stage 1 --- fire-wise posteriors}
 
 For each of the 57 fires with a known ignition point we sampled $\boldsymbol{\beta}_f$
-with adaptive ABC sequential Monte Carlo \citep{delmoral2012adaptive}. The surrogate prior
+with adaptive ABC sequential Monte Carlo \citep{delmoral2012adaptive}. The placeholder prior
 is uniform over the bounded parameter space $[\mathbf{L}, \mathbf{U}]$, which is a
 standard logistic distribution on the unconstrained scale on which the sampler works. We
 used $N = 10\,000$ particles, initialized from a Sobol sequence, and one simulated fire
@@ -513,17 +461,16 @@ scaled difference between two other particles drawn with probability proportiona
 their weights, plus a small Gaussian jitter (scale $10^{-3}$). Sampling stopped when the
 acceptance rate fell below 0.015, when fewer than 300 distinct particles survived a move,
 or when $\varepsilon$ stopped decreasing appreciably (less than $10^{-4}$ for ten
-consecutive iterations). The upper bound on $\kappa$ was set per fire to the value that
-allows simulating fires large enough to reach a very low overlap with the observed one,
-which bounds the search without excluding plausible sizes.
-
-% [Claude → Iván] "very low overlap" is get_bounds() in spread/stage1_smc.R. If it
-% still targets overlap ~= 0.05, as the thesis says, put the number back in.
+consecutive iterations). The upper bound on $\kappa$ was set separately for each fire, by
+simulating that fire's landscape with a spread probability of 1 and no step limit and
+recording the number of steps consumed before no burnable cell remained within reach.
+Beyond that value more steps cannot change the simulated fire, so the bound restricts the
+search without excluding any attainable fire size.
 
 \subsubsection*{Stage 2 --- hierarchical fit}
 
 Stage 2 ran an MCMC over all parameters, using the stage-1 samples as the proposal
-distribution for each $\boldsymbol{\beta}_f$, discounting the stage-1 surrogate prior, and
+distribution for each $\boldsymbol{\beta}_f$, discounting the stage-1 placeholder prior, and
 updating most hyperparameters by Gibbs steps \citep{lunn2013fully}.
 
 The 57 fires with a known ignition point are larger, on average, than the mapped record as
@@ -547,31 +494,11 @@ threshold. The prior on $\alpha_0$ was centred on the mean of $\log(a)$ over all
 fires so as not to bias its estimation.
 
 The fire simulator is written in C\texttt{++} and distributed as the R package
-\texttt{FireSpread} \citep{firespread} through \texttt{Rcpp} \citep{Rcpp}. All fitting and
-analysis was done in R 4.2.0 \citep{R}, with \texttt{terra} \citep{terra} for spatial data.
+\texttt{FireSpread} v1.4 \citep{firespread} through \texttt{Rcpp} v1.1.0 \citep{Rcpp}. All
+fitting and analysis was done in R 4.5.3 \citep{R}, with \texttt{terra} v1.8.70
+\citep{terra} for spatial data.
 
 \subsection{Validation}
-
-% [Claude → Iván] Nothing here comes from the thesis. Written from
-% manuscript-spread/validation-and-journal.md and docs/spread.md, and the
-% discrepancies you asked me to flag are marked below. State of play as of writing:
-%   - the simulation experiment HAS RUN (64,836 accepted fires, on disk since
-%     2026-08-21), so §"The simulation experiment" describes something done;
-%   - the shape metrics on the observed polygons HAVE RUN;
-%   - the spatial signature on the full observed set HAS NOT: it is blocked on
-%     downloading the 184 reduced landscapes from GEE (roadmap §B/C). Only the 57
-%     focal fires have been run. So the last analysis is written as designed, not as
-%     completed. Do not leave it in this state at submission.
-% Discrepancies between validation-and-journal.md and what the code actually does:
-%   1. the .md specifies a 1:1 pairing (one unburned edge cell + one random burned
-%      neighbour); the code uses donor-centred strata. The .md's own §2.2 records
-%      the switch, and docs/spread.md gives the evidence. Text below follows the code.
-%   2. the .md lists four predictors in the signature regression (VFI, TFI, slope,
-%      wind); the code fits VFI and TFI only, because slope and wind are directional
-%      and not computable for an observed fire. Text below follows the code.
-%   3. the .md targets N = 50,000 simulated fires; the run accepted 64,836.
-%   4. the .md's FWI-uniform second simulated dataset was deferred and not run.
-%      It is not mentioned below. Say so in the discussion if a reviewer would miss it.
 
 Classical train/test validation is not appropriate here, for reasons we return to in the
 Discussion, and burn-probability models of this kind are conventionally judged on the
@@ -620,7 +547,8 @@ elongation, as the ratio of the principal axes, and orientation, as the bearing 
 leading eigenvector. Orientation is compared with the dominant wind axis, so that
 wind-driven fires should run along it. These metrics need only a rasterized perimeter, so
 the observed reference is every mapped fire in every size class, not only the 57 with a
-known ignition point. For simulated fires, where the wind field is known, we additionally
+known ignition point --- and, for the same reason, it does not require a fire to have
+usable weather data. For simulated fires, where the wind field is known, we additionally
 measured elongation \emph{along the wind axis} --- spread along it divided by spread across
 it --- taking the axis as the circular mean of wind direction over the cells the fire
 burned, since WindNinja steers the field by terrain.
@@ -680,16 +608,9 @@ file(s). The model's statistical detail belongs here rather than in the main tex
 
 \section{Acknowledgements}
 
-We thank Sandro Lobos and Jorge Bonansea (Brigada de Puerto Patriada, Servicio
-Provincial de Manejo del Fuego, Chubut), who located the ignition points of many of the
-fires used to fit the spread model, and Iván Renison, who structured the fire simulator
-into the \texttt{FireSpread} R package.
-% [Claude → Iván] From ch. 4 and the thesis acknowledgements the people who supplied
-% ignition points were Marcelo Bari (co-author, so not thanked here), Sandro Lobos and
-% Jorge Bonansea; some points came from the Kitzberger & Bürgesser lightning database.
-% Add a line for that database if Thomas is not a co-author on this paper, and check
-% whether the PICT-2017-2142 grant and the CONICET fellowship belong in the funding
-% statement below rather than here.
+We thank Sandro Lobos and Jorge Bonansea (Brigada de Puerto Patriada, Servicio Provincial
+de Manejo del Fuego, Chubut), who located the ignition points of many of the fires used to
+fit the spread model.
 
 %------------------------------------------------------------------------------
 % REFERENCES — Harvard (CSIRO). BibTeX with the class's own style file.
@@ -721,8 +642,11 @@ available. Examples: \url{https://www.publish.csiro.au/journals/publishingpolici
 The authors declare that they have no conflicts of interest.
 
 \boxsection{Declaration of funding (compulsory)}
-Include every funding source and grant numbers where available. If none: `This research did not
-receive any specific funding.'
+This work was funded by the Ministerio de Ciencia, Tecnología e Innovación Productiva and
+the Agencia Nacional de Promoción de la Investigación, el Desarrollo Tecnológico y la
+Innovación (Argentina) through grant PICT-2017-2142 to T. Kitzberger, and by a doctoral
+fellowship from the Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET,
+Argentina) to I. Barberá.
 
 \boxsection{Author contributions (optional)}
 

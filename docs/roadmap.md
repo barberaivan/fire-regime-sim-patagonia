@@ -62,7 +62,7 @@ unresolved — summarized under "Open items" below, full detail in that file).
   `terra::intersect()` line is a one-way coverage *check* (is any of the study area untiled?),
   not a crop.
 - **The spread model's validation is designed, implemented and half-run** (2026-08-21). Design
-  in `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/validation-and-journal.md`
+  in `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/journal_choose.md`
   updated to match. Code: `R/spread_validation_functions.R`,
   `spread/validation_ignition_cells.R` (run — output in
   `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (smoke-tested,
@@ -216,8 +216,8 @@ The only piece with no code yet. Consumes `simulated_fires.rds` (on disk since 2
 the observed tables:
 size-distribution Q-Q in `log10(area)`, shape metrics against all 238 polygons by size class,
 signature distributions conditioned on `log10(area)`, and the FWI-stratified version. Plot style
-in `manuscript-spread/validation-and-journal.md` §3 — simulated as 2-D density, observed as
-points, GAM smoothers on both.
+in `docs/spread.md` → *Plot style* — simulated as 2-D density, observed as points, GAM
+smoothers on both.
 
 **The headline result is already visible and will not change:** observed fires are elongated
 (median 2.2–2.6) and wind-aligned (49–70 % within 30° of the 113/293° axis), simulated fires are

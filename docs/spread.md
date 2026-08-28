@@ -11,6 +11,19 @@ The largest, most complex module. Fits the fire spread model in two stages, driv
 > of the model is also going to change. Document the *current* method here; note deltas from the
 > thesis where useful.
 
+> **Notation in the manuscript deliberately differs from the thesis.** Beyond translating the
+> Spanish (IIV → VFI, IIT → TFI, quincena → fortnight, pasos → steps, solapamiento → overlap,
+> orientación norte → northness, and the five vegetation classes), two symbol clashes the thesis
+> tolerated are fixed in `manuscript-spread/ijwf/spread-paper.tex`:
+>
+> - the flammability-index coefficients are `a_v`, `b_v`, `c_v`, not `α_v`, `β_v`, `ω_v` — the
+>   old names collided with the spread coefficients `β`;
+> - aspect is `Φ`, not `L` — the old name collided with the vector of lower bounds **L**.
+>
+> The thesis's "previa redundante" is called a **placeholder prior** in the manuscript, and it is
+> no longer redundant: stage 1 now uses a plain uniform prior over [**L**, **U**]. Do not
+> "correct" the manuscript back to thesis notation.
+
 ## Stage 1 — fire-wise posteriors — `stage1_smc.R`
 - **Purpose:** sample a posterior of spread parameters per focal fire.
 - **Method:** ABC-SMC (Del Moral et al. 2011) with a hard ABC kernel; DE-MCMC moves using
@@ -31,13 +44,38 @@ The largest, most complex module. Fits the fire spread model in two stages, driv
 
 Pattern-oriented validation: the simulator is judged on whether statistical patterns that
 emerge from many simulated fires match those of the observed record, not on point prediction
-of individual fires. The rationale for skipping classical train/test (57 fires, deliberate
-underparameterization, hierarchical shrinkage as its own regularizer) lives in
-`manuscript-spread/validation-and-journal.md` §1 and belongs in the discussion; this section
-documents **what is run**.
+of individual fires.
 
 Code: `R/spread_validation_functions.R` (shared metrics),
 `spread/validation_ignition_cells.R` (run once), `spread/validation_simulate.R` (the run).
+
+### Why not classical train/test
+
+The argument belongs in the paper's discussion, in 2–3 paragraphs, citing Parisien et al. 2020
+(burn-probability models are evaluated against emergent regime properties, not point
+predictions) and the pattern-oriented-modelling literature (Grimm, Hartig).
+
+- **57 fires** is already small for a 6-parameter hierarchical model with sign-constrained
+  priors, a multivariate logit-normal on the transformed parameters, and an auxiliary
+  `log(area) ~ log(steps)` regression that depends on the fitted `κ_f`. Holding out 20 % would
+  degrade both the hyperparameter estimates and the auxiliary regression that corrects the size
+  bias using the fires with unknown ignition point.
+- The size distribution is **heavy-tailed and peaked** (high peak at small fires, thin long
+  tail). Estimating it from ~50 fires is not a stable target for a held-out test.
+- The model is **deliberately underparameterized** for the process: sigmoid functional forms,
+  sign restrictions, fixed `τ`, restricted parameter ranges. Overfitting is not the failure mode
+  cross-validation is designed to catch.
+- The hierarchical structure is its own regularizer: per-fire `β_f` are shrunk toward the
+  population posterior, so a held-out fire's "test" coefficients would mostly reflect the
+  population mean plus noise.
+- The aim is **regime-level pattern reproduction**, not point prediction of individual fires.
+
+Framing: *we evaluate the simulator's ability to reproduce statistical patterns that emerge
+from real fires.*
+
+What is deliberately **not** done: per-cell stop-mechanism attribution (whether an edge cell is
+unburned because propagation refused or because `κ` ran out). The distinction is real but adds
+interpretive complexity the paper does not need — one sentence in the discussion and move on.
 
 ### The simulation experiment
 
@@ -149,8 +187,8 @@ to run the signature on **all 241 mapped fire polygons**, not just the 57 with a
 point, which removes the size-bias of the focal subsample from this analysis. See *Reduced
 landscapes* below.
 
-This replaces the 1:1 "one unburned edge cell + one random burned neighbour" pairing in
-`validation-and-journal.md` §2.2, which was tested and is strictly weaker: on the 57 observed
+This replaces an earlier 1:1 "one unburned edge cell + one random burned neighbour" pairing,
+which was tested and is strictly weaker: on the 57 observed
 fires it leaves the `vfi` signature at noise where the donor-centred version resolves it.
 Observed values (57 focal fires, original scale, all converged):
 
@@ -356,9 +394,53 @@ plausible contributor: real fire-day winds are stronger and gustier than the fie
 both fitted and simulated under, so the fitted `wind` coefficient has no way to express the
 day-to-day variation that produces real elongation.
 
-Also flag once, per `validation-and-journal.md` §6.3: the simulator's edges lump "spread
-refused" and "step budget exhausted", a lumped stand-in for suppression and weather-event end.
-Per-cell stop-mechanism attribution is out of scope.
+Also flag once: the simulator's edges lump "spread refused" and "step budget exhausted", a
+lumped stand-in for suppression and weather-event end. Per-cell stop-mechanism attribution is
+out of scope.
+
+### Plot style
+
+For each metric, one panel with:
+
+- x = `log10(fire_size)`, or FWI (both worth showing; size is the primary axis because the
+  metrics depend strongly on it through sample size).
+- Simulated dataset as a 2-D density (`geom_density_2d_filled` or hex bins — raw points do not
+  work at 1e6).
+- Observed fires as points.
+- GAM smoothers (`geom_smooth`) for each dataset.
+
+Facet by metric (each coefficient, each shape metric). One figure for the size-conditional
+plots, one for the FWI-conditional ones. Conditioning on size or FWI defends against any
+residual mismatch in the marginals; FWI is pixel-level standardized (temporal variation only),
+so there are no spatial FWI complications.
+
+### How many fires? The four counts, reconciled
+
+Four different totals for "the mapped record" appear across the code, and they are all correct
+for what they count — checked 2026-08-28, no bug:
+
+| count | what it is |
+|---|---|
+| **241** | features in `data/patagonian_fires_spread.shp` |
+| **238** | features in `data/patagonian_fires/patagonian_fires.shp` — the base mapped record |
+| **235** | rows in the hierarchical fit (`J1 = 57` + `J2 = 178`) |
+| **233** | distinct fires in `data/climatic_data_by_fire_fwi-fortnight-cumulative_FWIZ2.csv` |
+
+`_spread` = base record **+2** (`2011_19` split into `2011_19E`/`W`, `2015_47` into
+`2015_47N`/`S`) **+1** (`2003_1215845321`, present only in `_spread`) = 241. Two fires also
+carry a different year label between the two files (`1546963766` is 1999 in `_spread`, 2000 in
+the base; `-1075171770` is 2014 vs 2016) — same fires, so they do not change any count.
+
+Of the 241, **six have no FWI record** (`1999_1319185782`, `1999_1689435445`,
+`1999_1780556035`, `2003_1215845321`, `2005_17`, `2012_23`), leaving 235 fires the model can
+use; collapsing the two splits gives the csv's 233 distinct fires.
+
+**For the paper, always say 235 = 57 + 178.** The one place that does not match is the shape
+analysis, which was run over the 238 polygons of the base shapefile — it needs no weather and
+no ignition point, so it can use fires the fit cannot. Either re-run it on the 235 for a single
+number throughout, or keep 238 and say in the text that the shape reference set is every mapped
+polygon rather than only the fires the model was fitted to. The manuscript currently takes the
+second route and gives no count there.
 
 ### Cost and parallelization
 
