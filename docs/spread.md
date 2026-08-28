@@ -47,7 +47,9 @@ emerge from many simulated fires match those of the observed record, not on poin
 of individual fires.
 
 Code: `R/spread_validation_functions.R` (shared metrics),
-`spread/validation_ignition_cells.R` (run once), `spread/validation_simulate.R` (the run).
+`spread/validation_ignition_cells.R` (run once), `spread/validation_simulate.R` (the simulated
+side), `spread/validation_observed.R` (the observed side — the same metrics over all 241 mapped
+fires, saved to `files/spread_validation/observed_signature.rds` and `observed_shape.rds`).
 
 ### Why not classical train/test
 
@@ -139,7 +141,7 @@ KS statistic. Read it with the caveat below — it is the weakest of the set.
 **2. Shape metrics.** Area, perimeter, compactness, **elongation and orientation** (PCA on
 burned-cell coordinates; orientation as a bearing mod 180, comparable to the fixed 293° wind, so
 fires should run along the 113/293 axis), and convex-hull fill. These need no landscape, only a
-rasterized polygon — so the observed reference is **all 238 mapped fires across every size
+rasterized polygon — so the observed reference is **all 241 mapped fires across every size
 class**, not just the 57 focal ones. Sub-millisecond per fire. This is where the wind term is
 actually tested (see below).
 
@@ -190,19 +192,39 @@ landscapes* below.
 This replaces an earlier 1:1 "one unburned edge cell + one random burned neighbour" pairing,
 which was tested and is strictly weaker: on the 57 observed
 fires it leaves the `vfi` signature at noise where the donor-centred version resolves it.
-Observed values (57 focal fires, original scale, all converged) — **not reproducible from disk:**
-these were reported in an exploratory session and the output table was never saved (see
-`docs/roadmap.md` → C). Expectations to reproduce, not results in hand:
+**Observed values, computed and saved 2026-08-28** by `spread/validation_observed.R` into
+`files/spread_validation/observed_signature.rds` (one row per fire; `observed_shape.rds` is its
+shape twin). All **241** fires were fitted and all 241 converged — `donor_strata()` never
+returned NULL, the smallest fire in the record still yielding 60 usable strata. Coefficients on
+the original predictor scale, size classes by burned-cell area:
 
-| | median | IQR | frac > 0 | < 100 ha | 100–1000 ha | > 1000 ha |
-|---|---|---|---|---|---|---|
-| `vfi` | 0.578 | [0.20, 1.18] | 0.86 | 0.06 | 0.78 | 0.59 |
-| `tfi` | 1.881 | [−1.01, 4.05] | 0.65 | 0.15 | 1.55 | 2.53 |
+| | n | median | IQR | frac > 0 | < 100 ha | 100–1000 ha | > 1000 ha |
+|---|---|---|---|---|---|---|---|
+| `vfi`, all 241 | 241 | 1.121 | [−0.01, 3.46] | 0.74 | 2.09 | 0.44 | 0.84 |
+| `tfi`, all 241 | 241 | 0.698 | [−3.78, 4.37] | 0.56 | 0.66 | 0.47 | 1.21 |
+| `vfi`, 57 focal | 57 | 0.882 | [0.28, 1.84] | 0.84 | 1.12 | 0.79 | 0.94 |
+| `tfi`, 57 focal | 57 | 0.624 | [−2.94, 2.99] | 0.53 | −0.21 | −0.65 | 1.13 |
 
-Both strengthen with fire size, so the comparison must condition on `log10(area)`. Note these
-are *edge-local summary statistics*, not estimates of the model's β (the fitted per-fire values
-are an order of magnitude larger: `vfi` median 11.9, `tfi` 4.5). What matters is whether
-observed and simulated distributions of the statistic agree.
+(146 / 59 / 36 fires in the three size classes.)
+
+**These supersede the numbers this file used to carry** (`vfi` 0.578, 86 % > 0; `tfi` 1.881,
+65 % > 0), which came from an exploratory session whose output was never saved. `vfi` reproduces
+in the ballpark — median 0.88 against 0.578, 84 % against 86 % positive — but `tfi` does not:
+the measured median is 0.62, not 1.881, and only 53 % of focal fires are positive. The old
+per-size-class figures are not reproduced at all. The saved run is the reference from here on;
+it is stable under the donor subsampling (re-running with a different seed moves the focal `vfi`
+median 0.882 → 0.828 and leaves `tfi` at 0.624).
+
+`tfi` does strengthen with fire size, which is the pattern the size-conditioned comparison was
+designed around, but `vfi` does not: it is *largest* among fires under 100 ha, where a hundred-odd
+small fires with few strata give wide, noisy per-fire estimates (IQR [−0.26, 4.07] over the 184
+non-focal fires against [0.28, 1.84] over the 57 focal ones). The comparison must condition on
+`log10(area)` either way — but read the small-fire end as noise-dominated rather than as a
+stronger signal.
+
+Note these are *edge-local summary statistics*, not estimates of the model's β (the fitted
+per-fire values are an order of magnitude larger: `vfi` median 11.9, `tfi` 4.5). What matters is
+whether observed and simulated distributions of the statistic agree.
 
 Edge extraction stays **in R** — measured at 49 ms/fire mean over the 57 focal fires, 0.45 s for
 the largest (300 k cells). There is no case for modifying `FireSpread`'s output contract.
@@ -232,10 +254,17 @@ and the burned layer in the same arrays used for fitting. Only the remaining fir
   `raw data from GEE signature`, file prefix `fire_signature_raw_`. Deliberately a **separate
   script** from `"Landscapes export"`, so the provenance of the 57 fitting landscapes stays
   reproducible.
-- **R — still to write.** A second loop in `data_prep/landscapes_preparation.R` building the
-  three-layer arrays from those 184 exports. No WindNinja, no ignition point, no `steps`; the
-  burned layer comes from the export's `burned` band, and `vfi`/`tfi` reuse `build_landscape()`
-  unchanged.
+- **R — done (2026-08-28).** The `do_signature` loop at the end of
+  `data_prep/landscapes_preparation.R` builds the three-layer arrays from those 184 exports into
+  `data/signature_landscapes/landscapes/<fire_id>.rds` (25 MB in total, seconds to run). No
+  WindNinja, no ignition point, no `steps`; the burn mask comes from the export's `burned` band
+  and is stored 0-indexed as `burned_ids`, exactly as the focal landscapes store it, and
+  `vfi`/`tfi` come from `build_landscape()` called with **`wind = NULL`** — a path added for this
+  purpose, which emits the reduced `land_names_reduced` = `veg`/`vfi`/`tfi` layer set and skips
+  the wind projection and the elevation layer. The year each fire's NDVI is detrended to is read
+  from `patagonian_fires_spread.shp`'s `year` property minus one — the same property the GEE
+  export picked `b_<year - 1>` with, and identical to the July–June `fire_year` for all 57 focal
+  fires. One fire, `2014_1010415027`, trips the 2 % NA-mask warning at 3.3 %.
 
 The script excludes the 57 by an explicit `fire_id` list taken from the landscape **filenames**,
 not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because some fires were
@@ -361,9 +390,11 @@ And the fitted fires sit firmly in the saturated regime: the fitted `wind` coeff
 4.90, so the downwind-to-upwind logit swing `2 · b_wind · wspeed` has median 25, and **82 % of
 fires exceed a swing of 6** — more than enough to pin `p` at 0 and 1.
 
-Against that ceiling, **63 % of the 238 mapped fires are more elongated than the model can be
-(1.9), rising to 79 % among fires over 1000 ha**; the observed distribution runs 1.33 / 2.20 /
-3.80 at the 10th / 50th / 90th percentiles, with a maximum of 8.0.
+Against that ceiling, **61 % of the 241 mapped fires are more elongated than the model can be
+(1.9), rising to 78 % among fires over 1000 ha**; the observed distribution runs 1.31 / 2.12 /
+3.78 at the 10th / 50th / 90th percentiles, with a maximum of 7.55 (measured 2026-08-28 from
+`observed_shape.rds`; the earlier 63 % / 79 % / 1.33 / 2.20 / 3.80 / 8.0 were the same statistic
+over an unsaved 238-fire run).
 
 This is the paper's main negative result, and it is a structural statement rather than a
 tuning failure: no value of the fitted parameters can fix it. Reproducing fire shape would need

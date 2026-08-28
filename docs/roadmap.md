@@ -6,7 +6,7 @@ answers one question when you come back after a gap: *what's the current state, 
 next thing to do?* Update the two sections below as work progresses; don't accumulate history
 here — that's what git log and `docs/migration.md` are for.
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-08-28
 
 **Open to-dos live in `docs/migration.md`'s TODO register** (items #6, #7, #9 are still
 unresolved — summarized under "Open items" below, full detail in that file).
@@ -61,20 +61,21 @@ unresolved — summarized under "Open items" below, full detail in that file).
   study area; they are stopped only by a tile's own border. `landscapes_simulation.R`'s
   `terra::intersect()` line is a one-way coverage *check* (is any of the study area untiled?),
   not a crop.
-- **The spread model's validation is designed, implemented and half-run** (2026-08-21). Design
-  in `docs/spread.md` → *Stage 3 — validation*; `manuscript-spread/journal_choose.md`
-  updated to match. Code: `R/spread_validation_functions.R`,
-  `spread/validation_ignition_cells.R` (run — output in
-  `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (smoke-tested,
-  not yet run at full size).
+- **The spread model's validation is designed, implemented, and both sides are run**
+  (2026-08-28). Design in `docs/spread.md` → *Stage 3 — validation*;
+  `manuscript-spread/journal_choose.md` updated to match. Code:
+  `R/spread_validation_functions.R`, `spread/validation_ignition_cells.R` (run — output in
+  `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (run — 64,836
+  simulated fires), `spread/validation_observed.R` (run — 241 observed fires). Only the analysis
+  and figures (step D below) are left.
 
   - **All 185 GEE export tasks succeeded** — the 184 fires with unknown ignition point, plus the
-    `2015_41` focal smoke test. In Drive folder `raw data from GEE signature`, prefix
-    `fire_signature_raw_`, **not downloaded yet**. Two interchangeable drivers live in
-    `~/dev/fire_spread-gee/`: the Code Editor script and `python/export_signature_landscapes.py`.
-    Use the Python one for batches — the Code Editor's "run all tasks" plug-in gave up after 129
-    of 184 (all 129 succeeded, so it was a transport failure, not a code one) and the Python
-    driver is re-runnable, skipping fires whose task already exists.
+    `2015_41` focal smoke test — and all 184 are downloaded and built into reduced landscapes
+    (step B below). Two interchangeable drivers live in `~/dev/fire_spread-gee/`: the Code Editor
+    script and `python/export_signature_landscapes.py`. Use the Python one for batches — the Code
+    Editor's "run all tasks" plug-in gave up after 129 of 184 (all 129 succeeded, so it was a
+    transport failure, not a code one) and the Python driver is re-runnable, skipping fires whose
+    task already exists.
   - **The GEE assets migrated** to `projects/ivanbarbera-001/assets/` and the scripts follow the
     tiles script's paths. Verified live: the migrated NDVI and vegetation rasters are
     pixel-identical to the legacy ones at 30 m, band order unchanged, and the legacy
@@ -108,21 +109,22 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ## Next steps
 
-**Where the spread paper's validation stands (2026-08-21).** The design is settled and written
-up (`docs/spread.md` → *Stage 3 — validation*). Both sides of the comparison are code-complete
-and smoke-tested; what is left is one download, one short script, one long run, and the analysis.
+**Where the spread paper's validation stands (2026-08-28).** The design is settled and written
+up (`docs/spread.md` → *Stage 3 — validation*), and **both sides of the comparison are computed
+and on disk**. All that is left is D: the analysis and its figures.
 
 ```
    simulated side                     observed side
    ──────────────                     ─────────────
    [A] full run ─── DONE ✅           57 focal fires ─── already on disk
-       64,836 fires, 15 min           184 others ─── exported ✅, NOT downloaded
+       64,836 fires, 15 min           184 others ─── exported + downloaded ✅
                                             │
                                             ▼
-                                      [B] R loop → landscapes
+                                      [B] R loop → landscapes ─── DONE ✅
                                             │
                                             ▼
-                                      [C] observed signature (241 fires)
+                                      [C] observed signature ─── DONE ✅
+                                          241 fires, all converged
                     └────────────┬──────────┘
                                  ▼
                           [D] analysis + figures
@@ -170,18 +172,17 @@ cells has a 5–95 % range of **277–311°** around the 293° the tiles were dr
 per-fire fields are highly coherent (median `rbar` 0.99).
 
 One thing for D to check rather than assume: the simulated signature medians are `b_vfi`
-1.39 / 1.42 / 1.74 by size class and `b_tfi` −2.45 / −0.57 / −0.18, against the 57 focal fires'
-observed 0.578 and 1.881. Both look displaced, and `b_tfi` has the wrong sign for small fires —
-but the observed pilot was not conditioned on size, which is exactly what D's size-conditioned
-comparison is for. Do not read the gap off these two numbers.
+1.39 / 1.42 / 1.74 by size class and `b_tfi` −2.45 / −0.57 / −0.18. Against the observed medians
+C actually measured (`b_vfi` 2.09 / 0.44 / 0.84, `b_tfi` 0.66 / 0.47 / 1.21 over all 241), the
+`vfi` gap is much smaller than the old unsaved pilot suggested, while `b_tfi` still has the
+wrong sign for small and mid-sized fires. Do the size-conditioned comparison properly rather
+than reading the gap off medians.
 
-### B. Build the 184 reduced landscapes — **the export and the download are done; the R loop is not**
+### B. Build the 184 reduced landscapes — **DONE 2026-08-28**
 
-**Exports: done.** All 185 tasks SUCCEEDED (the 184 targets plus the `2015_41` focal smoke
-test), submitted by `~/dev/fire_spread-gee/python/export_signature_landscapes.py`.
-
-**Download: done (2026-08-28).** The 184 `.tif` are on disk, verified against the collection —
-every target present, none missing, no duplicate files:
+The exports, the download and the R loop are all done. `data/signature_landscapes/landscapes/`
+holds **184 `.rds`**, 25 MB in total, written in seconds by the `do_signature` stage at the end
+of `data_prep/landscapes_preparation.R`:
 
 ```
 data/signature_landscapes/raw_gee/      <- the 184 .tif                   DONE
@@ -189,8 +190,34 @@ data/signature_landscapes/smoke_test/   <- fire_signature_raw_2015_41.tif, the f
                                            smoke test; diff it against
                                            data/focal_fires/raw_gee/fire_data_raw_2015_41.tif
                                            if the vintages are ever doubted again. Not input.
-data/signature_landscapes/landscapes/   <- the 184 .rds this step writes  TO DO
+data/signature_landscapes/landscapes/   <- the 184 .rds                   DONE
 ```
+
+Each `.rds` is a list with `landscape` (a `veg`/`vfi`/`tfi` array), `burned_layer`,
+`burned_ids` (0-indexed, as in `data/focal_fires/`), `counts_veg`, `counts_veg_available` and
+`fire_id`.
+
+How the two consistency requirements were met:
+
+- **Crosswalk** — the loop reuses the `dveg <- veg_crosswalk("forest")` the focal loop builds
+  (urban → wet forest), not the `"nonburnable"` convention of the simulation tiles.
+- **NDVI detrending** — `ndvi_prev` is detrended to its 2022 equivalent with `ndvi_detrend()`,
+  at `year - 1` where `year` is the fire's property in `patagonian_fires_spread.shp`. That is
+  the same property the GEE export selected band `b_<year - 1>` with, and it equals the
+  July–June `fire_year` the focal loop derives from the fire dates for all 57 focal fires.
+
+One change was needed in the shared recipe: `build_landscape()` now accepts **`wind = NULL`**
+and then emits the reduced layer set `land_names_reduced` = `veg`/`vfi`/`tfi` — no wind
+projection, and no `elevation` layer either (it exists only for the engine's directional slope
+term, and a cell with missing elevation already loses its `tfi`, so the NA mask is unchanged).
+The full-landscape path is untouched.
+
+Two smaller edits in the same script: the stage toggles now include `do_signature`, and the
+exploratory veg-abundance tail is behind `do_veg_summary <- FALSE` so that an `Rscript` run of
+the file does not re-read all 57 rasters and draw plots.
+
+One fire, `2014_1010415027`, trips the 2 % NA-mask warning at 3.3 % — the only warning in the
+run.
 
 > A warning for anyone re-running the export: `--status` in that script collapses tasks by
 > description and reports the best state per name, so a **re-submission of an already-finished
@@ -198,53 +225,58 @@ data/signature_landscapes/landscapes/   <- the 184 .rds this step writes  TO DO
 > second full wave was launched by mistake and had to be cancelled by hand. Check
 > `ee.data.listOperations()` for live states before resubmitting anything.
 
-**What is left: the R loop.** Write a second loop in `data_prep/landscapes_preparation.R` that,
-per fire, reads the tif, computes `vfi` from `veg` + detrended `ndvi_prev`, `tfi` from
-`elevation`/`slope`/`aspect`, and saves a list with the three layers plus the rasterized
-`burned` band into `data/signature_landscapes/landscapes/<fire_id>.rds` — mirroring
-`data/focal_fires/`. Reuses `build_landscape()`; **no WindNinja, no ignition point, no
-`steps`**.
+### C. Observed signature and shape — **DONE 2026-08-28**
 
-> Two things this loop must get right, or the observed set is inconsistent:
-> - **`veg_crosswalk("forest")`** — urban → wet forest, the convention the 57 focal landscapes
->   used. *Not* the `"nonburnable"` one the simulation tiles use.
-> - **NDVI detrending** — the focal landscapes detrend the previous summer's NDVI to its 2022
->   equivalent, which is why the export carries both `ndvi_prev` and `ndvi_22`. Do the same.
->
-> The asset-vintage worry is closed: the migrated NDVI and vegetation rasters were compared
-> against the legacy ones at 30 m and are pixel-identical (`max|old − new| = 0`), band order
-> unchanged.
+`spread/validation_observed.R` runs `donor_strata()` + `edge_clogit()` and `fire_shape()` over
+the 57 focal landscapes and the 184 reduced ones — **241 fires, 1.4 minutes** — and saves one
+row per fire to `files/spread_validation/observed_signature.rds` and `observed_shape.rds`. Both
+tables carry `fire_id`, `source` (focal / signature), `area_ha` and the fire's FWI
+(`fwi_fort_expquad`, available for 233 of the 241; the 8 without it are fires the climatic table
+never covered), so D's FWI-stratified test can read them directly.
 
-### C. Observed signature and shape — blocked on B's R loop — **nothing is saved yet**
+**All 241 fires were fitted and all 241 converged.** `donor_strata()` never returned NULL — even
+the smallest fire in the record yields 60 usable strata — so, unlike the simulated side's 14 NA
+fires, the observed side has no missing signature at all.
 
-Run `donor_strata()` + `edge_clogit()` (`R/spread_validation_functions.R`) over the 57 focal
-landscapes *and* the 184 new ones, and `fire_shape()` over every mapped polygon.
+**The rerun disagrees with the numbers that were quoted around the repo, and the rerun wins.**
+`docs/spread.md` has been updated; the headline comparison:
 
-> **The observed numbers quoted around this repo were never persisted.** `files/spread_validation/`
-> holds only `ignition_cells.rds` and `simulated_fires.rds` — there is no observed signature
-> table and no observed shape table anywhere on disk (checked 2026-08-28). The figures in
-> `docs/spread.md` (`vfi` median 0.578, 86 % > 0; `tfi` 1.881, 65 % > 0; elongation 2.2–2.6;
-> 49–70 % wind-aligned) come from exploratory sessions whose results were written into the docs
-> and whose outputs were then lost. **Treat them as expectations to reproduce, not as results in
-> hand** — if the rerun disagrees, the rerun wins.
->
-> So C must **save what it computes**, one row per fire, to
-> `files/spread_validation/observed_signature.rds` and `observed_shape.rds`. D consumes those
-> files; today it has nothing to consume.
+| 57 focal fires | quoted | measured |
+|---|---|---|
+| `vfi` median | 0.578 | **0.882** |
+| `vfi` frac > 0 | 0.86 | **0.84** |
+| `tfi` median | 1.881 | **0.624** |
+| `tfi` frac > 0 | 0.65 | **0.53** |
 
-### D. Analysis and figures — **no code, and no observed tables to consume**
+`vfi` reproduces in the ballpark; `tfi` does not — the measured median is a third of the quoted
+one and barely half the fires are positive. The old per-size-class figures are not reproduced
+either. The difference is not the donor subsampling: re-running with a different seed moves the
+focal `vfi` median 0.882 → 0.828 and leaves `tfi` at 0.624 exactly.
+
+Over all 241 fires: `vfi` median 1.121 (74 % > 0), `tfi` median 0.698 (56 % > 0), with the
+per-size-class breakdown in `docs/spread.md`. `tfi` strengthens with fire size; `vfi` does not —
+it is largest among fires under 100 ha, where the 146 small fires have few strata and wide,
+noisy per-fire estimates. Read the small-fire end as noise-dominated, not as a stronger signal.
+
+The **shape** side reproduces what was quoted: median `elongation` 2.12 over all 241 (2.47 over
+the 57 focal), and 51 % of fires oriented within 30° of the 113/293° axis — against the
+simulated 1.50 and 27.8 %. 61 % of the 241 are more elongated than the model's 1.9 ceiling,
+rising to 78 % above 1000 ha. `observed_shape.rds` also carries `elong_fixed`, elongation along
+the fixed 293°, which is the column directly comparable to the simulated `elong_wind`.
+
+### D. Analysis and figures — **no code yet; both inputs are now on disk**
 
 The only piece with no code yet. Consumes `simulated_fires.rds` (on disk since 2026-08-21) and
-the observed tables:
+the observed tables `observed_signature.rds` / `observed_shape.rds` (since 2026-08-28):
 size-distribution Q-Q in `log10(area)`, shape metrics against all 238 polygons by size class,
 signature distributions conditioned on `log10(area)`, and the FWI-stratified version. Plot style
 in `docs/spread.md` → *Plot style* — simulated as 2-D density, observed as points, GAM
 smoothers on both.
 
 **The headline result is already visible and will not change:** observed fires are elongated
-(median 2.2–2.6) and wind-aligned (49–70 % within 30° of the 113/293° axis), simulated fires are
-rounder (median 1.50 over all 64,836) and randomly oriented (27.8 % within 30°, against 33.3 %
-for uniform). The full run adds the sharper version: measured **along the wind**, the simulated
+(median 2.12 over all 241, 2.47 over the 57 focal) and wind-aligned (51 % within 30° of the
+113/293° axis, 72 % above 1000 ha), simulated fires are rounder (median 1.50 over all 64,836)
+and randomly oriented (27.8 % within 30°, against 33.3 % for uniform). The full run adds the sharper version: measured **along the wind**, the simulated
 fires are not elongated at all — median `elong_wind` 0.976, falling to 0.94 above 1000 ha. It is
 structural — the automaton's
 spread *rate* is isotropic, so the head fire cannot outrun the flanks, capping elongation at the

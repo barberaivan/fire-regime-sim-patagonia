@@ -10,10 +10,13 @@
 # ignition point and no observed fire — are built by landscapes_simulation.R.
 # Both scripts share the recipe in R/landscape_functions.R.
 #
-# Two stages, toggled below:
+# Three stages, toggled below:
 #   1. export each fire's elevation and run WindNinja over it (slow, ~1 min per
 #      fire; only needed to regenerate the wind layers from scratch);
-#   2. build and save the landscapes.
+#   2. build and save the landscapes;
+#   3. build and save the REDUCED landscapes of the 184 mapped fires with no
+#      ignition point, which the spread model's validation scores but the fit
+#      never sees (veg/vfi/tfi + burn mask only — see the section at the end).
 
 library(terra)
 library(tidyverse)
@@ -26,6 +29,8 @@ source(file.path("R", "landscape_functions.R"))
 # Stages to run
 do_windninja <- FALSE   # TRUE only to regenerate the wind layers
 do_landscapes <- TRUE
+do_signature <- TRUE    # the 184 reduced landscapes, for the validation
+do_veg_summary <- FALSE # exploratory plots of veg abundance per landscape
 
 # WindNinja settings for focal fires. Fire-sized DEMs fit a 90 m mesh; the
 # region-sized ones in landscapes_simulation.R do not.
@@ -205,9 +210,95 @@ for (i in 1:n_fires) {
 }
 
 
+# Reduced landscapes — the 184 fires without an ignition point ------------
+#
+# The spread model's validation (docs/spread.md -> "Stage 3 — validation")
+# scores every mapped fire's edge with a conditional logit on `vfi` and `tfi`
+# at the target cell. Both are non-directional, so the landscape it needs is
+# only `veg`, `vfi`, `tfi` plus the rasterized burn polygon — no wind field,
+# hence no WindNinja, and no ignition point and no `steps` either. That is what
+# makes the whole mapped record affordable: the 57 focal landscapes built above
+# already carry everything the validation reads and are reused as they are,
+# and only the remaining 184 fires are built here, from their own smaller GEE
+# exports (fire bounds + 150 m).
+#
+# Two things keep this set consistent with the 57, and getting either wrong
+# would make the observed side incomparable with itself:
+#   * the crosswalk is the SAME `dveg` built above — veg_crosswalk("forest"),
+#     urban as wet forest, the fitting convention — not the "nonburnable" one
+#     the simulation tiles use;
+#   * `ndvi_prev` is detrended to its 2022 equivalent, which is why the export
+#     carries `ndvi_22` next to it.
+
+sig_gee_dir <- file.path("data", "signature_landscapes", "raw_gee")
+sig_out_dir <- file.path("data", "signature_landscapes", "landscapes")
+
+if (do_signature) {
+
+sig_fnames <- list.files(sig_gee_dir, pattern = "\\.tif$")
+sig_ids <- sub("^fire_signature_raw_", "",
+               tools::file_path_sans_ext(sig_fnames))
+n_sig <- length(sig_ids)
+
+# The fire polygons are the authority on each fire's year: it is the property
+# the GEE export selected `ndvi_prev` with (band `b_<year - 1>`), and it agrees
+# with the July-June `fire_year` derived from the dates above for all 57 focal
+# fires. So the year to detrend to is `year - 1`, exactly as `ndvi_year` is.
+fires_poly <- vect(file.path("data", "patagonian_fires_spread.shp"))
+stopifnot(anyDuplicated(sig_ids) == 0,
+          all(sig_ids %in% fires_poly$fire_id),
+          !any(sig_ids %in% fire_ids))   # disjoint from the focal set
+covered <- length(union(sig_ids, fire_ids))
+if (covered != nrow(fires_poly)) {
+  warning("Focal + reduced landscapes cover ", covered, " of the ",
+          nrow(fires_poly), " mapped fires")
+}
+sig_ndvi_year <- fires_poly$year[match(sig_ids, fires_poly$fire_id)] - 1
+
+dir.create(sig_out_dir, showWarnings = FALSE, recursive = TRUE)
+
+for (i in 1:n_sig) {
+  cat(i, "/", n_sig, "-", sig_ids[i], "\n")
+
+  img <- rast(file.path(sig_gee_dir, sig_fnames[i]))
+
+  ## NDVI, detrended to its 2022 equivalent
+  ndvi <- ndvi_detrend(ndvi_focal = values(img[["ndvi_prev"]])[, 1],
+                       year = sig_ndvi_year[i],
+                       ndvi_22 = values(img[["ndvi_22"]])[, 1])
+
+  ## veg / vfi / tfi — `wind = NULL` is what makes it the reduced landscape
+  rall <- build_landscape(img, NULL, dveg, ndvi, label = sig_ids[i])
+  land_arr <- land_cube(rall)
+
+  ## The burn mask, stored the way the focal landscapes store it
+  burned_img <- img[["burned"]]
+  burned_layer <- land_cube(burned_img)[, , 1]
+  burned_layer[is.na(burned_layer)] <- 0
+  burned_cells <- which(values(burned_img)[, 1] == 1)
+  if (length(burned_cells) == 0) stop("No burned cell in ", sig_ids[i])
+  burned_ids <- t(rowColFromCell(img, burned_cells))
+  rownames(burned_ids) <- c("row", "col")
+
+  saveRDS(c(list(landscape = land_arr,
+                 burned_layer = burned_layer,
+                 burned_ids = burned_ids - 1,  # 0-indexing, as in focal_fires
+                 fire_id = sig_ids[i]),
+            count_veg(land_arr, burned_layer)),
+          file.path(sig_out_dir, paste0(sig_ids[i], ".rds")))
+}
+
+cat(n_sig, "reduced landscapes written to", sig_out_dir, "\n")
+
+}
+
+
 # Relative abundance of veg types in landscapes ---------------------------
 # Exploratory: how many vegetation types each landscape actually contains,
-# which bounds what the fire-wise fits can identify.
+# which bounds what the fire-wise fits can identify. Off by default — it draws
+# plots and re-reads all 57 rasters, which is not what a batch run wants.
+
+if (do_veg_summary) {
 
 nv <- 7
 veg_counts <- matrix(0, n_fires, nv)
@@ -253,3 +344,5 @@ barplot(fire_size_rel)
 
 fire_size_rel[veg_num == 5]
 # most of them are small
+
+}

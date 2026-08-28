@@ -67,7 +67,7 @@ paper needs them for:
 Both scripts have stage flags at the top (`do_windninja`, `do_tiles`, `do_pnnh`, …) so the slow
 WindNinja pass is not re-run by accident.
 
-### A third kind — reduced landscapes for the validation _(planned)_
+### A third kind — reduced landscapes for the validation _(built 2026-08-28)_
 
 The spread paper's validation adds a third set, much lighter than the other two. Its per-fire
 "spatial signature" (`docs/spread.md` → *Stage 3 — validation*) is an edge-local conditional
@@ -88,21 +88,36 @@ signature reads those off disk unchanged, so re-exporting them would be waste.
 
 | | reduced (validation) |
 |---|---|
-| GEE script | `Landscapes export for signature validation (fires without ignition point)` — **written, not yet run** |
+| GEE script | `Landscapes export for signature validation (fires without ignition point)`, or its Python twin `python/export_signature_landscapes.py` — **run; all 184 exported and downloaded** |
 | Covers | the **184** fires with unknown ignition point; the 57 focal ones are reused as they are |
 | Extent | each fire's own bounding box + 150 m, not the landscape rectangle |
 | Raw exports | Drive `raw data from GEE signature`, prefix `fire_signature_raw_` |
 | Layers kept | `veg`, `vfi`, `tfi`, plus the rasterized burn mask |
 | WindNinja | none |
-| R side | second loop in `landscapes_preparation.R` — **still to write** |
+| R side | the `do_signature` loop at the end of `landscapes_preparation.R` — **run**; writes `data/signature_landscapes/landscapes/<fire_id>.rds` (184 files, 25 MB) |
 
 The script excludes the 57 by an explicit `fire_id` list taken from the landscape **filenames**,
 not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because some fires were
 split in two after the ignition points were drawn.
 
 Elevation, slope and aspect are still *exported*, because `tfi` is computed from them, but no
-elevation layer is kept — nothing downstream reads it. Build the 184 with the **same
-`veg_crosswalk("forest")`** the focal landscapes used, or the observed set is not homogeneous.
+elevation layer is kept — nothing downstream reads it. That is what
+`build_landscape(wind = NULL)` does: it emits the reduced layer set `land_names_reduced` =
+`veg`/`vfi`/`tfi`, skipping the wind projection and the elevation layer. The NA mask is
+unaffected — a cell with missing elevation already loses its `tfi`.
+
+Two things keep the 184 homogeneous with the 57, and both are honoured by the loop:
+
+- the **same `veg_crosswalk("forest")`** the focal landscapes used (urban → wet forest), *not*
+  the `"nonburnable"` convention of the simulation tiles;
+- **NDVI detrended to its 2022 equivalent**, which is why the export carries `ndvi_22` beside
+  `ndvi_prev`. The year passed to `ndvi_detrend()` is `patagonian_fires_spread`'s `year` property
+  minus one — the same property the GEE export picked band `b_<year - 1>` with, and equal to the
+  July–June `fire_year` the focal loop derives from the fire dates for all 57 focal fires.
+
+Each `.rds` is a list: `landscape` (the 3-layer array), `burned_layer`, `burned_ids` (0-indexed,
+as in `data/focal_fires/`), `counts_veg`, `counts_veg_available`, `fire_id`. Only one fire,
+`2014_1010415027`, trips the 2 % NA-mask warning, at 3.3 %.
 
 Kept as a separate GEE script rather than an edit to `Landscapes export`, so re-running that one
 still reproduces exactly the 57 landscapes the spread model was fitted on.

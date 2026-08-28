@@ -35,6 +35,13 @@
 # part of the landscape file format — do not rename them.
 land_names <- c("veg", "vfi", "tfi", "elevation", "wdir", "wspeed")
 
+# Reduced layer set, for landscapes that are never handed to the engine: the
+# spread model's validation scores an observed fire's edge with a conditional
+# logit on the non-directional predictors only, so `veg`, `vfi` and `tfi` are
+# all it reads (R/spread_validation_functions.R -> donor_strata()). Landscapes
+# with this layer set are built by passing `wind = NULL` to build_landscape().
+land_names_reduced <- c("veg", "vfi", "tfi")
+
 n_veg_types <- 5
 
 # SD of the WindNinja wind speed (m/s) pooled over the 57 focal-fire
@@ -206,15 +213,19 @@ read_windninja <- function(elev_path) {
 #'
 #' @param stack SpatRaster with layers `veg`, `elevation`, `slope`, `aspect`.
 #' @param wind SpatRaster with layers `direction` (degrees) and `speed` (m/s),
-#'   on any grid — it is projected onto `stack`.
+#'   on any grid — it is projected onto `stack`. `NULL` builds the reduced
+#'   `land_names_reduced` landscape instead (no wind field, no elevation
+#'   layer): all the validation's edge analysis reads, and the reason the 184
+#'   fires without an ignition point need no WindNinja run.
 #' @param dveg crosswalk from `veg_crosswalk()`.
 #' @param ndvi numeric vector, one value per cell of `stack`, already detrended
 #'   to the 2022 scale if the source year is not 2022.
 #' @param na_warn_prop warn if more than this proportion of cells had to be
 #'   turned non-burnable because a predictor was missing.
 #' @param label name used in that warning.
-#' @return SpatRaster with layers `land_names`, ready for `land_cube()`. The
-#'   proportion of NA-masked cells is attached as attribute `na_prop`.
+#' @return SpatRaster with layers `land_names` (or `land_names_reduced` when
+#'   `wind` is NULL), ready for `land_cube()`. The proportion of NA-masked
+#'   cells is attached as attribute `na_prop`.
 build_landscape <- function(stack, wind, dveg, ndvi,
                             na_warn_prop = 0.02,
                             label = NULL) {
@@ -249,18 +260,25 @@ build_landscape <- function(stack, wind, dveg, ndvi,
                             vtopo[burnable, "aspect"],
                             vtopo[burnable, "slope"])
 
-  ## Wind, projected onto the landscape grid
-  wind_local <- project(wind, stack, method = "cubicspline")
-  vwind <- values(wind_local)
+  ## Wind, projected onto the landscape grid, and the full engine layer order.
+  # Without wind there is no elevation layer either: it is only there for the
+  # engine's directional slope term, and a cell whose elevation is missing
+  # already loses its `tfi`, so the NA mask below is unchanged by dropping it.
+  if (is.null(wind)) {
+    vv <- cbind(veg_spread, vfi, tfi)
+    colnames(vv) <- land_names_reduced
+  } else {
+    wind_local <- project(wind, stack, method = "cubicspline")
+    vwind <- values(wind_local)
 
-  ## Stack everything, in the engine's layer order
-  vv <- cbind(veg_spread,
-              vfi,
-              tfi,
-              vtopo[, "elevation"],
-              vwind[, "direction"] * pi / 180,
-              vwind[, "speed"] / wind_sd)
-  colnames(vv) <- land_names
+    vv <- cbind(veg_spread,
+                vfi,
+                tfi,
+                vtopo[, "elevation"],
+                vwind[, "direction"] * pi / 180,
+                vwind[, "speed"] / wind_sd)
+    colnames(vv) <- land_names
+  }
 
   ## Any cell with a missing predictor becomes non-burnable
   na_cells <- which(!stats::complete.cases(vv))
@@ -274,9 +292,9 @@ build_landscape <- function(stack, wind, dveg, ndvi,
             ": ", round(na_prop * 100, 2), "% of cells")
   }
 
-  rall <- rast(stack, nlyrs = length(land_names))
+  rall <- rast(stack, nlyrs = ncol(vv))
   values(rall) <- vv
-  names(rall) <- land_names
+  names(rall) <- colnames(vv)
 
   attr(rall, "na_prop") <- na_prop
   return(rall)

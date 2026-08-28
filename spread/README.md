@@ -14,3 +14,4 @@ Planned files (migrated from the old repo):
 | `hierarchical_fit.R` | Stage 2 — hierarchical Bayesian fit via custom MCMC (Gibbs + MH), using stage-1 samples as proposals |
 | `validation_ignition_cells.R` | Stage 3, run once — eligible ignition cells per study-area tile, and how many survive eroding the tile by each `steps` margin |
 | `validation_simulate.R` | Stage 3 — simulates fires over the tiles from the full posterior and reduces each to a summary row (size, shape, spatial signature) |
+| `validation_observed.R` | Stage 3 — the observed side: the same shape and signature metrics over all 241 mapped fires, into `files/spread_validation/observed_{signature,shape}.rds` |
