@@ -215,14 +215,24 @@ per fire, reads the tif, computes `vfi` from `veg` + detrended `ndvi_prev`, `tfi
 > against the legacy ones at 30 m and are pixel-identical (`max|old − new| = 0`), band order
 > unchanged.
 
-### C. Observed signature for all 241 fires — blocked on B's R loop
+### C. Observed signature and shape — blocked on B's R loop — **nothing is saved yet**
 
 Run `donor_strata()` + `edge_clogit()` (`R/spread_validation_functions.R`) over the 57 focal
-landscapes *and* the 184 new ones, and `fire_shape()` over all 238 mapped polygons. Already
-proven on the 57: all converged, `vfi` median 0.578 (86 % > 0), `tfi` 1.881 (65 % > 0), both
-strengthening with fire size.
+landscapes *and* the 184 new ones, and `fire_shape()` over every mapped polygon.
 
-### D. Analysis and figures — **A is done; now blocked on C alone**
+> **The observed numbers quoted around this repo were never persisted.** `files/spread_validation/`
+> holds only `ignition_cells.rds` and `simulated_fires.rds` — there is no observed signature
+> table and no observed shape table anywhere on disk (checked 2026-08-28). The figures in
+> `docs/spread.md` (`vfi` median 0.578, 86 % > 0; `tfi` 1.881, 65 % > 0; elongation 2.2–2.6;
+> 49–70 % wind-aligned) come from exploratory sessions whose results were written into the docs
+> and whose outputs were then lost. **Treat them as expectations to reproduce, not as results in
+> hand** — if the rerun disagrees, the rerun wins.
+>
+> So C must **save what it computes**, one row per fire, to
+> `files/spread_validation/observed_signature.rds` and `observed_shape.rds`. D consumes those
+> files; today it has nothing to consume.
+
+### D. Analysis and figures — **no code, and no observed tables to consume**
 
 The only piece with no code yet. Consumes `simulated_fires.rds` (on disk since 2026-08-21) and
 the observed tables:

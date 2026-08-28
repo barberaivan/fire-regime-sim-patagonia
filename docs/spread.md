@@ -190,7 +190,9 @@ landscapes* below.
 This replaces an earlier 1:1 "one unburned edge cell + one random burned neighbour" pairing,
 which was tested and is strictly weaker: on the 57 observed
 fires it leaves the `vfi` signature at noise where the donor-centred version resolves it.
-Observed values (57 focal fires, original scale, all converged):
+Observed values (57 focal fires, original scale, all converged) — **not reproducible from disk:**
+these were reported in an exploratory session and the output table was never saved (see
+`docs/roadmap.md` → C). Expectations to reproduce, not results in hand:
 
 | | median | IQR | frac > 0 | < 100 ha | 100–1000 ha | > 1000 ha |
 |---|---|---|---|---|---|---|
