@@ -241,6 +241,50 @@ spread *rate* is isotropic, so the head fire cannot outrun the flanks, capping e
 half-lobe bound of 1.89–2.0 regardless of the wind coefficient. Full argument and the evidence
 that it is not a bug in `docs/spread.md` → *Why the model cannot make an elongated fire*.
 
+### E. Figure 5 — burn-probability maps for four fires — **no code yet**
+
+The other results figure that needs a run, not just a plot. Independent of B/C/D: it uses the
+focal landscapes and the fitted model, both already on disk, so it can be done in any order.
+
+**The four fires are chosen** (criteria and full justification in
+`manuscript-spread/ijwf/designing.txt` → Fig. 5). Summaries from the 2000 fitted-ranef sims in
+`files/hierarchical_model/metrics_table.rds`; `q` = simulated / observed size:
+
+| fire_id | obs ha | overlap med/mean | q med/mean | P(q>1) |
+|---|---|---|---|---|
+| `1999_25j` | 724.0 | 0.838 / 0.832 | 1.04 / 1.04 | 0.85 |
+| `2015_50` | 28,567.3 | 0.636 / 0.637 | 1.11 / 1.11 | 1.00 |
+| `2004_23` | 320.1 | 0.350 / 0.349 | 0.44 / 0.53 | 0.07 |
+| `2002_34` | 19.9 | 0.266 / 0.237 | 2.67 / 2.49 | 0.95 |
+
+They give a monotone overlap gradient (0.84 → 0.27, against a 57-fire median of 0.535), three
+orders of magnitude in size, and the strongest under- and overestimate in the set.
+
+**What to run.** Per fire, 1000 simulations under **fitted** random effects and 1000 under
+**simulated** ones — same landscape, same ignition point, one posterior draw per simulated fire,
+full posterior (never the mean, never a thinned subset). Then burn probability per cell = the
+fraction of simulations that burned it, with the observed perimeter drawn over it. Eight panels,
+4 fires × 2 random-effect modes.
+
+**Do not write the simulation loop from scratch.** `spread/hierarchical_fit.R` ~L2526–2620
+already does exactly this — it builds `ranef_fit` and `ranef_sim` from `draws`, loops over
+fires, and simulates. The only change needed is to accumulate a per-cell burn count instead of
+reducing each simulation to the `metrics_table` row. Copy that block rather than re-deriving the
+MVLN → `invlogit_scaled` chain.
+
+> **The trap in that chain:** `draws$ranef` row 6 (`steps`) is stored on the **natural** scale
+> while rows 1–5 are on the logit scale. `docs/spread.md` → *The elongation gap* records it.
+
+**Inputs:** `data/focal_fires/landscapes/<fire_id>.rds` (landscape, `ig_rowcol`, `burned_layer`),
+`files/hierarchical_model/draws_batch_*.rds` or `spread_model_samples.rds`, and
+`files/hierarchical_model/size_obs.rds`. **Output:** a figure into `manuscript-spread/figures/`.
+
+**Aesthetics:** Iván has made maps like this before, for presentations and possibly for the
+thesis or RAE — find that code and copy its look rather than inventing one.
+
+**Caption numbers, already computed:** median fitted-ranef overlap over the 57 focal fires is
+0.535, median size quotient 1.04, and 36 of 57 fires are overestimated.
+
 ### Then
 
 **Manuscript (started 2026-08-26).** `manuscript-spread/ijwf/` is initialised for the target
@@ -252,13 +296,17 @@ results.
 
 **Materials and methods drafted (2026-08-28)** — study area, data, the spread model, the
 two-stage estimation and the validation design, with `references.bib` populated. It runs
-**3250 words of the 6000**, which is more than half the budget on one section; the obvious
+**3311 words of the 6000**, which is more than half the budget on one section; the obvious
 trim is to move the hierarchical priors (Eqns 4–6) and the stage-2 detail to the
-supplementary, where IJWF expects the statistical detail anyway. The `.tex` carries
-`[Claude → Iván]` comments at the four places that still need a decision: the fire-count
-discrepancy (235 / 233 / 238 / 241), the software versions used for the final run, the
-`get_bounds()` overlap target, and the fact that the spatial-signature analysis is written
-as designed rather than as completed (it is still blocked on B/C above).
+supplementary, where IJWF expects the statistical detail anyway. Every open question in it has
+been resolved except one: the `.tex` still carries `[Claude, make and add the study area
+figure]`. The paper says **235 = 57 + 178** fires throughout (the four counts are reconciled in
+`docs/spread.md` → *How many fires?*), and the figure plan lives in
+`manuscript-spread/ijwf/designing.txt`.
+
+Still true of the Validation subsection: it is written **as designed, not as completed** — the
+spatial signature has only been run on the 57 focal fires, and needs B and C. Do not submit it
+in that state.
 
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
