@@ -1,0 +1,57 @@
+Fig. 1: Study area. map similar to chapter 3 in thesis, showing the fires,
+        separating by colour the known and unknown ignition point ids.
+        (no plotting the points, just different color among those 2
+        classes.).
+        Also the topographi and vegetation layers.
+        I did the figure for that paper/chapter in qgis, but try to do
+        this one in R.
+
+What we will show in results (mostly figures).
+
+**Core results**
+
+Fig. 2: Effects on spread prob (Fig. 4.7 in thesis).
+
+Fig. 3: Spread parameters as a function of FWI (Fig. 4.8 in thesis).
+
+Fig. 4: Vegetation effect (Fig. 4.9 in thesis).
+
+Fig. 5: Maps for a few focal landscapes showing the observed fire and 
+        the burn probability from 1000 simulations. 
+        Simulations always use the full posterior; each simulated fire uses
+        a single posterior draw. Uncertainty is considered for both simulated and
+        fitted random effects.
+        Multipanel figure. It must show 4 fires, both simulated with fitted
+        and simulated random effects, but always on the same data and ignition
+        point.
+        I have done maps like this for presentations, maybe for the thesis or
+        for RAE. Search code like this to copy the aesthetics.
+        We must choose 4 fires to show:
+            Small and large observed fire, where the model
+            either underestimates or overestimates burned area.
+            Ideally, also show a gradient of overlap, from the best to the worst,
+            judged by the overlap from fitted ranef.
+            I used the Figure C5 in thesis to choose, besides choosing based on 
+            the posterior-median overlap (or mean) with fitted ranef.
+
+**Validation results**
+
+(let's discuss about it before implementing)
+
+Fig. 6: Metrics as a function of FWI, for observed and simulated fires.
+
+Fig. 7: Another validation figure? Maybe Conditioning on fire size classes?
+
+---
+
+Supplementary figures
+
+Fig. S1: Flammability indices (Fig. C1 in thesis).
+
+Fig. S2: Effects of raw predictors (Fig. C2 in thesis).
+
+Fig. S3: Correlation among parameters (Fig. C3 in thesis).
+
+Fig. S4: Overlap with simulated or fitted ranef (Fig. C4 in thesis).
+
+Fig. S5: Size quotients (Fg. C5 in thesis).
