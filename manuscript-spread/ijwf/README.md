@@ -27,6 +27,12 @@ The pristine CSIRO template (class, `samplebib.bst`, Word template, author guide
 
 Everything works with the TeX Live already on this machine — no extra packages.
 
+> **Compile only through `make`.** A build launched without `-outdir` (LaTeX Workshop's
+> default recipe, say) drops `spread-paper.aux`/`.bbl`/`.pdf` next to the `.tex`, and
+> `latexmk` then finds that stale `.bbl` and silently skips BibTeX, so every citation renders
+> as `?`. The compiled PDF at the folder root is gitignored for the same reason. If citations
+> stop resolving, delete the stray files in this folder and `make` again.
+
 ```bash
 cd manuscript-spread/ijwf
 make            # -> build/spread-paper.pdf   (latexmk + bibtex)
@@ -74,6 +80,9 @@ Verified against every worked example in the CSIRO PDF. Two things it cannot do 
    class loads natbib without `sort`, and IJWF wants them chronological. Order the keys yourself.
 2. Datasets/preprints via `@misc` need the `[Dataset]` / `[Preprint]` tag inside the `title`
    field to land in the right place.
+3. **A DOI containing an underscore has to be escaped in the `.bib`** (`10.1007/0-387-21710-X\_9`)
+   — the style writes the `doi` field into the `.bbl` as plain text, so a bare `_` is a
+   "Missing $ inserted" fatal error.
 
 If you prefer to keep the library in Zotero, use the `.csl` file instead and check the output
 against the same PDF.

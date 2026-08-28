@@ -238,6 +238,16 @@ sources in `manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `m
 before D is finished — Introduction, study area and methods do not depend on the validation
 results.
 
+**Materials and methods drafted (2026-08-28)** — study area, data, the spread model, the
+two-stage estimation and the validation design, with `references.bib` populated. It runs
+**3250 words of the 6000**, which is more than half the budget on one section; the obvious
+trim is to move the hierarchical priors (Eqns 4–6) and the stage-2 detail to the
+supplementary, where IJWF expects the statistical detail anyway. The `.tex` carries
+`[Claude → Iván]` comments at the four places that still need a decision: the fire-count
+discrepancy (235 / 233 / 238 / 241), the software versions used for the final run, the
+`get_bounds()` overlap target, and the fact that the spatial-signature analysis is written
+as designed rather than as completed (it is still blocked on B/C above).
+
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the
    drift item above) unless the old `.asc` files are recovered.

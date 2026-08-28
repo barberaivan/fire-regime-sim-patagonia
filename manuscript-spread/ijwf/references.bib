@@ -1,4 +1,4 @@
-% References for the spread paper (IJWF, Harvard/CSIRO style via samplebib.bst).
+% References for the spread paper (IJWF, Harvard/CSIRO style via ijwf.bst).
 %
 % Formatting notes that the .bst cannot enforce for you:
 %   - journal = {...}  must hold the FULL journal name, never an abbreviation
@@ -8,13 +8,334 @@
 %
 % If you keep the library in Zotero, export with the CSL style
 % international-journal-of-wildland-fire.csl (in this folder) for non-LaTeX output.
+%
+% Entries carried over from the thesis bibliography (~/dev/phd-thesis-fire-patagonia/
+% tex/bibliografia.bib) keep their original keys, so citations can be moved between
+% the two documents without renaming.
 
-@article{placeholder2024,
-  author  = {Surname AB and Surname CD and Surname EF},
-  year    = {2024},
-  title   = {Delete this entry once real references are in},
+%------------------------------------------------------------------------------
+% Study area, fire regime and fuels
+%------------------------------------------------------------------------------
+
+@article{barbera_patterns,
+  author  = {Barberá, Iván and Cingolani, Ana María and Tiribelli, Florencia and Mermoz, Mónica Alicia and Morales, Juan Manuel and Kitzberger, Thomas},
+  year    = {2025},
+  title   = {Biotic and physical drivers of fire in northwestern {P}atagonia},
+  journal = {Fire Ecology},
+  volume  = {21},
+  pages   = {14},
+  doi     = {10.1186/s42408-025-00353-8}
+}
+
+@article{oyarzabal_vegetation_2018,
+  author  = {Oyarzabal, Mariano and Clavijo, José and Oakley, Luis and Biganzoli, Fernando and Tognetti, Pedro and Barberis, Ignacio and Maturo, Hernán M and Aragón, Roxana and Campanello, Paula I and Prado, Darién and Oesterheld, Martín and León, Rolando J C},
+  year    = {2018},
+  title   = {Vegetation units of {A}rgentina},
+  journal = {Ecología Austral},
+  volume  = {28},
+  pages   = {40--63},
+  doi     = {10.25260/EA.18.28.1.0.399}
+}
+
+@article{villalba_large-scale_2003,
+  author  = {Villalba, Ricardo and Lara, Antonio and Boninsegna, José A and Masiokas, Mariano and Delgado, Silvia and Aravena, Juan C and Roig, Fidel A and Schmelter, Andrea and Wolodarsky, Alexia and Ripalta, Alberto},
+  year    = {2003},
+  title   = {Large-scale temperature changes across the southern {A}ndes: 20th-century variations in the context of the past 400 years},
+  journal = {Climatic Change},
+  volume  = {59},
+  pages   = {177--232},
+  doi     = {10.1023/A:1024452701153}
+}
+
+@article{kitzberger_climatic_1997,
+  author  = {Kitzberger, Thomas and Veblen, Thomas T and Villalba, Ricardo},
+  year    = {1997},
+  title   = {Climatic influences on fire regimes along a rain forest-to-xeric woodland gradient in northern {P}atagonia, {A}rgentina},
+  journal = {Journal of Biogeography},
+  volume  = {24},
+  pages   = {35--47},
+  doi     = {10.1111/j.1365-2699.1997.tb00048.x}
+}
+
+@incollection{veblen_fire_2003,
+  author    = {Veblen, Thomas T and Kitzberger, Thomas and Raffaele, Estela and Lorenz, Diane C},
+  year      = {2003},
+  title     = {Fire history and vegetation changes in northern {P}atagonia, {A}rgentina},
+  booktitle = {Fire and Climatic Change in Temperate Ecosystems of the Western {A}mericas},
+  editor    = {Veblen, Thomas T and Baker, William L and Montenegro, Gloria and Swetnam, Thomas W},
+  pages     = {265--295},
+  publisher = {Springer},
+  address   = {New York, USA},
+  doi       = {10.1007/0-387-21710-X\_9}
+}
+
+@article{paritsis_positive_2015,
+  author  = {Paritsis, Juan and Veblen, Thomas T and Holz, Andrés},
+  year    = {2015},
+  title   = {Positive fire feedbacks contribute to shifts from {N}othofagus pumilio forests to fire-prone shrublands in {P}atagonia},
+  journal = {Journal of Vegetation Science},
+  volume  = {26},
+  pages   = {89--101},
+  doi     = {10.1111/jvs.12225}
+}
+
+@article{tiribelli_changes_2018,
+  author  = {Tiribelli, Florencia and Kitzberger, Thomas and Morales, Juan Manuel},
+  year    = {2018},
+  title   = {Changes in vegetation structure and fuel characteristics along post-fire succession promote alternative stable states and positive fire--vegetation feedbacks},
+  journal = {Journal of Vegetation Science},
+  volume  = {29},
+  pages   = {147--156},
+  doi     = {10.1111/jvs.12620}
+}
+
+@article{barbera_microclimate_2023,
+  author  = {Barberá, Iván and Paritsis, Juan and Ammassari, Luciana and Morales, Juan Manuel and Kitzberger, Thomas},
+  year    = {2023},
+  title   = {Microclimate and species composition shape the contribution of fuel moisture to positive fire-vegetation feedbacks},
+  journal = {Agricultural and Forest Meteorology},
+  volume  = {330},
+  pages   = {109289},
+  doi     = {10.1016/j.agrformet.2022.109289}
+}
+
+%------------------------------------------------------------------------------
+% Spatial and climatic data sources
+%------------------------------------------------------------------------------
+
+@techreport{mapa_ciefap,
+  author      = {{CIEFAP} and {MAyDS}},
+  year        = {2016},
+  title       = {Actualización de la Clasificación de Tipos Forestales y Cobertura del Suelo de la Región Bosque Andino Patagónico. Informe Final},
+  institution = {CIEFAP, MAyDS},
+  address     = {Esquel, Argentina}
+}
+
+@article{lara_vegetacion_1999,
+  author  = {Lara, Antonio and Rutherford, Paula and Montory, Carlos and Bran, Donaldo and Pérez, Alicia and Clayton, Susana and Ayesa, Juan and Barrios, Daniel and Gross, Mónica and Iglesias, Gustavo},
+  year    = {1999},
+  title   = {Vegetación de la eco-región de los {B}osques {V}aldivianos},
+  journal = {Fundación Vida Silvestre Boletín Técnico},
+  volume  = {51},
+  pages   = {1--29}
+}
+
+@article{DEMfarr2007,
+  author  = {Farr, Tom G and Rosen, Paul A and Caro, Edward and Crippen, Robert and Duren, Riley and Hensley, Scott and Kobrick, Michael and Paller, Mimi and Rodriguez, Ernesto and Roth, Ladislav and Seal, David and Shaffer, Scott and Shimada, Joanne and Umland, Jeffrey and Werner, Marian and Oskin, Michael and Burbank, Douglas and Alsdorf, Douglas},
+  year    = {2007},
+  title   = {The shuttle radar topography mission},
+  journal = {Reviews of Geophysics},
+  volume  = {45},
+  pages   = {RG2004},
+  doi     = {10.1029/2005RG000183}
+}
+
+@phdthesis{forthofer2007windNinja,
+  author = {Forthofer, Jason M},
+  year   = {2007},
+  title  = {Modeling wind in complex terrain for use in fire spread prediction},
+  school = {Colorado State University},
+  address = {Fort Collins, CO, USA},
+  type   = {MSc Thesis}
+}
+
+@book{van_wagner_development_1987,
+  author    = {Van Wagner, Charles E},
+  year      = {1987},
+  title     = {Development and Structure of the {C}anadian {F}orest {F}ire {W}eather {I}ndex {S}ystem},
+  series    = {Forestry Technical Report 35},
+  publisher = {Canadian Forestry Service},
+  address   = {Ottawa, Canada}
+}
+
+@article{vitolo_era5-based_2020,
+  author  = {Vitolo, Claudia and Di Giuseppe, Francesca and Barnard, Christopher and Coughlan, Ruth and San-Miguel-Ayanz, Jesús and Libertá, Giorgio and Krzeminski, Blazej},
+  year    = {2020},
+  title   = {{ERA5}-based global meteorological wildfire danger maps},
+  journal = {Scientific Data},
+  volume  = {7},
+  pages   = {216},
+  doi     = {10.1038/s41597-020-0554-z}
+}
+
+@article{hersbach2020era5,
+  author  = {Hersbach, Hans and Bell, Bill and Berrisford, Paul and Hirahara, Shoji and Horányi, András and Muñoz-Sabater, Joaquín and Nicolas, Julien and Peubey, Carole and Radu, Raluca and Schepers, Dinand and Simmons, Adrian and Soci, Cornel and Abdalla, Saleh and Abellan, Xavier and Balsamo, Gianpaolo and Thépaut, Jean-Noël},
+  year    = {2020},
+  title   = {The {ERA5} global reanalysis},
+  journal = {Quarterly Journal of the Royal Meteorological Society},
+  volume  = {146},
+  pages   = {1999--2049},
+  doi     = {10.1002/qj.3803}
+}
+
+%------------------------------------------------------------------------------
+% Fire spread and burn-probability modelling
+%------------------------------------------------------------------------------
+
+@article{morales_stochastic_2015,
+  author  = {Morales, Juan Manuel and Mermoz, Mónica and Gowda, Juan Haridas and Kitzberger, Thomas},
+  year    = {2015},
+  title   = {A stochastic fire spread model for north {P}atagonia based on fire occurrence maps},
+  journal = {Ecological Modelling},
+  volume  = {300},
+  pages   = {73--80},
+  doi     = {10.1016/j.ecolmodel.2015.01.004}
+}
+
+@article{marchal_turning_2020,
+  author  = {Marchal, Jean and Cumming, Steven G and McIntire, Eliot J B},
+  year    = {2020},
+  title   = {Turning down the heat: vegetation feedbacks limit fire regime responses to global warming},
+  journal = {Ecosystems},
+  volume  = {23},
+  pages   = {204--216},
+  doi     = {10.1007/s10021-019-00398-2}
+}
+
+@article{parisien2019applications,
+  author  = {Parisien, Marc-André and Dawe, Denyse A and Miller, Carol and Stockdale, Christopher A and Armitage, O Bradley},
+  year    = {2019},
+  title   = {Applications of simulation-based burn probability modelling: a review},
   journal = {International Journal of Wildland Fire},
-  volume  = {33},
-  pages   = {WF24031},
-  doi     = {10.1071/WF24031}
+  volume  = {28},
+  pages   = {913--926},
+  doi     = {10.1071/WF19069}
+}
+
+@article{parisien2020commentary,
+  author  = {Parisien, Marc-André and Finney, Mark A and Gralewicz, Nicholas V and Belval, Erin J and Beverly, Jennifer L},
+  year    = {2020},
+  title   = {Commentary on the article `{B}urn probability simulation and subsequent wildland fire activity in {A}lberta, {C}anada---{I}mplications for risk assessment and strategic planning'},
+  journal = {Forest Ecology and Management},
+  volume  = {462},
+  pages   = {117998},
+  doi     = {10.1016/j.foreco.2020.117998}
+}
+
+%------------------------------------------------------------------------------
+% Statistical methods
+%------------------------------------------------------------------------------
+
+@book{gelman2013bayesian,
+  author    = {Gelman, Andrew and Carlin, John B and Stern, Hal S and Dunson, David B and Vehtari, Aki and Rubin, Donald B},
+  year      = {2013},
+  title     = {Bayesian Data Analysis},
+  edition   = {3rd},
+  publisher = {Chapman and Hall/CRC},
+  address   = {Boca Raton, FL, USA},
+  doi       = {10.1201/b16018}
+}
+
+@book{sisson2018handbook,
+  author    = {Sisson, Scott A and Fan, Yanan and Beaumont, Mark A},
+  year      = {2018},
+  title     = {Handbook of Approximate {B}ayesian Computation},
+  publisher = {Chapman and Hall/CRC},
+  address   = {Boca Raton, FL, USA},
+  doi       = {10.1201/9781315117195}
+}
+
+@article{beaumont2010approximate,
+  author  = {Beaumont, Mark A},
+  year    = {2010},
+  title   = {Approximate {B}ayesian computation in evolution and ecology},
+  journal = {Annual Review of Ecology, Evolution, and Systematics},
+  volume  = {41},
+  pages   = {379--406},
+  doi     = {10.1146/annurev-ecolsys-102209-144621}
+}
+
+@article{delmoral2012adaptive,
+  author  = {Del Moral, Pierre and Doucet, Arnaud and Jasra, Ajay},
+  year    = {2012},
+  title   = {An adaptive sequential {M}onte {C}arlo method for approximate {B}ayesian computation},
+  journal = {Statistics and Computing},
+  volume  = {22},
+  pages   = {1009--1020},
+  doi     = {10.1007/s11222-011-9271-y}
+}
+
+@article{terbraak2006markov,
+  author  = {ter Braak, Cajo J F},
+  year    = {2006},
+  title   = {A {M}arkov {C}hain {M}onte {C}arlo version of the genetic algorithm {D}ifferential {E}volution: easy {B}ayesian computing for real parameter spaces},
+  journal = {Statistics and Computing},
+  volume  = {16},
+  pages   = {239--249},
+  doi     = {10.1007/s11222-006-8769-1}
+}
+
+@article{lunn2013fully,
+  author  = {Lunn, David and Barrett, Jessica and Sweeting, Michael and Thompson, Simon},
+  year    = {2013},
+  title   = {Fully {B}ayesian hierarchical modelling in two stages, with application to meta-analysis},
+  journal = {Journal of the Royal Statistical Society Series C: Applied Statistics},
+  volume  = {62},
+  pages   = {551--572},
+  doi     = {10.1111/rssc.12007}
+}
+
+@article{grimm2005pattern,
+  author  = {Grimm, Volker and Revilla, Eloy and Berger, Uta and Jeltsch, Florian and Mooij, Wolf M and Railsback, Steven F and Thulke, Hans-Hermann and Weiner, Jacob and Wiegand, Thorsten and DeAngelis, Donald L},
+  year    = {2005},
+  title   = {Pattern-oriented modeling of agent-based complex systems: lessons from ecology},
+  journal = {Science},
+  volume  = {310},
+  pages   = {987--991},
+  doi     = {10.1126/science.1116681}
+}
+
+@article{hartig2011statistical,
+  author  = {Hartig, Florian and Calabrese, Justin M and Reineking, Björn and Wiegand, Thorsten and Huth, Andreas},
+  year    = {2011},
+  title   = {Statistical inference for stochastic simulation models---theory and application},
+  journal = {Ecology Letters},
+  volume  = {14},
+  pages   = {816--827},
+  doi     = {10.1111/j.1461-0248.2011.01640.x}
+}
+
+%------------------------------------------------------------------------------
+% Software
+%------------------------------------------------------------------------------
+
+@misc{R,
+  author = {{R Core Team}},
+  year   = {2022},
+  title  = {R: A Language and Environment for Statistical Computing},
+  note   = {R Foundation for Statistical Computing, Vienna, Austria},
+  url    = {https://www.R-project.org/}
+}
+
+@article{Rcpp,
+  author  = {Eddelbuettel, Dirk and Balamuta, James Joseph},
+  year    = {2018},
+  title   = {Extending {R} with {C++}: a brief introduction to {R}cpp},
+  journal = {The American Statistician},
+  volume  = {72},
+  pages   = {28--36},
+  doi     = {10.1080/00031305.2017.1375990}
+}
+
+@misc{terra,
+  author = {Hijmans, Robert J},
+  year   = {2022},
+  title  = {terra: Spatial Data Analysis [{R} package]},
+  note   = {R package version 1.6-47},
+  url    = {https://CRAN.R-project.org/package=terra}
+}
+
+@misc{survival,
+  author = {Therneau, Terry M},
+  year   = {2024},
+  title  = {A Package for Survival Analysis in {R} [{R} package]},
+  note   = {R package version 3.5-8},
+  url    = {https://CRAN.R-project.org/package=survival}
+}
+
+@misc{firespread,
+  author = {Barberá, Iván and Renison, Iván},
+  year   = {2025},
+  title  = {{FireSpread}: A Cellular Automaton Fire Spread Simulator for Northwestern {P}atagonia [{R} package]},
+  url    = {https://github.com/barberaivan/FireSpread}
 }
