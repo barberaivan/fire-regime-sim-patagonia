@@ -61,13 +61,15 @@ unresolved — summarized under "Open items" below, full detail in that file).
   study area; they are stopped only by a tile's own border. `landscapes_simulation.R`'s
   `terra::intersect()` line is a one-way coverage *check* (is any of the study area untiled?),
   not a crop.
-- **The spread model's validation is designed, implemented, and both sides are run**
-  (2026-08-28). Design in `docs/spread.md` → *Stage 3 — validation*;
-  `manuscript-spread/journal_choose.md` updated to match. Code:
-  `R/spread_validation_functions.R`, `spread/validation_ignition_cells.R` (run — output in
-  `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (run — 64,836
-  simulated fires), `spread/validation_observed.R` (run — 241 observed fires). Only the analysis
-  and figures (step D below) are left.
+- **The spread model's validation is complete** (2026-08-28) — design, both sides, the analysis
+  and its figures. Design in `docs/spread.md` → *Stage 3 — validation*, results in the same file
+  under *Results of the validation*; `manuscript-spread/journal_choose.md` updated to match.
+  Code: `R/spread_validation_functions.R`, `spread/validation_ignition_cells.R` (output in
+  `files/spread_validation/ignition_cells.rds`), `spread/validation_simulate.R` (64,836
+  simulated fires), `spread/validation_observed.R` (241 observed fires),
+  `spread/validation_analysis.R` (the comparison — four figures and
+  `validation_summary.rds`). Paper Fig. 5 is done too, by
+  `spread/figure_burn_probability.R`.
 
   - **All 185 GEE export tasks succeeded** — the 184 fires with unknown ignition point, plus the
     `2015_41` focal smoke test — and all 184 are downloaded and built into reduced landscapes
@@ -109,9 +111,9 @@ unresolved — summarized under "Open items" below, full detail in that file).
 
 ## Next steps
 
-**Where the spread paper's validation stands (2026-08-28).** The design is settled and written
-up (`docs/spread.md` → *Stage 3 — validation*), and **both sides of the comparison are computed
-and on disk**. All that is left is D: the analysis and its figures.
+**Where the spread paper's validation stands (2026-08-28).** Design, both sides of the
+comparison, the analysis and Fig. 5 are all **done**. Results are written up in `docs/spread.md`
+→ *Results of the validation*; the remaining work is manuscript prose and the other figures.
 
 ```
    simulated side                     observed side
@@ -127,8 +129,11 @@ and on disk**. All that is left is D: the analysis and its figures.
                                           241 fires, all converged
                     └────────────┬──────────┘
                                  ▼
-                          [D] analysis + figures
+                          [D] analysis + figures ─── DONE ✅
 ```
+
+Fig. 5 (step E below) is done too, so the whole validation block is closed. What remains for
+the paper is writing the Results and Discussion around it, and Figs. 1–4 and 6–7.
 
 ### A. Run the full simulation — **DONE 2026-08-21**
 
@@ -264,65 +269,62 @@ simulated 1.50 and 27.8 %. 61 % of the 241 are more elongated than the model's 1
 rising to 78 % above 1000 ha. `observed_shape.rds` also carries `elong_fixed`, elongation along
 the fixed 293°, which is the column directly comparable to the simulated `elong_wind`.
 
-### D. Analysis and figures — **no code yet; both inputs are now on disk**
+### D. Analysis and figures — **DONE 2026-08-28**
 
-The only piece with no code yet. Consumes `simulated_fires.rds` (on disk since 2026-08-21) and
-the observed tables `observed_signature.rds` / `observed_shape.rds` (since 2026-08-28):
-size-distribution Q-Q in `log10(area)`, shape metrics against all 238 polygons by size class,
-signature distributions conditioned on `log10(area)`, and the FWI-stratified version. Plot style
-in `docs/spread.md` → *Plot style* — simulated as 2-D density, observed as points, GAM
-smoothers on both.
+`spread/validation_analysis.R` compares the 64,836 simulated fires with the 241 observed ones —
+size-distribution Q-Q, shape by size class, signature conditioned on `log10(area)`, and the
+FWI-stratified version. Under a minute. Four figures into `files/spread_validation/figures/`
+(`size_distribution`, `shape_by_size`, `signature_by_size`, `metrics_by_fwi`), every number into
+`files/spread_validation/validation_summary.rds`. Plot style as designed: simulated as hex-binned
+2-D density, observed as points, GAM smoothers on both. Full tables in `docs/spread.md` →
+*Results of the validation*.
 
-**The headline result is already visible and will not change:** observed fires are elongated
-(median 2.12 over all 241, 2.47 over the 57 focal) and wind-aligned (51 % within 30° of the
-113/293° axis, 72 % above 1000 ha), simulated fires are rounder (median 1.50 over all 64,836)
-and randomly oriented (27.8 % within 30°, against 33.3 % for uniform). The full run adds the sharper version: measured **along the wind**, the simulated
-fires are not elongated at all — median `elong_wind` 0.976, falling to 0.94 above 1000 ha. It is
-structural — the automaton's
-spread *rate* is isotropic, so the head fire cannot outrun the flanks, capping elongation at the
-half-lobe bound of 1.89–2.0 regardless of the wind coefficient. Full argument and the evidence
-that it is not a bug in `docs/spread.md` → *Why the model cannot make an elongated fire*.
+What it found, in one line each:
 
-### E. Figure 5 — burn-probability maps for four fires — **no code yet**
+- **Size** — the simulator runs large by a factor of 2–3 through the middle of the distribution
+  (median 151 vs 58 ha), uniformly rather than in one tail; KS *D* = 0.187. Weakest test of the
+  set, and the truncation/record caveats apply.
+- **Shape** — the headline result holds *at every size class*. Observed elongation 2.07 / 1.96 /
+  2.57 against simulated 1.56 / 1.47 / 1.47; observed wind alignment 0.48 / 0.46 / 0.72 against
+  simulated 0.30 / 0.27 / 0.26, the last of which is below the 0.333 of a uniform orientation.
+- **Signature, `vfi`** — broadly agrees. The simulated median sits inside the observed IQR in all
+  three size classes and the fraction positive matches within a few points. The gap the pilot
+  implied was mostly the missing size conditioning.
+- **Signature, `tfi`** — the real disagreement. Simulated fires give a *negative* edge-local
+  topographic signature at small sizes (−2.45) where observed give a positive one (+0.66), and
+  fewer than half of simulated fires are positive in any class.
+- **FWI** — both sides grow with FWI by a similar factor (observed median 39.6 → 277.7 ha across
+  quartiles, simulated 53.9 → 397.9). Simulated elongation rises weakly with FWI, observed is
+  flat. The FWI panels are visibly striped because `fwi_z` is resampled from only 233 distinct
+  observed values.
 
-The other results figure that needs a run, not just a plot. Independent of B/C/D: it uses the
-focal landscapes and the fitted model, both already on disk, so it can be done in any order.
+Still to decide with Iván: `manuscript-spread/ijwf/designing.txt` marks the validation figures
+(Figs. 6–7) *"let's discuss about it before implementing"*, so these four are analysis output,
+not the paper's figures yet. The obvious pairing is one size-conditioned figure (shape +
+signature) and one FWI-conditioned one.
 
-**The four fires are chosen** (criteria and full justification in
-`manuscript-spread/ijwf/designing.txt` → Fig. 5). Summaries from the 2000 fitted-ranef sims in
-`files/hierarchical_model/metrics_table.rds`; `q` = simulated / observed size:
+### E. Figure 5 — burn-probability maps for four fires — **DONE 2026-08-28**
 
-| fire_id | obs ha | overlap med/mean | q med/mean | P(q>1) |
-|---|---|---|---|---|
-| `1999_25j` | 724.0 | 0.838 / 0.832 | 1.04 / 1.04 | 0.85 |
-| `2015_50` | 28,567.3 | 0.636 / 0.637 | 1.11 / 1.11 | 1.00 |
-| `2004_23` | 320.1 | 0.350 / 0.349 | 0.44 / 0.53 | 0.07 |
-| `2002_34` | 19.9 | 0.266 / 0.237 | 2.67 / 2.49 | 0.95 |
+`spread/figure_burn_probability.R` → `manuscript-spread/figures/fig5_burn_probability.{png,pdf}`.
+Per fire, 1000 simulations under fitted random effects and 1000 under simulated ones, same
+landscape and same ignition point, one posterior draw per simulated fire, full posterior. Eight
+panels, 4 fires × 2 modes: burn probability per cell over a burnable/non-burnable base layer,
+the observed perimeter haloed over it, the ignition point as a white dot, a scale bar per panel
+(the four fires span 20 ha to 28,616 ha, so no shared scale would work). About **2 minutes on 8
+cores**, nearly all of it `2015_50`.
 
-They give a monotone overlap gradient (0.84 → 0.27, against a 57-fire median of 0.535), three
-orders of magnitude in size, and the strongest under- and overestimate in the set.
+The per-cell counts are kept in `files/hierarchical_model/burn_probability_maps.rds` (cropped to
+what is drawn, rasters `wrap()`ped), so the figure can be restyled with `do_simulate <- FALSE`
+without re-simulating.
 
-**What to run.** Per fire, 1000 simulations under **fitted** random effects and 1000 under
-**simulated** ones — same landscape, same ignition point, one posterior draw per simulated fire,
-full posterior (never the mean, never a thinned subset). Then burn probability per cell = the
-fraction of simulations that burned it, with the observed perimeter drawn over it. Eight panels,
-4 fires × 2 random-effect modes.
+The simulation block was copied from `spread/hierarchical_fit.R` ~L2526–2620, not re-derived, and
+the natural-vs-logit `steps` trap was respected. The check that it was copied right: mean
+simulated sizes give size quotients 1.03 / 1.11 / 0.53 / 2.39, against the `metrics_table`
+values 1.04 / 1.11 / 0.53 / 2.49.
 
-**Do not write the simulation loop from scratch.** `spread/hierarchical_fit.R` ~L2526–2620
-already does exactly this — it builds `ranef_fit` and `ranef_sim` from `draws`, loops over
-fires, and simulates. The only change needed is to accumulate a per-cell burn count instead of
-reducing each simulation to the `metrics_table` row. Copy that block rather than re-deriving the
-MVLN → `invlogit_scaled` chain.
-
-> **The trap in that chain:** `draws$ranef` row 6 (`steps`) is stored on the **natural** scale
-> while rows 1–5 are on the logit scale. `docs/spread.md` → *The elongation gap* records it.
-
-**Inputs:** `data/focal_fires/landscapes/<fire_id>.rds` (landscape, `ig_rowcol`, `burned_layer`),
-`files/hierarchical_model/draws_batch_*.rds` or `spread_model_samples.rds`, and
-`files/hierarchical_model/size_obs.rds`. **Output:** a figure into `manuscript-spread/figures/`.
-
-**Aesthetics:** Iván has made maps like this before, for presentations and possibly for the
-thesis or RAE — find that code and copy its look rather than inventing one.
+One thing to know before reading the panels: the square, blocky outer edge of the burned region
+is the `steps` budget, not a landscape border — 8 neighbours per step means the burned set stays
+inside a square of half-width `steps` around the ignition cell.
 
 **Caption numbers, already computed:** median fitted-ranef overlap over the 57 focal fires is
 0.535, median size quotient 1.04, and 36 of 57 fires are overestimated.
@@ -346,9 +348,9 @@ figure]`. The paper says **235 = 57 + 178** fires throughout (the four counts ar
 `docs/spread.md` → *How many fires?*), and the figure plan lives in
 `manuscript-spread/ijwf/designing.txt`.
 
-Still true of the Validation subsection: it is written **as designed, not as completed** — the
-spatial signature has only been run on the 57 focal fires, and needs B and C. Do not submit it
-in that state.
+The Validation subsection is still written **as designed, not as completed** — it was drafted
+before B–E ran. It now needs updating to the past tense and a Results section written against
+`docs/spread.md` → *Results of the validation*.
 
 4. **TODO #7 re-run** (see above) — do this whenever the SMC-fitted regime outputs are actually
    needed; not urgent otherwise. Note it would now also pick up a new PNNH wind field (see the

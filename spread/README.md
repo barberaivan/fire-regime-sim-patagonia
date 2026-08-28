@@ -15,3 +15,5 @@ Planned files (migrated from the old repo):
 | `validation_ignition_cells.R` | Stage 3, run once — eligible ignition cells per study-area tile, and how many survive eroding the tile by each `steps` margin |
 | `validation_simulate.R` | Stage 3 — simulates fires over the tiles from the full posterior and reduces each to a summary row (size, shape, spatial signature) |
 | `validation_observed.R` | Stage 3 — the observed side: the same shape and signature metrics over all 241 mapped fires, into `files/spread_validation/observed_{signature,shape}.rds` |
+| `validation_analysis.R` | Stage 3 — the comparison: size Q-Q, shape and signature conditioned on size and on FWI; figures into `files/spread_validation/figures/`, numbers into `validation_summary.rds` |
+| `figure_burn_probability.R` | Paper Fig. 5 — burn-probability maps for four focal fires, fitted vs simulated random effects, into `manuscript-spread/figures/` |

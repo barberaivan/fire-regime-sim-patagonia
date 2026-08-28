@@ -77,6 +77,15 @@ Fig. 5: Maps for a few focal landscapes showing the observed fire and
 
         Note the sims above are 2000 per fire, not the 1000 written above; the
         figure can use either, the summaries would barely move.
+
+        --- DONE (2026-08-28) -------------------------------------------------
+        spread/figure_burn_probability.R -> figures/fig5_burn_probability.{png,pdf}
+        1000 sims per fire per mode, the four fires above, ~2 min on 8 cores.
+        Per-cell counts cached in files/hierarchical_model/burn_probability_maps.rds,
+        so the figure restyles with do_simulate <- FALSE.
+        Aesthetics copied from the defence maps (plots_defensa*.R in the old repo).
+        Note for the caption: the square outer edge of the burned region in some
+        panels is the `steps` budget, not a landscape border.
         ----------------------------------------------------------------------
 
 **Validation results**
@@ -86,6 +95,33 @@ Fig. 5: Maps for a few focal landscapes showing the observed fire and
 Fig. 6: Metrics as a function of FWI, for observed and simulated fires.
 
 Fig. 7: Another validation figure? Maybe Conditioning on fire size classes?
+
+        --- ANALYSIS RUN, FIGURES NOT YET CHOSEN (Claude, 2026-08-28) ---------
+        spread/validation_analysis.R has produced four candidate panels in
+        files/spread_validation/figures/ (not in manuscript figures/, because
+        this section still says "discuss before implementing"):
+
+          size_distribution.png   density + Q-Q in log10(area)
+          shape_by_size.png       elongation, elongation along 293, compactness,
+                                  hull fill, deviation from the wind axis, all
+                                  vs log10(area)
+          signature_by_size.png   b_vfi, b_tfi vs log10(area)
+          metrics_by_fwi.png      all seven metrics vs standardized FWI
+
+        Style is the designed one: simulated as hex-binned 2-D density,
+        observed as red points, GAM smoother on each.
+
+        Suggested pairing when we discuss it: Fig. 6 = shape + signature
+        conditioned on size (the headline: observed fires are elongated and
+        wind-aligned at every size class, simulated ones are not); Fig. 7 =
+        the FWI-conditioned version. The size Q-Q is a supplementary figure at
+        best — the simulated set is truncated at 10 ha and the observed record
+        is not a draw from the same process.
+
+        One cosmetic thing to decide for the FWI figure: the hex bins are
+        visibly striped, because FWI is resampled from only 233 distinct
+        observed values. Jittering fwi_z would hide it; leaving it is honest.
+        ----------------------------------------------------------------------
 
 ---
 

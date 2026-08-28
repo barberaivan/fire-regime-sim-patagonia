@@ -61,17 +61,23 @@ cat(n_fires, "mapped fires:", length(focal_ids), "focal +",
     length(sig_ids), "reduced\n")
 
 # Two fires were split in two for the fit, so they have two landscapes but one
-# row in the climatic tables. FWI is carried along for the FWI-stratified
-# analysis; fires the table does not cover keep NA.
+# row in the climatic tables. And two fires carry a different year label in
+# `patagonian_fires_spread` than in the base mapped record the climatic tables
+# were keyed on — same fires, different id string (docs/spread.md -> "How many
+# fires?"). Both are aliases to resolve before the FWI join; fires the table
+# genuinely does not cover keep NA, and there are six of those.
 split_fires <- c("2015_47N" = "2015_47", "2015_47S" = "2015_47",
-                 "2011_19E" = "2011_19", "2011_19W" = "2011_19")
+                 "2011_19E" = "2011_19", "2011_19W" = "2011_19",
+                 "1999_1546963766" = "2000_1546963766",
+                 "2014_-1075171770" = "2016_-1075171770")
 fires$fire_id_climate <- ifelse(fires$fire_id %in% names(split_fires),
                                 split_fires[fires$fire_id], fires$fire_id)
 fwi_tab <- read.csv(file.path("data",
   "climatic_data_by_fire_fwi-fortnight-cumulative_FWIZ2.csv"))
 fires$fwi <- fwi_tab$fwi_fort_expquad[match(fires$fire_id_climate,
                                             fwi_tab$fire_id)]
-cat("FWI available for", sum(!is.na(fires$fwi)), "of", n_fires, "fires\n")
+cat("FWI available for", sum(!is.na(fires$fwi)), "of", n_fires, "landscapes",
+    "| without:", paste(fires$fire_id[is.na(fires$fwi)], collapse = ", "), "\n")
 
 
 # Measure -----------------------------------------------------------------

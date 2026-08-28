@@ -40,6 +40,39 @@ The largest, most complex module. Fits the fire spread model in two stages, driv
 - **Inputs:** `files/posterior_samples_stage1/`, the lagged FWI matrix.
 - **Outputs:** `files/hierarchical_model/*.rds` — **the fitted spread model (production constant).**
 
+### Burn-probability maps — `figure_burn_probability.R` (paper Fig. 5)
+
+Per-cell burn probability from 1000 simulations under the **fitted** random effect and 1000
+under a **newly simulated** one, on the same landscape and the same ignition point, for four
+focal fires — 8 panels. Written to `manuscript-spread/figures/fig5_burn_probability.{png,pdf}`,
+with the per-cell counts kept in `files/hierarchical_model/burn_probability_maps.rds` so the
+figure can be retuned without re-simulating (`do_simulate <- FALSE`). About 2 minutes on 8
+cores, nearly all of it `2015_50`.
+
+The simulation block is lifted from this file's *Assessing model fit* section (~L2526–2620) —
+same `ranef_fit` / `ranef_sim` construction, one posterior draw per simulated fire, full
+posterior — with a per-cell burn count accumulated instead of a `metrics_table` row. **The trap
+to respect when copying it:** `draws$ranef` row 6 (`steps`) is stored on the *natural* scale
+while rows 1–5 are on the logit scale, so only rows 1:(n_coef − 1) get back-transformed; the
+simulated random effects come out of `rmvn()` entirely on the logit scale and all six are
+transformed, with `Upar["steps"]` set per draw from `draws$stepsU`. The mean simulated sizes
+reproduce the `metrics_table` size quotients (1.03, 1.11, 0.53, 2.39 against 1.04, 1.11, 0.53,
+2.49), which is the cheapest check that the chain was copied correctly.
+
+The four fires and the criteria behind them are in `manuscript-spread/ijwf/designing.txt` →
+Fig. 5: a monotone gradient of posterior-median overlap (0.84 / 0.64 / 0.35 / 0.27 against a
+57-fire median of 0.535), three orders of magnitude in size, and the strongest under- and
+overestimate in the set. Caption numbers: median fitted-ranef overlap over the 57 focal fires
+0.535, median size quotient 1.04, 36 of 57 fires overestimated.
+
+Aesthetics follow the burn-probability maps made for the thesis defence
+(`fire regime simulations/plots_defensa*.R` in the old PhD repo): a burnable / non-burnable base
+layer, the probability surface over it through `ggnewscale`, the observed perimeter as a haloed
+outline and the ignition point as a white dot. One feature of the panels is worth knowing before
+it is mistaken for a bug: the square, blocky outer boundary of the burned region is the `steps`
+budget, not a landscape edge — the automaton reaches 8 neighbours per step, so after `steps`
+steps the burned set is contained in a square of that half-width around the ignition cell.
+
 ## Stage 3 — validation
 
 Pattern-oriented validation: the simulator is judged on whether statistical patterns that
@@ -49,7 +82,10 @@ of individual fires.
 Code: `R/spread_validation_functions.R` (shared metrics),
 `spread/validation_ignition_cells.R` (run once), `spread/validation_simulate.R` (the simulated
 side), `spread/validation_observed.R` (the observed side — the same metrics over all 241 mapped
-fires, saved to `files/spread_validation/observed_signature.rds` and `observed_shape.rds`).
+fires, saved to `files/spread_validation/observed_signature.rds` and `observed_shape.rds`), and
+`spread/validation_analysis.R` (the comparison — figures into
+`files/spread_validation/figures/`, numbers into `validation_summary.rds`). Results below under
+*Results of the validation*.
 
 ### Why not classical train/test
 
@@ -298,6 +334,74 @@ distinctive structural claim is that spatial coefficients move with FWI. The sec
 dataset with FWI drawn uniformly across the modeled range (for coverage where observed data is
 sparse) is **deferred**, not part of the current run; revisit if the stratified test turns out
 to be starved at high FWI.
+
+### Results of the validation (2026-08-28)
+
+Both sides are on disk and compared by `spread/validation_analysis.R`, which writes four
+figures into `files/spread_validation/figures/` and the numbers below into
+`validation_summary.rds`. 64,836 simulated fires against 241 observed ones.
+
+**1. Size distribution — the simulator runs large, uniformly.** KS *D* = 0.187
+(*p* = 1.1e-7), and the Q-Q sits below the 1:1 line over the whole range rather than
+departing in one tail:
+
+| quantile | 5 % | 25 % | 50 % | 75 % | 95 % | max |
+|---|---|---|---|---|---|---|
+| observed (ha) | 15.8 | 27 | 58 | 321 | 3,249 | 28,616 |
+| simulated (ha) | 12.8 | 36 | 151 | 904 | 10,143 | 454,278 |
+
+Read it with the caveat the design already flags: the simulated set is conditioned on ≥ 10 ha
+and the observed record is what the mapping caught over 1999–2022, not a draw from the same
+generative process. It is the weakest test of the set, and the offset is roughly a factor of
+2–3 in the middle of the distribution.
+
+**2. Shape — the headline result, confirmed at every size.** Medians by size class:
+
+| | < 100 ha | 100–1000 ha | > 1000 ha |
+|---|---|---|---|
+| `elongation` observed | **2.07** | **1.96** | **2.57** |
+| `elongation` simulated | 1.56 | 1.47 | 1.47 |
+| `elong_293` observed | 1.23 | 1.13 | 1.58 |
+| `elong_293` simulated | 1.00 | 0.97 | 0.93 |
+| `elong_wind` simulated | 0.99 | 0.98 | 0.94 |
+| compactness observed / simulated | 0.24 / 0.33 | 0.10 / 0.26 | 0.03 / 0.09 |
+| hull fill observed / simulated | 0.73 / 0.85 | 0.68 / 0.88 | 0.60 / 0.85 |
+| frac. within 30° of 113/293 observed | 0.48 | 0.46 | **0.72** |
+| frac. within 30° of 113/293 simulated | 0.30 | 0.27 | 0.26 |
+
+Conditioning on size does not rescue it: simulated fires are rounder, fuller-hulled and more
+compact than observed ones in every class, and their orientation is *below* the 0.333 a uniform
+orientation would give while the observed alignment rises to 0.72 among fires over 1000 ha.
+Measured along the fixed 293°, the simulated fires are not elongated at all (0.93–1.00), and
+measured along their own terrain-steered wind they are the same. See *Why the model cannot make
+an elongated fire*.
+
+**3. Spatial signature — `vfi` broadly agrees, `tfi` has the wrong sign at small sizes.**
+
+| | < 100 ha | 100–1000 ha | > 1000 ha |
+|---|---|---|---|
+| `b_vfi` observed / simulated | 2.09 / 1.39 | 0.44 / 1.42 | 0.84 / 1.74 |
+| frac > 0 observed / simulated | 0.72 / 0.79 | 0.66 / 0.83 | 0.94 / 0.92 |
+| `b_tfi` observed / simulated | 0.66 / **−2.45** | 0.47 / −0.57 | 1.21 / −0.18 |
+| frac > 0 observed / simulated | 0.56 / 0.38 | 0.54 / 0.46 | 0.64 / 0.48 |
+
+The `vfi` distributions overlap heavily — the simulated median is inside the observed IQR in all
+three classes, and the fraction positive matches within a few points. The *trend* with size does
+not match (observed falls then rises, simulated rises monotonically), but the small-fire end of
+the observed side is noise-dominated, so little weight should be put on that.
+
+`tfi` is the real disagreement: simulated fires give a **negative** edge-local topographic
+signature at small sizes, where observed fires give a positive one, and the simulated fraction
+positive is below a half in every class against 0.54–0.64 observed. This is a genuine structural
+mismatch and not the size-conditioning artefact the pilot's unconditioned comparison suggested.
+
+**4. FWI.** Both sides get bigger with FWI, and by a similar factor — observed median area
+39.6 → 277.7 ha across quartiles of the observed FWI, simulated 53.9 → 397.9 ha (the offset from
+test 1 carried along). Simulated `elongation` rises weakly with FWI (1.43 → 1.53) where observed
+is flat (1.93 → 2.12, no trend), and simulated `b_vfi` *falls* with FWI (1.78 → 1.30) where
+observed is noisy. Every simulated fire falls inside the observed FWI range, because FWI is
+resampled from the 233 mapped fires — which is also why the FWI panels are visibly striped:
+`fwi_z` takes only 233 distinct values.
 
 ### What each test can and cannot diagnose
 
