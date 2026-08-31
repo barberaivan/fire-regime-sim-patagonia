@@ -54,6 +54,12 @@ drop_unavailable <- FALSE
 
 veg_levels <- c("Wet forest", "Subalpine forest", "Dry forest",
                 "Shrubland", "Grassland")
+
+# TWO different orders, and they must not be confused. `metric_labels` follows
+# the column order of `size_obs` / of `metrics_table`'s metrics — total FIRST,
+# then the five classes — and is what indexes a metric to its name.
+# `class_levels` is only the order the panels are drawn in, with the total last.
+metric_labels <- c("All vegetation types", veg_levels)
 class_levels <- c(veg_levels, "All vegetation types")
 
 fig_dir <- file.path("manuscript-spread", "figures")
@@ -98,7 +104,7 @@ res_table <- do.call("rbind", lapply(seq_along(size_metrics), function(m) {
                       observedResponse = size_obs[keep, m],
                       integerResponse = TRUE)
     r <- sort(d$scaledResiduals)
-    data.frame(veg_class = class_levels[m], ranef = label,
+    data.frame(veg_class = metric_labels[m], ranef = label,
                q_obs = r, q_exp = unif_q(length(r)))
   }
 
