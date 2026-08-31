@@ -298,10 +298,11 @@ What it found, in one line each:
   flat. The FWI panels are visibly striped because `fwi_z` is resampled from only 233 distinct
   observed values.
 
-Still to decide with Iván: `manuscript-spread/ijwf/designing.txt` marks the validation figures
-(Figs. 6–7) *"let's discuss about it before implementing"*, so these four are analysis output,
-not the paper's figures yet. The obvious pairing is one size-conditioned figure (shape +
-signature) and one FWI-conditioned one.
+Decided with Iván on 2026-08-31 (his answers in `manuscript-spread/ijwf/designing.txt`): these
+four stay as analysis output, and the paper's validation figures are the two built in **F**
+below. `vfi`/`tfi` are dropped from the paper, and of the shape metrics only compactness and the
+deviation from the wind axis survive — elongation and convex-hull fill are largely redundant
+with compactness, and elongation along the fixed 293° adds nothing.
 
 ### E. Figure 5 — burn-probability maps for four fires — **DONE 2026-08-28**
 
@@ -328,6 +329,50 @@ inside a square of half-width `steps` around the ignition cell.
 
 **Caption numbers, already computed:** median fitted-ranef overlap over the 57 focal fires is
 0.535, median size quotient 1.04, and 36 of 57 fires are overestimated.
+
+### F. Figures 6–7 — the validation figures — **DONE 2026-08-31**
+
+Two scripts, both fast, both writing into `manuscript-spread/figures/`.
+
+**Fig. 6 — `spread/figure_dharma_size.R` → `fig6_dharma_size_veg.{png,pdf}`.** DHARMa uniform
+Q-Q of burned area, overall and per vegetation class, for the **57 focal fires only**, under
+fitted and under simulated random effects. Reproduces `dharma_size_fit_sim.png` from the old PhD
+repo (the *"Dharma for size"* block of `spread/hierarchical model fitting_FWIZ2_SMC.R`) against
+this repo's canonical fit; reads only `metrics_table.rds`, `size_obs.rds` and
+`veg_available.rds`, and runs in seconds.
+
+Why focal fires only, for the paper's text: burned area per vegetation class is comparable
+between observed and simulated only from the *same* ignition point, because what is available to
+burn around that point dominates the answer. The 184 fires without a mapped ignition point
+therefore carry the shape/size validation instead, never this one.
+
+What it shows, in the same direction as the thesis version: **fitted** random effects put the
+observed areas low in their own predictive distributions (mean scaled residual 0.28 overall,
+0.75 of fires below the simulated median) — the model burns too much — while **simulated**
+random effects push it the other way (mean 0.62, only 0.32 below the median). Grassland is the
+worst class under fitted parameters (mean 0.29, KS *D* = 0.43), dry forest the best (0.54,
+*D* = 0.19). Every class rejects uniformity at *p* < 0.05, in both modes; the script prints the
+full table.
+
+One open switch, `drop_unavailable` at the top of the script, defaults to `FALSE` — the faithful
+reproduction. Fires where a vegetation class is entirely absent from the landscape (5 wet, 10
+subalpine, 5 dry) are structural zeros whose residual is pure tie randomization; setting it to
+`TRUE` drops them per panel. This is what `veg_available` was saved for and never used for.
+
+**Fig. 7 — `spread/figure_validation_metrics.R` → `fig7a_size_distribution.{png,pdf}` and
+`fig7b_metrics_conditioned.{png,pdf}`.** Part A is the size density + Q-Q, unchanged from D.
+Part B is a 3 × 2 grid: one metric per row (size, compactness, deviation from the wind axis),
+conditioned on FWI in the left column and on fire size in the right. The size row has no
+size-vs-size panel, so the top-right cell holds the two shared legends — the line colour
+(Simulated / Observed) and the `N° of simulated fires` colourbar. Sizes are drawn on a log10
+scale but labelled in hectares. Axis titles appear once per column (bottom) and once per row
+(left), since every column shares an x scale and every row a y scale.
+
+The vertical striping in the FWI panels is left in on purpose: `fwi_z` is resampled from only 233
+distinct observed values, and jittering would hide a real property of the simulated set.
+
+Left as it is, and worth a glance before submission: Part A still labels its axes in log10 units
+while Part B labels sizes in hectares.
 
 ### Then
 
