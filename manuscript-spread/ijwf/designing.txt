@@ -92,10 +92,6 @@ Fig. 5: Maps for a few focal landscapes showing the observed fire and
 
 (let's discuss about it before implementing)
 
-Fig. 6: Metrics as a function of FWI, for observed and simulated fires.
-
-Fig. 7: Another validation figure? Maybe Conditioning on fire size classes?
-
         --- ANALYSIS RUN, FIGURES NOT YET CHOSEN (Claude, 2026-08-28) ---------
         spread/validation_analysis.R has produced four candidate panels in
         files/spread_validation/figures/ (not in manuscript figures/, because
@@ -121,6 +117,52 @@ Fig. 7: Another validation figure? Maybe Conditioning on fire size classes?
         One cosmetic thing to decide for the FWI figure: the hex bins are
         visibly striped, because FWI is resampled from only 233 distinct
         observed values. Jittering fwi_z would hide it; leaving it is honest.
+        
+        ---- Iván's answers for Claude, 2026-08-31 ----
+        
+        We'll ignore vfi and tfi.
+        We'll use probably two different figures here:
+        
+        1) DHARMa residuals of burned area by veg class for the 57 focal 
+           fires, using fitted and simulated ranef.
+           This figure lives in the olde repo:
+           /home/ivan/Insync/Fire spread modelling/fire_spread/spread/figures/dharma_size_fit_sim.png
+           Find the code that made it there and reproduce it.
+           The text will have to explain that we validate this only on focal fires
+           (known ig point) because the burned area by veg is only comparable
+           from the same ignition point, as the available veg matters a lot.
+        
+        2) Simplified figure from what you already did in this turn.
+        
+        Two parts, both multi-panel.
+        A. (above) size_distribution.png, is perfect
+        B. One metric by row, conditioning on FWI (left) and on log10-size (right).
+           Metrics will be:
+        	B1: size, log10. Always with the axis labels in the not-log scale
+        	    (ggplot has a log10 axis function to get this). This applies
+        	    to size in y and also in x. This panel has only left side, as
+        	    size ~ FWI, not size ~ size in the right, obviously.
+        	B2: Compactness.
+        	B3: Deviation from wind.
+	    
+	    Choose of metrics in B: I noticed elongation, compactness, convex_hull
+	    are quite redundant. Elongation along 293 is pointless.
+	    Perhaps compactness is nicer to show for it shows more patterns.
+	    And its computation is probably easier to explain.
+	    
+	    FWI and size titles in the x axis must only appear in the bottom panel,
+	    not in every one. Same for the title of metrics in the y axis: only show 
+	    at the leftmost panel.
+	    
+	    Add a shared reference for the line color (simulated vs. observed),
+	    and a title for the colorbar: N° of simulated fires.
+	    These legends might live in the top right empty space left by the 
+	    size ~ size missing panel.
+	    
+	About your cosmetic comment above, it's fine, keep it like it is now
+	and remove the comment.
+	
+	
         ----------------------------------------------------------------------
 
 ---
