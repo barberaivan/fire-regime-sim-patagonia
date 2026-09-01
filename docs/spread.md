@@ -650,11 +650,15 @@ inside is XML) rather than reinvented:
 - **CRS `EPSG:5343`** (POSGAR 2007 / Argentina 1) and the layout's own map extent,
   `ext(1476449.12, 1622527.39, 5071498.51, 5690988.16)`. Note `lat_0 = -90`, so northings are
   measured from the south pole and run 5.07-5.69 × 10⁶ m here.
-- **Colours**: study-area outline `#470094`, fires `#E72A09`, lakes `#1DCCE3` over panels A and
-  C but `#CAEEFC` over the elevation panel, Chile `grey83`. The vegetation ramp is inferno
-  sampled at 8 levels (`#000000`, `#6b186e`, `#a82e5f`, `#dd513a`, `#f98c0a`, `#f6d645`,
-  `#fcffa4`, `#fcffa4`); the last two classes share a colour and one legend entry. The elevation
-  ramp is viridis over 200-3200 m.
+- **Colours**: lakes `#1DCCE3` over panels A and C but `#CAEEFC` over the elevation panel, Chile
+  `grey83`. The vegetation ramp is inferno sampled at 8 levels (`#000000`, `#6b186e`, `#a82e5f`,
+  `#dd513a`, `#f98c0a`, `#f6d645`, `#fcffa4`, `#fcffa4`); the last two classes share a colour and
+  one legend entry. The elevation ramp is viridis over 200-3200 m. The published figure's violet
+  outline and red fires were replaced (Iván, 2026-09-01) by **three points of one magma ramp** —
+  outline at `begin = 0.12`, a mapped fire at `0.45`, a fire with a known ignition point at
+  `0.72` — so panel A reads as one family beside panel C's inferno. The two fire classes are far
+  apart in hue *and* in lightness, which is what makes them tell apart at the size these polygons
+  are drawn.
 - **The grey is Chile and the white is Argentina**; the international border needs no line of its
   own, it is where the two meet. The **thick dashed grey lines crossing the panels are the
   provincial boundaries** (Neuquén / Río Negro / Chubut), which is what panel C's three labels
@@ -665,8 +669,20 @@ inside is XML) rather than reinvented:
   `vegetation_valdivian_img copy` layer carries the inferno palette the printed figure shows.
 
 **What this version adds** is the only intended change: panel A colours the **57 fires with a
-mapped ignition point** (`#2166AC`) apart from the rest of the record. The split comes from
+mapped ignition point** apart from the rest of the record. The split comes from
 `data/focal_fires/landscapes/*.rds`, matched against `data/patagonian_fires_spread.shp`.
+
+**The inset needs the IGN provinces, not the FAO GAUL ones.** GAUL's Argentina has 17 of the 24
+provinces — Río Negro, Chubut, Santa Cruz, Tierra del Fuego, Entre Ríos and Formosa are simply
+absent — so an inset drawn from it leaves the east and south of the country grey, as if it were
+another country. Take the whole country from the bicontinental project's `Provincias.shp`, the
+same layer the panels' provincial boundaries come from, and crop to the inset bounds (which also
+drops the Antarctic claim carried by Tierra del Fuego, and it would otherwise stretch the inset
+to the pole).
+
+**The script writes two versions**, `fig1_study_area_stacked` and `fig1_study_area_below`,
+differing only in where the panel A and B keys sit — see `docs/roadmap.md`. Once Iván picks one,
+drop the other from `variants` and the suffix goes away.
 
 **Base layers live outside the store.** The elevation mosaic (240 MB), the vegetation raster, the
 lakes and the country/province shapefiles are still in the Insync folders the QGIS project used,

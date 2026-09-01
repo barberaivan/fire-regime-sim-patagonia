@@ -56,10 +56,17 @@ figures*. What is left on them is prose: the captions, and the Results text for 
 
 **For Iván — decisions on the figures I could not make for you**
 
-- **Fig. 1, the colour of the 57.** Fires with a mapped ignition point are drawn in `#2166AC`
-  (`col_fire_ig` in `spread/figure_study_area.R`), the rest in the published red. Blue reads
-  clearly against the red, but the lakes are cyan and at small sizes a blue fire on a lake shore
-  can be misread. Change the one constant if you want another hue.
+- **Fig. 1, which legend layout.** Two versions are built, differing only in where the panel A
+  and panel B keys sit: `fig1_study_area_stacked` (all three legends in the fourth column, under
+  the inset — the maps stay full height) and `fig1_study_area_below` (A's key under A and B's
+  under B, as the published QGIS figure has them — costs the maps about a fifth of their height).
+  **Pick one**, then delete the other from `variants` at the foot of
+  `spread/figure_study_area.R` and the file name loses its suffix.
+- **Fig. 1, the fire palette** is now three points of one magma ramp, set at the top of the
+  script: the study-area outline at `begin = 0.12` (near-black), a mapped fire at `0.45`
+  (reddish-purple), a fire with a known ignition point at `0.72` (coral). Move the `begin`
+  values if the two fire classes are not far enough apart in print. The lakes stay cyan — water
+  should not read as a fourth level of the fire scale.
 - **Fig. 1, which vegetation map panel C should show.** It draws the WWF / Lara et al. (1999)
   raster the published figure used. The spread model does *not* run on that map — it runs on the
   merged CIEFAP + Lara raster this repo builds (`docs/data-prep.md`). Showing the published one

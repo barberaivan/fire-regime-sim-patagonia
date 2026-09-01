@@ -62,17 +62,21 @@ inset_bbox <- ext(-82, -33, -57, 14)
 
 # Colours, from the QGIS project's symbology.
 col_chile <- "grey83"          # land outside Argentina
-col_border <- "grey45"         # the international border, dashed
-col_study <- "#470094"         # the study-area outline
+col_border <- "grey45"         # the provincial boundaries, dashed
 col_lake <- "#1DCCE3"          # lakes over panels A and C
 col_lake_pale <- "#CAEEFC"     # lakes over the elevation panel
-col_fire <- "#E72A09"          # a mapped fire
 
-# The one new colour in this version: the 57 fires with a mapped ignition
-# point. Blue rather than another warm hue, so it separates from `col_fire` at
-# the size these polygons are drawn; distinct from the cyan lakes (much
-# lighter) and from the violet study-area outline (a line, not a fill).
-col_fire_ig <- "#2166AC"
+# The fires and the study-area outline are three points of ONE magma ramp, so
+# panel A reads as a single family and sits beside panel C's inferno
+# vegetation. Positions, not names: 0.12 is the near-black end for the outline,
+# 0.45 the reddish-purple of a mapped fire, 0.72 the coral that separates the
+# 57 fires with an ignition point from the rest — far enough along the ramp to
+# differ in hue AND in lightness, which is what makes them tell apart at the
+# size these polygons are drawn. The lakes stay cyan, as published: a lake has
+# to read as water, not as a fourth level of the fire scale.
+col_study <- viridis::magma(1, begin = 0.12)     # "#1B1043"
+col_fire <- viridis::magma(1, begin = 0.45)      # "#A1307E"
+col_fire_ig <- viridis::magma(1, begin = 0.72)   # "#F9795D"
 
 # The vegetation ramp: inferno sampled at 8 levels, as set in the QGIS project
 # (and in the old `study area map/study_area_map_colors.R`). The last two
@@ -142,9 +146,9 @@ stopifnot(nrow(chile) > 0)
 # folder: GAUL's Argentina is missing six provinces, Río Negro and Chubut among
 # them.
 prov_names <- c("Neuquén", "Río Negro", "Chubut")
-provinces <- vect(file.path(sam_dir, "Mapa_Argentina_Bicontinental_QGIS",
-                            "datos_shp", "Provincias.shp"))
-provinces <- provinces[provinces$NAM %in% prov_names, ]
+provinces_all <- vect(file.path(sam_dir, "Mapa_Argentina_Bicontinental_QGIS",
+                                "datos_shp", "Provincias.shp"))
+provinces <- provinces_all[provinces_all$NAM %in% prov_names, ]
 stopifnot(nrow(provinces) == length(prov_names))
 provinces <- to_map(provinces)
 
@@ -321,17 +325,20 @@ p_c <- ggplot() +
 
 # The inset ---------------------------------------------------------------
 
-# South America with Argentina's provinces, and the study area as a red sliver.
-# Drawn in the same CRS as the panels, which is what stretches it.
-gaul_dir <- file.path(sam_dir, "countries and provinces - fao gaul")
-
-sa <- crop(vect(file.path(sam_dir, "South_America", "South_America.shp")),
-           inset_bbox)
-ar_prov <- vect(file.path(gaul_dir, "fao_gaul_provinces.shp"))
-ar_prov <- ar_prov[ar_prov$ADM0_NAME == "Argentina", ]
-
-sa <- to_map(sa)
-ar <- to_map(crop(ar_prov, inset_bbox))
+# South America with all of Argentina's provinces, and the study area as a
+# coloured sliver. Drawn in the same CRS as the panels, which is what stretches
+# it.
+#
+# The provinces come from the SAME IGN layer the panels use. The FAO GAUL file
+# in the neighbouring folder is the trap here: its Argentina has 17 of the 24
+# provinces, so drawing the inset from it leaves the whole east and south of
+# the country grey, as if it were another country.
+sa <- to_map(crop(vect(file.path(sam_dir, "South_America",
+                                 "South_America.shp")), inset_bbox))
+# Cropping also drops the Antarctic claim carried by Tierra del Fuego, which
+# would otherwise stretch the inset to the pole.
+ar <- to_map(crop(provinces_all, inset_bbox))
+stopifnot(nrow(ar) == 24)
 inset_ext <- ext(sa)
 
 p_inset <- ggplot() +
@@ -356,29 +363,73 @@ p_inset <- ggplot() +
 
 # Assembly ----------------------------------------------------------------
 
-# The three legends are pulled out of their panels and stacked in a fourth
-# column under the inset, as in the published figure — a legend left inside a
-# 3 cm wide panel would squeeze the map to nothing.
+# TWO VERSIONS, for Iván to choose between; they differ only in where the
+# panel A and panel B keys sit.
+#
+#   "stacked"  all three legends pulled out and stacked in a fourth column
+#              under the inset. Compact, and the three maps stay full height.
+#   "below"    A's key under panel A and B's colourbar under panel B, as the
+#              published QGIS figure has them; only the vegetation legend stays
+#              in the fourth column. Reads more directly, and costs the maps
+#              about a fifth of their height.
+#
+# Whichever wins, delete the other from `variants` and drop the suffix from its
+# file name.
+variants <- c("stacked", "below")
+
 strip_legend <- function(p) p + theme(legend.position = "none")
 grab <- function(p) ggpubr::as_ggplot(ggpubr::get_legend(p))
 
-leg_col <- grab(p_c) / grab(p_b) / grab(p_a) +
-  plot_layout(heights = c(1.6, 1, 1.3))
+# A key placed under a 3.5 cm panel has to be one column wide, and its title
+# and text have to shrink or the panel is set by the legend rather than by the
+# map.
+below_theme <- function(p, ...) {
+  p + guides(...) +
+    theme(legend.position = "bottom",
+          legend.direction = "vertical",
+          legend.justification = "left",
+          legend.title = element_text(size = 8),
+          legend.text = element_text(size = 7),
+          legend.margin = margin(1, 0, 0, 0, unit = "mm"),
+          legend.box.margin = margin(0, 0, 0, 0, unit = "mm"))
+}
 
 # The panel is 146 km wide and 619 km tall and `coord_sf` holds that ratio, so
 # the figure's height decides how wide the three maps come out, and a height
 # that is too generous just puts a white band above and below them. At 17 cm
 # wide the three panels plus the legend column leave each map about 3.5 cm, so
-# ~15 cm of drawn map: 16.5 cm of figure is the shape with no slack.
-fig1 <- (strip_legend(p_a) | strip_legend(p_b) | strip_legend(p_c) |
-           (p_inset / leg_col + plot_layout(heights = c(1, 2.7)))) +
-  plot_layout(widths = c(1, 1, 1, 1.3))
+# ~15 cm of drawn map: 16.5 cm of figure is the shape with no slack. The
+# "below" version needs the extra height its two keys take.
+assemble <- function(variant) {
+  if (variant == "stacked") {
+    leg_col <- grab(p_c) / grab(p_b) / grab(p_a) +
+      plot_layout(heights = c(1.6, 1, 1.3))
+    left <- list(strip_legend(p_a), strip_legend(p_b))
+    right <- p_inset / leg_col + plot_layout(heights = c(1, 2.7))
+  } else {
+    left <- list(
+      below_theme(p_a, fill = guide_legend(ncol = 1),
+                  colour = guide_legend(ncol = 1)),
+      below_theme(p_b, fill = guide_colourbar(
+        title.position = "top", barwidth = unit(4, "mm"),
+        barheight = unit(14, "mm"))))
+    right <- p_inset / grab(p_c) + plot_layout(heights = c(1, 2.2))
+  }
+  (left[[1]] | left[[2]] | strip_legend(p_c) | right) +
+    plot_layout(widths = c(1, 1, 1, 1.3))
+}
 
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
-for (ext_ in c("png", "pdf")) {
-  f <- file.path(fig_dir, paste0("fig1_study_area.", ext_))
-  ggsave(f, plot = fig1, width = 17, height = 16.5, units = "cm",
-         dpi = 400, bg = "white",
-         device = if (ext_ == "pdf") grDevices::cairo_pdf else NULL)
-  cat("wrote", f, "\n")
+for (variant in variants) {
+  fig <- assemble(variant)
+  stem <- if (length(variants) == 1) "fig1_study_area"
+          else paste0("fig1_study_area_", variant)
+  for (ext_ in c("png", "pdf")) {
+    f <- file.path(fig_dir, paste0(stem, ".", ext_))
+    ggsave(f, plot = fig, width = 17,
+           height = if (variant == "below") 18.5 else 16.5, units = "cm",
+           dpi = 400, bg = "white",
+           device = if (ext_ == "pdf") grDevices::cairo_pdf else NULL)
+    cat("wrote", f, "\n")
+  }
 }
