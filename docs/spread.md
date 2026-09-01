@@ -664,9 +664,16 @@ inside is XML) rather than reinvented:
   provincial boundaries** (Neuquén / Río Negro / Chubut), which is what panel C's three labels
   refer to. Take them from the bicontinental project's IGN `Provincias.shp` — the FAO GAUL file
   sitting in the same folder is missing six Argentine provinces, Río Negro and Chubut among them.
-- Panel C draws **`vegetation_valdivian_img.tif`**, the 8-class version, not the
-  `_dryforest2` one; the `.qgs` has four raster renderers and only the one on the
+- The elevation ramp is clamped at **200-2400 m**, not at the study area's true 3200 m maximum
+  as the QGIS project had it (`oob = squish`, so Tronador and Lanín sit at the top colour rather
+  than dropping out). Almost every peak here tops out near 2200 m and only those two go well
+  above it, over a tiny area, so the full range spent most of viridis on ground that barely
+  exists.
+- The QGIS project drew panel C from **`vegetation_valdivian_img.tif`**, the 8-class version, not
+  the `_dryforest2` one; the `.qgs` has four raster renderers and only the one on the
   `vegetation_valdivian_img copy` layer carries the inferno palette the printed figure shows.
+  That path is still in the script under `veg_source <- "lara"`, but it is no longer the default
+  — see below.
 
 **What this version adds** is the only intended change: panel A colours the **57 fires with a
 mapped ignition point** apart from the rest of the record. The split comes from
@@ -691,11 +698,13 @@ Nothing else in the pipeline reads them. Runtime is about 90 s, nearly all of it
 rasters; `maxcell_plot` caps what is actually rendered at 3 × 10⁶ cells, since the elevation
 mosaic is 121 million cells at 30 m and each panel is 3.5 cm wide.
 
-**Switching panel C to the merged vegetation map.** The panel draws the WWF / Lara99 raster the
-published figure used, not the CIEFAP + Lara merge the spread model runs on. The GEE script that
-makes the merge usable here is `Vegetation merged export for study area map` in
-`~/dev/fire_spread-gee` (written 2026-09-01, **not yet run**): it coarsens the 30 m merge asset to
-120 m and writes it to Drive in EPSG:5343.
+**Panel C draws the merged vegetation map** (`veg_source <- "merged"`, the default since
+2026-09-01) — the CIEFAP + Lara99 merge the spread model actually runs on, not the WWF / Lara99
+raster the published QGIS figure used. It is produced by the GEE script `Vegetation merged export
+for study area map` in `~/dev/fire_spread-gee`, which coarsens the 30 m merge asset to 120 m and
+writes it to Drive in EPSG:5343; the file lives in the store at
+**`data/vegetation_merged/vegetation_merged_120m.tif`** (5059 x 1210 cells, 580 kB). Set
+`veg_source <- "lara"` to get the published raster back.
 
 The trap that script exists to avoid is worth knowing anywhere a categorical raster is coarsened
 in Earth Engine: **both ordinary ways of changing scale average the classes.** `Export.image` with
@@ -705,10 +714,24 @@ class 5.5 that does not exist. The aggregation has to be explicit:
 `reduceResolution(ee.Reducer.mode())` followed by `reproject()`, and the two must stay together
 (a `reduceResolution` with no `reproject` after it is silently undone by the export).
 
-The export carries the merge's own `cnum1` codes, 1-11, not the FireSpread 0:4/99 ones — so the R
-side reclasses with `veg_crosswalk()` (`R/landscape_functions.R`), the same table the landscape
-builder reads, and the figure cannot drift from the model. The steps left are in
-`docs/roadmap.md`.
+The export carries the merge's own `cnum1` codes, 1-11, not the FireSpread 0:4/99 ones, so the R
+side reclasses with `veg_crosswalk()` (`R/landscape_functions.R`) — the same table the landscape
+builder reads, so the figure cannot drift from the model. It keys on **`cnum_spread`, not
+`class2`**: that is the column saying what the model does with a class, and it is where Urban
+parts company with Grassland. `urban_as = "nonburnable"` matches the simulation landscapes; over
+a 600 km region holding Bariloche, Esquel and El Bolsón, drawing the towns as burnable grassland
+would be wrong on the map for the same reason it is wrong in the simulator.
+
+The legend therefore has six entries, not the published eight: Plantation folds into Shrubland
+and Urban into Non-burnable, so "Anthropogenic prairie and plantation" disappears. Class shares
+over the study area, as drawn: grassland 41.7 %, subalpine forest 17.0 %, shrubland 14.0 %, wet
+forest 12.8 %, non-burnable 12.6 %, dry forest 1.4 % (0.6 % no data). Dry forest is barely
+visible in the panel for that reason, not because the reclass is wrong.
+
+One more trap on the R side: the vegetation layer is drawn with
+`maxcell = max(maxcell_plot, ncell(veg))`, i.e. never downsampled. `geom_spatraster`'s `maxcell`
+resamples, and a class that is the average of two others does not exist — the same failure the
+GEE script's `reduceResolution`/`mode` guards against, one step further downstream.
 
 Departures from the QGIS original, and the open questions on it, are listed in `docs/roadmap.md`.
 

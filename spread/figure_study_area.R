@@ -44,6 +44,8 @@ theme_set(theme_bw())
 
 source(file.path("R", "config.R"))
 source(file.path("R", "spread_figure_functions.R"))
+# for veg_crosswalk(); sources cleanly with terra alone, no FireSpread needed
+source(file.path("R", "landscape_functions.R"))
 
 # Settings ----------------------------------------------------------------
 
@@ -80,19 +82,50 @@ col_study <- viridis::magma(1, begin = 0.12)     # "#1B1043"
 col_fire <- viridis::magma(1, begin = 0.60)      # "#DE4968"
 col_fire_ig <- viridis::magma(1, begin = 0.38)   # "#842681"
 
+# WHICH VEGETATION MAP PANEL C DRAWS.
+#
+#   "merged"  the CIEFAP + Lara99 merge the spread model actually runs on,
+#             coarsened to 120 m by the GEE script <Vegetation merged export
+#             for study area map> in ~/dev/fire_spread-gee. Classes are the
+#             model's own: the five burnable ones plus non-burnable.
+#   "lara"    the WWF / Lara et al. (1999) raster the published QGIS figure
+#             drew, in its own 8 display classes. Keeps continuity with the
+#             Fire Ecology paper, but is not the landscape the model sees.
+#
+# The two differ in more than resolution: the merge patches every pixel burned
+# before 2014 with Lara cover and takes the rest from CIEFAP 2016, and its
+# classes come through `veg_crosswalk()` — the same table the landscape builder
+# reads — so under "merged" the figure cannot drift away from the model.
+veg_source <- "merged"
+
+# Where the GEE export lands once it has been run and moved into the store.
+veg_merged_file <- file.path("data", "vegetation_merged",
+                             "vegetation_merged_120m.tif")
+
 # The vegetation ramp: inferno sampled at 8 levels, as set in the QGIS project
-# (and in the old `study area map/study_area_map_colors.R`). The last two
-# classes share a colour and are merged into one legend entry, exactly as the
-# published figure does.
-veg_colors <- c("#000000", "#6b186e", "#a82e5f", "#dd513a",
-                "#f98c0a", "#f6d645", "#fcffa4", "#fcffa4")
+# (and in the old `study area map/study_area_map_colors.R`). Under "lara" the
+# last two classes share a colour and one legend entry, exactly as the
+# published figure does; "merged" has no anthropogenic classes of its own
+# (plantation folds into shrubland, urban into non-burnable) and so uses the
+# first six colours only.
+veg_colors_lara <- c("#000000", "#6b186e", "#a82e5f", "#dd513a",
+                     "#f98c0a", "#f6d645", "#fcffa4", "#fcffa4")
 # The seventh label is wrapped by hand: on one line it runs past the edge of
 # the page, and `guide_legend` does not wrap.
-veg_labels <- c("Non-burnable", "Subalpine forest", "Wet forest", "Dry forest",
-                "Shrubland", "Grassland",
-                "Anthropogenic prairie\nand plantation", NA)
+veg_labels_lara <- c("Non-burnable", "Subalpine forest", "Wet forest",
+                     "Dry forest", "Shrubland", "Grassland",
+                     "Anthropogenic prairie\nand plantation", NA)
 
-elev_limits <- c(200, 3200)    # the ramp's own range in the QGIS project
+veg_colors_merged <- veg_colors_lara[1:6]
+veg_labels_merged <- veg_labels_lara[1:6]
+
+# The QGIS project ran the ramp to the study area's true maximum, 3200 m, which
+# spends most of viridis on ground that barely exists: almost every peak here
+# tops out near 2200 m, and only Tronador and Lanín go well above it, over a
+# tiny area. Clamping at 2400 (`oob = squish`, so those two summits sit at the
+# top colour rather than dropping out) puts the contrast where the landscape
+# actually is.
+elev_limits <- c(200, 2400)
 
 # Raster cells actually rendered. The elevation mosaic is 121 million cells at
 # 30 m and the panel is 3 cm wide; drawing it at full resolution is minutes of
@@ -154,24 +187,84 @@ provinces <- provinces_all[provinces_all$NAM %in% prov_names, ]
 stopifnot(nrow(provinces) == length(prov_names))
 provinces <- to_map(provinces)
 
-# The two rasters, cropped to the panel before anything else touches them.
+# Both rasters are drawn only inside the study area, as in the published
+# figure, and each is clipped in ITS OWN CRS — the elevation and Lara layers
+# are lon/lat, the merged export is already EPSG:5343, and reprojecting before
+# masking would resample 121 million cells for nothing.
+study_area_ll <- vect(file.path("data", "patagonian_fires", "study_area.shp"))
+clip_to_study <- function(r) {
+  sa <- project(study_area_ll, crs(r))
+  mask(crop(r, sa), sa)
+}
+
 elev <- rast(file.path(sam_dir, "elevation_study_area_clipped.tif"))
 names(elev) <- "elevation"
+elev <- clip_to_study(elev)
 
-veg <- rast(file.path(veg_dir, "vegetation_valdivian_img.tif"))
-names(veg) <- "class"
+#' Panel C's vegetation layer, as a factor raster, plus its legend
+#'
+#' Returns the raster with one level per legend entry, in the order the legend
+#' prints them, and the labels and colours to go with it.
+veg_layer <- function(source) {
+  if (source == "lara") {
+    r <- rast(file.path(veg_dir, "vegetation_valdivian_img.tif"))
+    names(r) <- "class"
+    r <- clip_to_study(r)
+    labels <- veg_labels_lara
+    colors <- veg_colors_lara
+    # The file is already coded 1-8 in the published figure's own display
+    # classes, so the levels are the values.
+    r <- as.factor(r)
+    lev <- levels(r)[[1]]
+    lev$label <- labels[as.integer(lev[[1]])]
+    levels(r) <- lev[, c(1, ncol(lev))]
+    return(list(raster = r, labels = labels[!is.na(labels)], colors = colors))
+  }
 
-# Both are drawn only inside the study area, as in the published figure. The
-# masking is done in the rasters' own lon/lat CRS — reprojecting first would
-# resample 121 million cells for nothing.
-study_area_ll <- vect(file.path("data", "patagonian_fires", "study_area.shp"))
-elev <- mask(crop(elev, study_area_ll), study_area_ll)
-veg <- mask(crop(veg, study_area_ll), study_area_ll)
+  if (!file.exists(veg_merged_file)) {
+    stop("panel C is set to the merged vegetation map, but\n  ",
+         veg_merged_file, "\nis not there yet. Run the GEE task ",
+         "<Vegetation merged export for study area map> in\n",
+         "  ~/dev/fire_spread-gee, then move the .tif from Drive into that ",
+         "folder.\nOr set `veg_source <- \"lara\"` to draw the published ",
+         "raster instead.")
+  }
 
-veg <- as.factor(veg)
-lev <- levels(veg)[[1]]
-lev$label <- veg_labels[as.integer(lev[[1]])]
-levels(veg) <- lev[, c(1, ncol(lev))]
+  r <- rast(veg_merged_file)[[1]]
+  names(r) <- "class"
+  r <- clip_to_study(r)
+
+  # The export carries the merge's own `cnum1` codes, 1-11. Reclass through
+  # the SAME crosswalk the landscape builder uses, keyed on `cnum_spread`
+  # rather than on `class2`: that is the column that says what the model
+  # actually does with a class, and it is where Urban parts company with
+  # Grassland. `urban_as = "nonburnable"` matches the simulation landscapes —
+  # over a 600 km region holding Bariloche, Esquel and El Bolsón, drawing the
+  # towns as burnable grassland would be wrong on the map for the same reason
+  # it is wrong in the simulator.
+  dveg <- veg_crosswalk(urban_as = "nonburnable")
+  level_of <- c("0" = 3, "1" = 2, "2" = 4, "3" = 5, "4" = 6, "99" = 1)
+  stopifnot(all(as.character(dveg$cnum_spread) %in% names(level_of)))
+
+  # `others = NA` sends the export's 0 no-data value, and any code the
+  # crosswalk does not cover, to transparent.
+  r <- classify(r, cbind(dveg$cnum1,
+                         unname(level_of[as.character(dveg$cnum_spread)])),
+                others = NA)
+  r <- as.factor(r)
+  lev <- levels(r)[[1]]
+  lev$label <- veg_labels_merged[as.integer(lev[[1]])]
+  levels(r) <- lev[, c(1, ncol(lev))]
+
+  list(raster = r, labels = veg_labels_merged, colors = veg_colors_merged)
+}
+
+vl <- veg_layer(veg_source)
+veg <- vl$raster
+veg_labels <- vl$labels
+veg_colors <- vl$colors
+cat("panel C: ", veg_source, " vegetation, ", length(veg_labels),
+    " classes, ", ncell(veg), " cells\n", sep = "")
 
 # Panels ------------------------------------------------------------------
 
@@ -282,7 +375,7 @@ p_b <- ggplot() +
   geom_spatraster(data = elev, maxcell = maxcell_plot) +
   scale_fill_viridis_c(option = "D", limits = elev_limits, oob = scales::squish,
                        na.value = "transparent", name = "Elevation (m a.s.l.)",
-                       breaks = c(200, 3200),
+                       breaks = elev_limits,
                        guide = guide_colourbar(
                          title.position = "top", direction = "vertical",
                          barwidth = unit(4, "mm"),
@@ -296,7 +389,10 @@ p_b <- ggplot() +
 
 p_c <- ggplot() +
   base_layers +
-  geom_spatraster(data = veg, maxcell = maxcell_plot) +
+  # The vegetation layer is never downsampled: `maxcell` would resample a
+  # categorical raster, and a class that is the average of two others does not
+  # exist. It is small enough to draw whole either way.
+  geom_spatraster(data = veg, maxcell = max(maxcell_plot, ncell(veg))) +
   scale_fill_manual(values = setNames(veg_colors, veg_labels),
                     breaks = veg_labels[!is.na(veg_labels)],
                     na.value = "transparent", na.translate = FALSE,

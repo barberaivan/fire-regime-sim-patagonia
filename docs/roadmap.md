@@ -67,32 +67,18 @@ figures*. What is left on them is prose: the captions, and the Results text for 
   `0.38` (deep purple-magenta), the rest of the record at `0.60` (rose). Move the `begin` values
   if the two fire classes are not far enough apart in print. The lakes stay cyan — water should
   not read as a fourth level of the fire scale.
-- **Fig. 1, panel C: run the vegetation export, then switch panel C over.** Panel C still draws
-  the WWF / Lara et al. (1999) raster the published figure used; the model runs on the merged
-  CIEFAP + Lara map instead. The GEE script that makes the merge usable here is written and
-  committed — `Vegetation merged export for study area map` in `~/dev/fire_spread-gee` — but
-  **the export has not been run**, so nothing has changed in the figure yet. Three steps:
-  1. run the task (one task, a few minutes; it lands in Drive as
-     `fire_spread/vegetation_merged_120m.tif`, ~5 MB, EPSG:5343, byte, 0 = no data);
-  2. move the file into the store beside the other vegetation layers;
-  3. in `spread/figure_study_area.R`, read it instead of `vegetation_valdivian_img.tif` and
-     reclass through `veg_crosswalk()` (`R/landscape_functions.R`) rather than the hard-coded
-     `veg_labels` — the export carries the merge's own `cnum1` codes 1-11, and the crosswalk is
-     the same table the landscape builder uses, so the figure then cannot drift from the model.
-     Note the legend changes: `cnum2` gives the model's five burnable classes plus non-burnable,
-     with Plantation folded into Shrubland and Urban into Grassland, so the published
-     "Anthropogenic prairie and plantation" entry disappears.
 - **Fig. 1, three cosmetic departures from the QGIS original.** (i) The QGIS map items carry
   `mapRotation = -1.5°`; the R panels are north-up, so the tilt is gone. (ii) The fire layer is
   `patagonian_fires_spread.shp` (241 features) rather than the 238-feature base record, because
   only `_spread` carries the split ids the 57 focal fires are keyed on. (iii) `annotation_scale`
   prints only the bar's maximum ("60 km"), not the QGIS bar's 0 / 50 / 100 ticks, and the
   graticule reads "72°W / 40°S" rather than "-72°0′".
-- **Fig. 1's base layers are outside the store.** The elevation mosaic (240 MB), the vegetation
-  raster, the lakes and the country/province shapefiles are still in `~/Insync/patagonian_fires
-  paper/study area map/` and `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`, reached through
-  two new `R/config.R` entries. Decide whether to copy that folder into the store (the figure
-  then rebuilds on any machine) or leave it machine-local.
+- **Fig. 1's base layers are outside the store.** The elevation mosaic (240 MB), the lakes and
+  the country/province shapefiles are still in `~/Insync/patagonian_fires paper/study area map/`
+  and `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`, reached through two new `R/config.R`
+  entries. Decide whether to copy that folder into the store (the figure then rebuilds on any
+  machine) or leave it machine-local. The vegetation raster is no longer among them: panel C now
+  reads `data/vegetation_merged/vegetation_merged_120m.tif`, which *is* in the store.
 - **Figs. 2 and S2 now label the FWI legend in anomaly units** (-0.60 / 0.86 / 2.38) instead of
   the fit's standardized values (-1.614 / 0 / 1.672), so Figs. 2, 3 and 4 share one FWI scale.
   Check that is what you want before writing the captions.
