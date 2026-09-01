@@ -62,16 +62,26 @@ figures*. What is left on them is prose: the captions, and the Results text for 
   under B, as the published QGIS figure has them — costs the maps about a fifth of their height).
   **Pick one**, then delete the other from `variants` at the foot of
   `spread/figure_study_area.R` and the file name loses its suffix.
-- **Fig. 1, the fire palette** is now three points of one magma ramp, set at the top of the
-  script: the study-area outline at `begin = 0.12` (near-black), a mapped fire at `0.45`
-  (reddish-purple), a fire with a known ignition point at `0.72` (coral). Move the `begin`
-  values if the two fire classes are not far enough apart in print. The lakes stay cyan — water
-  should not read as a fourth level of the fire scale.
-- **Fig. 1, which vegetation map panel C should show.** It draws the WWF / Lara et al. (1999)
-  raster the published figure used. The spread model does *not* run on that map — it runs on the
-  merged CIEFAP + Lara raster this repo builds (`docs/data-prep.md`). Showing the published one
-  keeps continuity with the Fire Ecology paper; showing the merged one would show the landscape
-  the model actually sees. Your call.
+- **Fig. 1, the fire palette** is three points of one magma ramp, set at the top of the script:
+  the study-area outline at `begin = 0.12` (near-black), a fire with a known ignition point at
+  `0.38` (deep purple-magenta), the rest of the record at `0.60` (rose). Move the `begin` values
+  if the two fire classes are not far enough apart in print. The lakes stay cyan — water should
+  not read as a fourth level of the fire scale.
+- **Fig. 1, panel C: run the vegetation export, then switch panel C over.** Panel C still draws
+  the WWF / Lara et al. (1999) raster the published figure used; the model runs on the merged
+  CIEFAP + Lara map instead. The GEE script that makes the merge usable here is written and
+  committed — `Vegetation merged export for study area map` in `~/dev/fire_spread-gee` — but
+  **the export has not been run**, so nothing has changed in the figure yet. Three steps:
+  1. run the task (one task, a few minutes; it lands in Drive as
+     `fire_spread/vegetation_merged_120m.tif`, ~5 MB, EPSG:5343, byte, 0 = no data);
+  2. move the file into the store beside the other vegetation layers;
+  3. in `spread/figure_study_area.R`, read it instead of `vegetation_valdivian_img.tif` and
+     reclass through `veg_crosswalk()` (`R/landscape_functions.R`) rather than the hard-coded
+     `veg_labels` — the export carries the merge's own `cnum1` codes 1-11, and the crosswalk is
+     the same table the landscape builder uses, so the figure then cannot drift from the model.
+     Note the legend changes: `cnum2` gives the model's five burnable classes plus non-burnable,
+     with Plantation folded into Shrubland and Urban into Grassland, so the published
+     "Anthropogenic prairie and plantation" entry disappears.
 - **Fig. 1, three cosmetic departures from the QGIS original.** (i) The QGIS map items carry
   `mapRotation = -1.5°`; the R panels are north-up, so the tilt is gone. (ii) The fire layer is
   `patagonian_fires_spread.shp` (241 features) rather than the 238-feature base record, because

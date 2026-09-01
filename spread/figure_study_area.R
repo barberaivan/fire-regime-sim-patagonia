@@ -69,14 +69,16 @@ col_lake_pale <- "#CAEEFC"     # lakes over the elevation panel
 # The fires and the study-area outline are three points of ONE magma ramp, so
 # panel A reads as a single family and sits beside panel C's inferno
 # vegetation. Positions, not names: 0.12 is the near-black end for the outline,
-# 0.45 the reddish-purple of a mapped fire, 0.72 the coral that separates the
-# 57 fires with an ignition point from the rest — far enough along the ramp to
-# differ in hue AND in lightness, which is what makes them tell apart at the
-# size these polygons are drawn. The lakes stay cyan, as published: a lake has
-# to read as water, not as a fourth level of the fire scale.
+# 0.38 the deep purple-magenta that marks the 57 fires with a mapped ignition
+# point, 0.60 the rose the rest of the record takes. Far enough apart on the
+# ramp to differ in hue AND in lightness, which is what makes them tell apart
+# at the size these polygons are drawn — and the darker of the two is the
+# highlighted subset, since it is the one the eye should stop on. The lakes
+# stay cyan, as published: a lake has to read as water, not as a fourth level
+# of the fire scale.
 col_study <- viridis::magma(1, begin = 0.12)     # "#1B1043"
-col_fire <- viridis::magma(1, begin = 0.45)      # "#A1307E"
-col_fire_ig <- viridis::magma(1, begin = 0.72)   # "#F9795D"
+col_fire <- viridis::magma(1, begin = 0.60)      # "#DE4968"
+col_fire_ig <- viridis::magma(1, begin = 0.38)   # "#842681"
 
 # The vegetation ramp: inferno sampled at 8 levels, as set in the QGIS project
 # (and in the old `study area map/study_area_map_colors.R`). The last two

@@ -655,10 +655,10 @@ inside is XML) rather than reinvented:
   `#dd513a`, `#f98c0a`, `#f6d645`, `#fcffa4`, `#fcffa4`); the last two classes share a colour and
   one legend entry. The elevation ramp is viridis over 200-3200 m. The published figure's violet
   outline and red fires were replaced (Iván, 2026-09-01) by **three points of one magma ramp** —
-  outline at `begin = 0.12`, a mapped fire at `0.45`, a fire with a known ignition point at
-  `0.72` — so panel A reads as one family beside panel C's inferno. The two fire classes are far
-  apart in hue *and* in lightness, which is what makes them tell apart at the size these polygons
-  are drawn.
+  outline at `begin = 0.12`, a fire with a known ignition point at `0.38`, the rest of the record
+  at `0.60` — so panel A reads as one family beside panel C's inferno. The two fire classes are
+  far apart in hue *and* in lightness, which is what makes them tell apart at the size these
+  polygons are drawn, and the darker of the two is the highlighted subset.
 - **The grey is Chile and the white is Argentina**; the international border needs no line of its
   own, it is where the two meet. The **thick dashed grey lines crossing the panels are the
   provincial boundaries** (Neuquén / Río Negro / Chubut), which is what panel C's three labels
@@ -690,6 +690,25 @@ reached through two new `R/config.R` entries, `study_area_map_dir` and `vegetati
 Nothing else in the pipeline reads them. Runtime is about 90 s, nearly all of it those two
 rasters; `maxcell_plot` caps what is actually rendered at 3 × 10⁶ cells, since the elevation
 mosaic is 121 million cells at 30 m and each panel is 3.5 cm wide.
+
+**Switching panel C to the merged vegetation map.** The panel draws the WWF / Lara99 raster the
+published figure used, not the CIEFAP + Lara merge the spread model runs on. The GEE script that
+makes the merge usable here is `Vegetation merged export for study area map` in
+`~/dev/fire_spread-gee` (written 2026-09-01, **not yet run**): it coarsens the 30 m merge asset to
+120 m and writes it to Drive in EPSG:5343.
+
+The trap that script exists to avoid is worth knowing anywhere a categorical raster is coarsened
+in Earth Engine: **both ordinary ways of changing scale average the classes.** `Export.image` with
+`scale: 120` resamples through the band's pyramiding policy, which is the *mean* for a numeric
+band, and `resample("bilinear")` does the same on purpose — class 2 beside class 9 comes out as a
+class 5.5 that does not exist. The aggregation has to be explicit:
+`reduceResolution(ee.Reducer.mode())` followed by `reproject()`, and the two must stay together
+(a `reduceResolution` with no `reproject` after it is silently undone by the export).
+
+The export carries the merge's own `cnum1` codes, 1-11, not the FireSpread 0:4/99 ones — so the R
+side reclasses with `veg_crosswalk()` (`R/landscape_functions.R`), the same table the landscape
+builder reads, and the figure cannot drift from the model. The steps left are in
+`docs/roadmap.md`.
 
 Departures from the QGIS original, and the open questions on it, are listed in `docs/roadmap.md`.
 
