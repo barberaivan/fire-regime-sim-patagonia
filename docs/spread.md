@@ -558,6 +558,125 @@ since every column shares an x scale and every row a y scale.
 The vertical striping in the FWI panels is deliberate: `fwi_z` is resampled from only 233 distinct
 observed values, and jittering would hide a real property of the simulated set.
 
+### The paper's model figures — Figs. 1-4 and S1-S5
+
+Written 2026-09-01. Every figure the spread paper carries now has **its own script in
+`spread/`**, each of which reads what the fit already wrote to `files/hierarchical_model/` and
+draws; none of them re-fits anything, and none needs `hierarchical_fit.R` to have been run in the
+session. Before this, Figs. 2-4 and S1-S5 existed only as plotting blocks buried in
+`hierarchical_fit.R`, a 3000-line script that has to run top to bottom before any of them will
+evaluate — so a caption change meant a refit.
+
+| Paper | Script | Output stem | Reads |
+|---|---|---|---|
+| Fig. 1 | `figure_study_area.R` | `fig1_study_area` | shapefiles + external base layers |
+| Fig. 2 | `figure_spread_curves.R` | `fig2_spread_curves` | `curves_df_prediction.rds` |
+| Fig. 3 | `figure_params_fwi.R` | `fig3_params_fwi` | `mu_samples_prediction.rds`, `spread_model_samples.rds` |
+| Fig. 4 | `figure_vegetation_effect.R` | `fig4_vegetation_effect` | `spreadprob_veg_comparison_array.rds` |
+| Fig. 5 | `figure_burn_probability.R` | `fig5_burn_probability` | `burn_probability_maps.rds` |
+| Fig. 6 | `figure_dharma_metrics.R` | `fig6_dharma_metrics` | `focal_metrics.rds` |
+| Fig. 7 | `figure_validation_metrics.R` | `fig7_validation` | `files/spread_validation/` |
+| Fig. S1 | `figure_flammability_indices.R` | `figS1_flammability_indices` | `data/flammability_indices/` |
+| Fig. S2 | `figure_spread_curves.R` | `figS2_spread_curves_raw` | `curves_df_prediction_raw_x.rds` |
+| Fig. S3 | `figure_parameter_correlations.R` | `figS3_parameter_correlations` | `spread_model_samples.rds` |
+| Figs. S4, S5 | `figure_focal_fit.R` | `figS4_overlap`, `figS5_size_quotient` | `focal_metrics.rds` |
+
+All of them write `.png` and `.pdf` into `manuscript-spread/figures/`, and all but Fig. 1 and
+Fig. S3 run in seconds. Fig. S3 re-simulates 235 fires per posterior draw for each of the 15
+parameter pairs (about 100 s) and caches the result to
+`files/hierarchical_model/parameter_correlations.rds`; `do_compute <- FALSE` then redraws it for
+free, the same two-stage pattern as Fig. 5.
+
+The shared pieces are in **`R/spread_figure_functions.R`**: `summarise_post()` (the fit's own
+posterior summary, renamed so it does not mask `dplyr::summarise`), `nice_theme()`,
+`spread_fwi_all()`, the FWI back-transform, `par_labels()` and `save_fig()`. It sources
+`R/focal_simulation_functions.R` for the parameter bounds and `invlogit_scaled2()`.
+
+**Three conventions the paper figures follow, and the traps behind them.**
+
+1. **Parameter names are the manuscript's**, never the code's: β₀ (intercept), β₁ (VFI),
+   β₂ (TFI), β₃ (slope), β₄ (wind), κ (steps). `par_labels()` is the only place that mapping is
+   written. They are **literal Unicode subscripts, not plotmath**, because plotmath silently
+   drops the space between an expression and the string after it when the text is rotated —
+   which is what a left-placed facet strip does, so `beta[0]~"(intercept)"` renders with the
+   subscript sitting on the bracket. The price is that the PDF has to go through `cairo_pdf`;
+   `save_fig()` does that.
+
+2. **FWI is always shown on its original anomaly scale**, never the fit's standardized one. The
+   two are easy to confuse and differ by a lot: FWI was already a pixel-level standardized
+   anomaly before the fit standardized it *again* across the 235 fires, so a model-internal 0 is
+   an anomaly of **+0.86**. The three levels of Figs. 2 and S2 are stored as
+   -1.614 / 0 / 1.672 and printed as **-0.60 / 0.86 / 2.38**.
+
+3. **`draws$ranef` mixes scales.** Row `steps` is stored on the natural scale, the other five on
+   the logit scale; only rows `1:(n_coef - 1)` are back-transformed. Documented at length in
+   `R/focal_simulation_functions.R` and repeated wherever it bites (Fig. 3's points, Fig. S3's
+   simulation).
+
+A fourth trap, found while writing Fig. S3: **`invlogit_scaled2()` reads a matrix as one column
+per (L, U) pair.** Handing it a fires × draws slice with scalar bounds silently takes `U[2]`,
+which is `NA` for a scalar `U`, and every correlation comes back `NA`. Use a plain
+`plogis(x) * (U - L) + L` for whole slices.
+
+**Figure 3 sanity check.** The per-parameter P(FWI slope > 0) printed by `figure_params_fwi.R`
+reproduces the thesis-era figure exactly — 73.73 / 22.83 / 55.33 / 34.42 / 92 / 100 % for
+intercept, VFI, TFI, slope, wind, steps. That is the cheapest confirmation that `fwi_all` and the
+back-transform chain were rebuilt correctly from the saved posterior rather than re-derived
+wrongly. Only `steps` is decisive: fire weather acts on how far a fire runs, not on how it
+spreads locally.
+
+**Two rendering defects of the thesis version of Fig. S3 are fixed**, and nothing else about it
+is changed: the inner panels carried white-on-white strip text that rendered as ghost labels
+floating above each row, and the bottom axis ran -1 to 1 with zero panel spacing, so neighbouring
+panels printed "1.0" and "-1.0" on top of each other (the extreme breaks are dropped).
+
+**Figs. S4 and S5 read `focal_metrics.rds`, not `metrics_table.rds`.** Both files hold overlap
+and simulated size for the 57 focal fires, but `metrics_table.rds` is the superseded
+`hierarchical_fit.R` run; `focal_metrics.rds` is what Fig. 6 uses, so the three focal-fire
+figures now describe the same 2000 × 2 simulations. Results from it: median overlap **0.527**
+under fitted random effects against **0.108** under simulated ones, and a median size quotient of
+1.09 (55 of 57 fires within a factor of two) against 1.51 (28 of 57).
+
+#### Fig. 1 — the study area map
+
+`spread/figure_study_area.R` is an R remake of the QGIS figure the Fire Ecology paper used
+(`~/Insync/patagonian_fires paper/study area map/mapa area de estudio 6.qgz` →
+`01) study area 6.jpeg`, Feb 2025). Three panels over one extent — (A) the fire record, (B)
+elevation, (C) vegetation — plus a South America locator inset.
+
+Everything about the design was read out of the `.qgz` (it is a zip; `unzip` it and the `.qgs`
+inside is XML) rather than reinvented:
+
+- **CRS `EPSG:5343`** (POSGAR 2007 / Argentina 1) and the layout's own map extent,
+  `ext(1476449.12, 1622527.39, 5071498.51, 5690988.16)`. Note `lat_0 = -90`, so northings are
+  measured from the south pole and run 5.07-5.69 × 10⁶ m here.
+- **Colours**: study-area outline `#470094`, fires `#E72A09`, lakes `#1DCCE3` over panels A and
+  C but `#CAEEFC` over the elevation panel, Chile `grey83`. The vegetation ramp is inferno
+  sampled at 8 levels (`#000000`, `#6b186e`, `#a82e5f`, `#dd513a`, `#f98c0a`, `#f6d645`,
+  `#fcffa4`, `#fcffa4`); the last two classes share a colour and one legend entry. The elevation
+  ramp is viridis over 200-3200 m.
+- **The grey is Chile and the white is Argentina**; the international border needs no line of its
+  own, it is where the two meet. The **thick dashed grey lines crossing the panels are the
+  provincial boundaries** (Neuquén / Río Negro / Chubut), which is what panel C's three labels
+  refer to. Take them from the bicontinental project's IGN `Provincias.shp` — the FAO GAUL file
+  sitting in the same folder is missing six Argentine provinces, Río Negro and Chubut among them.
+- Panel C draws **`vegetation_valdivian_img.tif`**, the 8-class version, not the
+  `_dryforest2` one; the `.qgs` has four raster renderers and only the one on the
+  `vegetation_valdivian_img copy` layer carries the inferno palette the printed figure shows.
+
+**What this version adds** is the only intended change: panel A colours the **57 fires with a
+mapped ignition point** (`#2166AC`) apart from the rest of the record. The split comes from
+`data/focal_fires/landscapes/*.rds`, matched against `data/patagonian_fires_spread.shp`.
+
+**Base layers live outside the store.** The elevation mosaic (240 MB), the vegetation raster, the
+lakes and the country/province shapefiles are still in the Insync folders the QGIS project used,
+reached through two new `R/config.R` entries, `study_area_map_dir` and `vegetation_lara_dir`.
+Nothing else in the pipeline reads them. Runtime is about 90 s, nearly all of it those two
+rasters; `maxcell_plot` caps what is actually rendered at 3 × 10⁶ cells, since the elevation
+mosaic is 121 million cells at 30 m and each panel is 3.5 cm wide.
+
+Departures from the QGIS original, and the open questions on it, are listed in `docs/roadmap.md`.
+
 ### What each test can and cannot diagnose
 
 **No edge-based regression can test the wind or slope terms.** Two reasons, and they compound.

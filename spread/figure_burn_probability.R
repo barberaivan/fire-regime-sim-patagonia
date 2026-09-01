@@ -346,9 +346,8 @@ for (f in names(maps)) {
     panels[[k]] <- panel(
       m, mode,
       title = if (first_row) {
-        sprintf("(%s) %s random effect",
-                if (mode == "fit") "A" else "B",
-                if (mode == "fit") "fitted" else "simulated")
+        if (mode == "fit") "(A) Fitted random effects"
+        else "(B) Simulated random effects"
       } else NULL,
       ylab = if (mode == "fit") base::sub(" - ", "\n", lab, fixed = TRUE) else NULL,
       scalebar = mode == "fit",

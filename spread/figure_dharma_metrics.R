@@ -63,9 +63,9 @@ dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 panels <- data.frame(
   metric = c("size", "size_wet", "size_subalpine", "size_dry",
              "size_shrubland", "size_grassland", "compactness", "axis_dev"),
-  label = c("All vegetation types", "Wet forest", "Subalpine forest",
-            "Dry forest", "Shrubland", "Grassland",
-            "Compactness", "Deviation from wind axis"),
+  label = c("A) All vegetation types", "B) Wet forest", "C) Subalpine forest",
+            "D) Dry forest", "E) Shrubland", "F) Grassland",
+            "G) Compactness", "H) Deviation from wind axis"),
   veg = c(NA, "wet", "subalpine", "dry", "shrubland", "grassland", NA, NA),
   integer = c(rep(TRUE, 6), FALSE, FALSE)
 )
@@ -122,13 +122,14 @@ res_table <- do.call("rbind", lapply(seq_len(nrow(panels)), function(k) {
                q_obs = r, q_exp = ppoints(length(r)))
   }
 
-  rbind(one_mode(ids_fit, "Fitted parameters"),
-        one_mode(ids_sim, "Simulated parameters"))
+  rbind(one_mode(ids_fit, "Fitted random effects"),
+        one_mode(ids_sim, "Simulated random effects"))
 }))
 
 res_table$panel <- factor(res_table$panel, levels = panels$label)
 res_table$ranef <- factor(res_table$ranef,
-                          levels = c("Fitted parameters", "Simulated parameters"))
+                          levels = c("Fitted random effects",
+                                     "Simulated random effects"))
 
 # Figure ------------------------------------------------------------------
 
@@ -162,7 +163,9 @@ p <- ggplot(res_table, aes(q_exp, q_obs, color = ranef, fill = ranef)) +
         panel.spacing.y = unit(4, "mm"),
         panel.spacing.x = unit(4, "mm"),
         strip.background = element_rect(color = bgcol, fill = bgcol),
-        strip.text = element_text(color = "white", size = 9))
+        strip.text = element_text(color = "white", size = 9, hjust = 0,
+                                  margin = margin(1.2, 1.2, 1.2, 1.2,
+                                                  unit = "mm")))
 
 for (ext in c("png", "pdf")) {
   f <- file.path(fig_dir, paste0("fig6_dharma_metrics.", ext))
@@ -190,11 +193,12 @@ tab <- do.call("rbind", lapply(split(res_table,
 rownames(tab) <- NULL
 tab <- tab[order(tab$ranef, match(tab$panel, panels$label)), ]
 # One row per panel per mode, printed narrow enough not to wrap in a terminal.
-cat(sprintf("%-26s %-10s %3s %8s %8s %6s %9s\n",
+cat(sprintf("%-29s %-10s %3s %8s %8s %6s %9s\n",
             "panel", "ranef", "n", "mean_res", "frac<med", "KS_D", "KS_p"))
 for (i in seq_len(nrow(tab))) {
-  cat(sprintf("%-26s %-10s %3d %8.3f %8.3f %6.3f %9.1e\n",
-              tab$panel[i], if (tab$ranef[i] == "Fitted parameters") "fitted" else "simulated",
+  cat(sprintf("%-29s %-10s %3d %8.3f %8.3f %6.3f %9.1e\n",
+              tab$panel[i],
+              if (tab$ranef[i] == "Fitted random effects") "fitted" else "simulated",
               tab$n[i], tab$mean_res[i], tab$frac_below_median[i],
               tab$ks_D[i], tab$ks_p[i]))
 }
@@ -203,7 +207,7 @@ cat("\ndrop_unavailable =", drop_unavailable, "| min_available =",
     min_available, "cells\n")
 for (k in which(!is.na(panels$veg))) {
   n_out <- J - length(panel_fires(panels$veg[k]))
-  cat(sprintf("  %-18s %2d fires dropped\n", panels$label[k], n_out))
+  cat(sprintf("  %-21s %2d fires dropped\n", panels$label[k], n_out))
 }
 
 na_ori <- mean(is.na(sim[, "orientation", ]))

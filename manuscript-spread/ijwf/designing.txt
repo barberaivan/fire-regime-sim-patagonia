@@ -1,12 +1,8 @@
-Fig. 1: 
-  Study area map. Remake the one in 
-  /home/ivan/Insync/patagonian_fires/data_analyses/figures/01) study area 6.jpeg,
-  which is in the paper, but show fires with ignition point known on a different
-  color from the rest. So only panel A has to change. The figure was made in QGIS,
-  but remake it in R.   
-  Probably all the necessary files are in 
-  home/Ivan/Insync/patagonian_fires_paper/study area map/
-  But do not get confused by the figures in there, which are older versions.
+Fig. 1: Study area map.
+        Made: spread/figure_study_area.R -> fig1_study_area.
+        Panel A now separates the 57 fires with a mapped ignition point
+        from the rest of the record. See docs/roadmap.md for the few
+        decisions left on it.
         
 What we will show in results (mostly figures).
 

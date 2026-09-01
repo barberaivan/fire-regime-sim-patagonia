@@ -90,3 +90,4 @@ spread/figures/*
 ignition_escape/figures/*
 !spread/figures/.gitkeep
 !ignition_escape/figures/.gitkeep
+Rplots.pdf

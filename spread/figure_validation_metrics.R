@@ -6,8 +6,12 @@
 # record (57 focal + 184 reduced landscapes), unlike the burned-area-by-
 # vegetation calibration of spread/figure_dharma_metrics.R.
 #
-#   Part A  the regional size distribution: a density over log10(area) and the
-#           matching Q-Q. Marginal, not conditioned — and read with the
+#   Part A  the regional size distribution: the two densities over log10(area)
+#           overlaid at alpha 0.5 — same estimator on both sides, so the eye
+#           compares like with like — and the matching Q-Q, whose points are
+#           drawn in the "simulated random effects" style of Fig. 6 (a red
+#           point there would read as "observed", which is not what a Q-Q
+#           point is). Marginal, not conditioned — and read with the
 #           truncation in mind (simulated fires are conditioned on >= 10 ha,
 #           and the observed record is what the mapping caught over 1999-2022,
 #           not a draw from the same generative process).
@@ -58,6 +62,11 @@ dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 obs_col <- "#c1272d"
 sim_col <- "black"
 n_bins <- 55
+
+# The Q-Q points are neither "observed" nor "simulated" — each one pairs the
+# two — so they take Fig. 6's second discrete colour rather than either of the
+# set colours. Keep this in step with spread/figure_dharma_metrics.R.
+qq_col <- viridis_pal(option = "D", end = 0.5)(2)[2]
 
 set_levels <- c("Simulated", "Observed")
 set_cols <- setNames(c(sim_col, obs_col), set_levels)
@@ -184,21 +193,40 @@ pp <- ppoints(length(lo))
 qq <- data.frame(obs = 10^quantile(lo, pp, type = 8),
                  sim = 10^quantile(ls, pp, type = 8))
 
-p_dens <- ggplot(mapping = aes(area_ha, after_stat(density))) +
-  geom_histogram(data = data.frame(area_ha = sim$area_ha), bins = 60,
-                 fill = "grey70", colour = NA) +
-  # Default (nrd0) bandwidth: the SJ selector over 241 fires resolves bumps
-  # that are sampling noise at this n.
-  geom_density(data = data.frame(area_ha = obs_shp$area_ha), colour = obs_col,
-               linewidth = 0.7) +
+# Both sides get the same kernel density over log10(area) — ggplot applies the
+# log10 scale before the stat — and are overlaid at alpha 0.5, so the overlap
+# itself is what the panel shows. Default (nrd0) bandwidth: the SJ selector
+# over 241 fires resolves bumps that are sampling noise at this n.
+dens_dat <- rbind(
+  data.frame(set = "Simulated", area_ha = sim$area_ha),
+  data.frame(set = "Observed", area_ha = obs_shp$area_ha)
+)
+dens_dat$set <- factor(dens_dat$set, levels = set_levels)
+
+p_dens <- ggplot(dens_dat, aes(area_ha, after_stat(density),
+                               colour = set, fill = set)) +
+  geom_density(linewidth = 0.6, alpha = 0.5) +
+  scale_colour_manual(values = set_cols, name = NULL) +
+  scale_fill_manual(values = set_cols, name = NULL) +
   area_scale("x") +
   labs(x = lab_size, y = "Density") +
   ggtitle("(A)") +
-  part_theme()
+  part_theme() +
+  # Part A carries its own key: Part B's collected legend sits below it and
+  # shows lines, not fills.
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.99, 0.99),
+        legend.justification = c(1, 1),
+        legend.background = element_blank(),
+        legend.key = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(3.5, "mm"),
+        legend.margin = margin(0, 0, 0, 0, unit = "mm"))
 
 p_qq <- ggplot(qq, aes(sim, obs)) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60", linewidth = 0.4) +
-  geom_point(size = 0.9, colour = obs_col) +
+  geom_point(shape = 21, size = 1.2, stroke = 0.4,
+             colour = qq_col, fill = alpha(qq_col, 0.4)) +
   area_scale("x") + area_scale("y") +
   labs(x = paste("Simulated", tolower(lab_size)),
        y = paste("Observed", tolower(lab_size))) +

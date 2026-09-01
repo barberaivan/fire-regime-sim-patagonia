@@ -39,25 +39,49 @@ Full detail in `docs/migration.md`'s TODO register.
 
 ### 1. The spread manuscript — the active job
 
-All the computation the paper needs is done (validation, Figs. 5–7). What is left is prose and
-the remaining figures.
+All the computation and every figure are done. What is left is prose.
 
 - **Results and Discussion** — write them against `docs/spread.md` → *Results of the validation*
   and *Why the model cannot make an elongated fire*.
 - **The Validation subsection of Methods is still written as designed, not as completed** — it
   was drafted before the runs finished. Move it to the past tense.
-- **Figures 1–4** — plan in `manuscript-spread/ijwf/designing.txt`. The `.tex` still carries
-  `[Claude, make and add the study area figure]`.
-- Figs. 5, 6 and 7 are **done** (2026-09-01) — the Fig. 5 redecoration, the Fig. 6 redesign
-  (shape metrics added, `drop_unavailable` with the < 30-cell rule) and the Fig. 7 merge and
-  hectare axes. Written up in `docs/spread.md` → *Burn-probability maps* and *The paper's
-  validation figures*; the Fig. 6 numbers quoted there are new, since the old ones predated the
-  panel-label fix. What is left on them is prose:
-  - the Fig. 6 caption and Results text have to be written from the new table, and the two shape
-    panels are new material for the Results — compactness under simulated random effects puts
-    96 % of observed fires outside the model's median, which is the headline result in
-    calibration form;
-  - the Fig. 5 caption should quote the per-panel mean overlaps now printed in the panels.
+- **Captions, and the figures into the `.tex`.** Nothing in `spread-paper.tex` includes a figure
+  yet, and it still carries `[Claude, make and add the study area figure]`.
+
+**Figures are done.** All eleven — Figs. 1-7 and S1-S5 — are built, each by its own script in
+`spread/`, and written to `manuscript-spread/figures/`. Procedure, colours, the traps and the
+numbers are in `docs/spread.md` → *The paper's model figures* and *The paper's validation
+figures*. What is left on them is prose: the captions, and the Results text for Figs. 2-4 and
+6-7.
+
+**For Iván — decisions on the figures I could not make for you**
+
+- **Fig. 1, the colour of the 57.** Fires with a mapped ignition point are drawn in `#2166AC`
+  (`col_fire_ig` in `spread/figure_study_area.R`), the rest in the published red. Blue reads
+  clearly against the red, but the lakes are cyan and at small sizes a blue fire on a lake shore
+  can be misread. Change the one constant if you want another hue.
+- **Fig. 1, which vegetation map panel C should show.** It draws the WWF / Lara et al. (1999)
+  raster the published figure used. The spread model does *not* run on that map — it runs on the
+  merged CIEFAP + Lara raster this repo builds (`docs/data-prep.md`). Showing the published one
+  keeps continuity with the Fire Ecology paper; showing the merged one would show the landscape
+  the model actually sees. Your call.
+- **Fig. 1, three cosmetic departures from the QGIS original.** (i) The QGIS map items carry
+  `mapRotation = -1.5°`; the R panels are north-up, so the tilt is gone. (ii) The fire layer is
+  `patagonian_fires_spread.shp` (241 features) rather than the 238-feature base record, because
+  only `_spread` carries the split ids the 57 focal fires are keyed on. (iii) `annotation_scale`
+  prints only the bar's maximum ("60 km"), not the QGIS bar's 0 / 50 / 100 ticks, and the
+  graticule reads "72°W / 40°S" rather than "-72°0′".
+- **Fig. 1's base layers are outside the store.** The elevation mosaic (240 MB), the vegetation
+  raster, the lakes and the country/province shapefiles are still in `~/Insync/patagonian_fires
+  paper/study area map/` and `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`, reached through
+  two new `R/config.R` entries. Decide whether to copy that folder into the store (the figure
+  then rebuilds on any machine) or leave it machine-local.
+- **Figs. 2 and S2 now label the FWI legend in anomaly units** (-0.60 / 0.86 / 2.38) instead of
+  the fit's standardized values (-1.614 / 0 / 1.672), so Figs. 2, 3 and 4 share one FWI scale.
+  Check that is what you want before writing the captions.
+- **Fig. S3 lost two rendering defects** that the thesis version had: ghost white-on-white strip
+  labels above each row, and colliding "1.0" / "-1.0" tick labels between panels (its x breaks
+  now stop at ±0.5). Nothing else about its design changed.
 
 Target journal *International Journal of Wildland Fire*, Research Article; rules and sources in
 `manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
