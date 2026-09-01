@@ -197,3 +197,7 @@ records, if wanted, should be summary rows appended to a preallocated table.
 
 Steps 1–3 are worth doing **before** the TODO #7 re-run, since that re-run is a multi-day job
 and this is the difference between 3 workers and all of them.
+
+> **Parked as of 2026-09-01.** The active work is the spread-model paper, so neither this redesign
+> nor the TODO #7 re-run is being touched. This note is the entry point when the regime side comes
+> back; the roadmap only points here.

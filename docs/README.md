@@ -10,6 +10,7 @@ concise papers and their supplementary material draw on. This is the two-tier sy
 
 | Doc | Covers |
 |-----|--------|
+| [`roadmap.md`](roadmap.md) | **Open tasks only** — what is still to do. Finished work is deleted from here and written up in the module doc below |
 | [`architecture.md`](architecture.md) | **Start here.** Module map, the **dependency tree**, end-to-end data flow, canonical pipeline, migration status & tech debt |
 | [`data-prep.md`](data-prep.md) | Flammability indices (VFI/TFI), FWI standardization/fortnights/projections, landscape arrays |
 | [`spread.md`](spread.md) | Spread model — ABC-SMC stage 1 (fire-wise posteriors) + hierarchical fit (paper 1) |

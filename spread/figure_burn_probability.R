@@ -7,17 +7,11 @@
 # fraction of simulations that burned it; the observed perimeter is drawn over
 # it. Eight panels, 4 fires x 2 random-effect modes.
 #
-# The simulation block is lifted from spread/hierarchical_fit.R (the "Assessing
-# model fit" section, which builds `ranef_fit` / `ranef_sim` and loops over
-# fires) — the only change is that a per-cell burn count is accumulated instead
-# of reducing each simulation to a `metrics_table` row. Do not re-derive the
-# MVLN -> invlogit_scaled chain from scratch.
-#
-#   THE TRAP: `draws$ranef` row 6 (`steps`) is stored on the NATURAL scale
-#   while rows 1-5 are on the logit scale, so the fitted random effects must be
-#   back-transformed on rows 1:(n_coef - 1) only. The simulated ones come out
-#   of `rmvn()` entirely on the logit scale, so all six rows are transformed
-#   there, with `Upar["steps"]` set per draw from `draws$stepsU`.
+# The random effects come from R/focal_simulation_functions.R, shared with
+# spread/simulate_focal_metrics.R (the Fig. 6 run) — including the trap about
+# `steps` being stored on the natural scale. The only thing that is special
+# here is that a per-cell burn COUNT is accumulated instead of reducing each
+# simulation to a row of metrics.
 #
 # The four fires and why they were chosen: manuscript-spread/ijwf/designing.txt
 # -> Fig. 5. They give a monotone gradient of posterior-median overlap
@@ -38,13 +32,14 @@ library(patchwork)
 theme_set(theme_bw())
 
 source(file.path("R", "config.R"))
+source(file.path("R", "focal_simulation_functions.R"))
 
 # Settings ----------------------------------------------------------------
 
 do_simulate <- TRUE
 do_plot <- TRUE
 
-nsim <- 1000        # per fire and per random-effect mode
+nsim <- 2000        # per fire and per random-effect mode
 cores <- 8
 seed <- 20260828
 
@@ -63,25 +58,13 @@ fig_dir <- file.path("manuscript-spread", "figures")
 n_veg <- 5
 nd_variables <- c("vfi", "tfi")
 terrain_variables <- c("elevation", "wdir", "wspeed")
-par_names <- c("intercept", "vfi", "tfi", "slope", "wind", "steps")
-n_coef <- length(par_names)
 upper_limit <- 1
 
-ext_alpha <- 50; ext_beta <- 30; stepsL <- 2
 fi_params <- readRDS(file.path("data", "flammability_indices",
                                "flammability_indices.rds"))
-Lpar <- c(-ext_alpha, rep(0, n_coef - 2), stepsL)
-Upar <- c(ext_alpha, rep(ext_beta, n_coef - 2), NA)
-names(Lpar) <- names(Upar) <- par_names
-Upar["slope"] <- ext_beta / fi_params$slope_term_sd
-
-# Inverse-logit scaled between L and U, column-wise when x is a matrix.
-invlogit_scaled2 <- function(x, L, U) {
-  if (is.matrix(x)) {
-    return(sapply(1:ncol(x), function(i) plogis(x[, i]) * (U[i] - L[i]) + L[i]))
-  }
-  plogis(x) * (U - L) + L
-}
+bounds <- focal_par_bounds(fi_params)
+par_names <- bounds$par_names
+n_coef <- bounds$n_coef
 
 
 # Stage 1 — simulate ------------------------------------------------------
@@ -95,66 +78,29 @@ draws <- readRDS(file.path("files", "hierarchical_model",
 npost <- dim(draws$fixef)[3]
 stopifnot(all(fire_ids %in% dimnames(draws$ranef)[[2]]))
 
-# Each fire's standardized FWI, the covariate the population mean is a function
-# of. Same source and same scaling as the fit.
-fwi_scale <- readRDS(file.path("files", "hierarchical_model",
-                               "fwi_mean_sd_spread.rds"))
-fwi_data <- read.csv(file.path(
-  "data", "climatic_data_by_fire_fwi-fortnight-cumulative_FWIZ2.csv"))
-stopifnot(all(fire_ids %in% fwi_data$fire_id))   # none of the four is a split fire
-fwi_z <- (fwi_data$fwi_fort_expquad[match(fire_ids, fwi_data$fire_id)] -
-            fwi_scale$fwi_mean) / fwi_scale$fwi_sd
-names(fwi_z) <- fire_ids
+# Each fire's standardized FWI, the covariate the population mean is a
+# function of. Same source and same scaling as the fit.
+fwi_z <- focal_fwi_z(fire_ids)
+stopifnot(!anyNA(fwi_z))
 
-#' Fitted random effects for one fire, on the simulator's scale
-#'
-#' Rows 1:(n_coef - 1) are stored on the logit scale and are back-transformed;
-#' row `steps` is already natural and is left alone. Returns nsim x n_coef.
-ranef_fitted <- function(fire_id, ids) {
-  r <- draws$ranef[, fire_id, ids]                       # n_coef x nsim
-  out <- t(r)
-  out[, 1:(n_coef - 1)] <- invlogit_scaled2(t(r[1:(n_coef - 1), ]),
-                                            Lpar, Upar)
-  colnames(out) <- par_names
-  out
-}
 
-#' New random effects for one fire, drawn from the population distribution
-#'
-#' One draw of the hyperparameters per simulated fire, so both hyperparameter
-#' and between-fire uncertainty are carried. Everything comes out of `rmvn()`
-#' on the logit scale, `steps` included, so all n_coef rows are transformed —
-#' with that draw's own upper bound for `steps`.
-ranef_simulated <- function(fire_id, ids) {
-  X <- cbind(1, fwi_z[fire_id])
-  out <- matrix(NA_real_, length(ids), n_coef,
-                dimnames = list(NULL, par_names))
-  Upar_ <- Upar
-  for (k in seq_along(ids)) {
-    jj <- ids[k]
-    mu <- X %*% t(draws$fixef[1:n_coef, c("a", "b"), jj])
-    sds <- sqrt(draws$fixef[1:n_coef, "s2", jj])
-    V <- diag(sds) %*% draws$rho[, , jj] %*% diag(sds)
-    Upar_["steps"] <- draws$stepsU[jj]
-    out[k, ] <- invlogit_scaled2(matrix(mgcv::rmvn(1, mu, V), nrow = 1),
-                                 Lpar, Upar_)
-  }
-  out
-}
-
-#' Per-cell burn counts over a matrix of parameter vectors (one row per fire)
+#' Per-cell burn counts, and the overlap of each simulation with the observed
+#' fire, over a matrix of parameter vectors (one row per fire)
 #'
 #' Chunked so each worker accumulates its own integer count matrix rather than
 #' returning one burn mask per simulation — for the 2917 x 3577 landscape of
 #' 2015_50 that is the difference between 42 MB and 42 GB of return traffic.
-burn_counts <- function(pars, veg, nd, terrain, ig) {
+#' The overlap comes back per simulation (a scalar each), because the figure
+#' labels every panel with its mean.
+burn_counts <- function(pars, veg, nd, terrain, ig, obs) {
   grp <- split(seq_len(nrow(pars)),
                cut(seq_len(nrow(pars)), cores, labels = FALSE))
   res <- mclapply(grp, function(g) {
     acc <- matrix(0L, nrow(veg), ncol(veg))
-    for (i in g) {
-      p <- pars[i, ]
-      acc <- acc + simulate_fire(
+    ov <- numeric(length(g))
+    for (k in seq_along(g)) {
+      p <- pars[g[k], ]
+      fire <- simulate_fire_compare(
         layer_vegetation = veg,
         layer_nd = nd,
         layer_terrain = terrain,
@@ -165,12 +111,15 @@ burn_counts <- function(pars, veg, nd, terrain, ig) {
         upper_limit = upper_limit,
         steps = p["steps"]
       )
+      acc <- acc + fire$burned_layer
+      ov[k] <- overlap_spatial(fire, obs)
     }
-    acc
+    list(acc = acc, ov = ov)
   }, mc.cores = cores)
   bad <- vapply(res, inherits, logical(1), "try-error")
   if (any(bad)) stop(sum(bad), " chunks failed")
-  Reduce(`+`, res)
+  list(counts = Reduce(`+`, lapply(res, `[[`, "acc")),
+       overlap = unlist(lapply(res, `[[`, "ov")))
 }
 
 maps <- vector("list", length(fire_ids))
@@ -186,9 +135,13 @@ for (f in fire_ids) {
   terrain <- land[, , terrain_variables]
 
   ids <- sample.int(npost, nsim, replace = FALSE)   # shared by the two modes
+  obs_fire <- l[c("burned_layer", "burned_ids")]
   t0 <- Sys.time()
-  cnt_fit <- burn_counts(ranef_fitted(f, ids), veg, nd, terrain, l$ig_rowcol)
-  cnt_sim <- burn_counts(ranef_simulated(f, ids), veg, nd, terrain, l$ig_rowcol)
+  run_fit <- burn_counts(ranef_fitted(draws, f, ids, bounds),
+                         veg, nd, terrain, l$ig_rowcol, obs_fire)
+  run_sim <- burn_counts(ranef_simulated(draws, f, ids, bounds, fwi_z[f]),
+                         veg, nd, terrain, l$ig_rowcol, obs_fire)
+  cnt_fit <- run_fit$counts; cnt_sim <- run_sim$counts
   cat("  ", nsim, "x2 simulations in",
       round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 1), "min\n")
 
@@ -240,14 +193,18 @@ for (f in fire_ids) {
     obs_cells = sum(obs > 0),
     mean_size_fit = sum(cnt_fit) / nsim,
     mean_size_sim = sum(cnt_sim) / nsim,
+    overlap_fit = mean(run_fit$overlap),
+    overlap_sim = mean(run_sim$overlap),
     nsim = nsim
   )
 
   cat("   observed", maps[[f]]$obs_cells, "cells | mean simulated:",
       round(maps[[f]]$mean_size_fit), "(fitted) /",
-      round(maps[[f]]$mean_size_sim), "(simulated ranef)\n")
+      round(maps[[f]]$mean_size_sim), "(simulated ranef)",
+      "| mean overlap:", round(maps[[f]]$overlap_fit, 3), "/",
+      round(maps[[f]]$overlap_sim, 3), "\n")
 
-  rm(l, land, veg, nd, terrain, cnt_fit, cnt_sim); gc()
+  rm(l, land, veg, nd, terrain, cnt_fit, cnt_sim, run_fit, run_sim); gc()
 }
 
 saveRDS(maps, maps_file)
@@ -291,25 +248,43 @@ map_theme <- function() {
   )
 }
 
-#' One panel. `ylab` is used as the row label, so it is only passed for the
-#' left-hand (fitted) panel of each fire.
-panel <- function(m, mode, title, ylab = NULL) {
+#' One panel.
+#'
+#' Which decorations a panel carries depends on where it sits in the 4 x 2
+#' grid, so that each thing is said once:
+#'   `title`     only the top row — the two columns ARE the two random-effect
+#'               modes, so repeating "(A) fitted" down the column is noise.
+#'   `ylab`      only the left column, where it names the fire and its size.
+#'   `scalebar`  only the left column; the two panels of a fire share an extent.
+#'   `coords`    only the right column, as a lat/long graticule. The panels are
+#'               in EPSG:5343 (metres); `datum` only changes what the axes are
+#'               labelled in, never the projection the raster is drawn in.
+#' The mean overlap with the observed fire is written inside every panel.
+panel <- function(m, mode, title = NULL, ylab = NULL,
+                  scalebar = FALSE, coords = FALSE) {
   prob <- unwrap(if (mode == "fit") m$prob_fit else m$prob_sim)
   prob[prob == 0] <- NA          # unburned cells show the base layer instead
   obs <- unwrap(m$obs_poly)
+  ov <- if (mode == "fit") m$overlap_fit else m$overlap_sim
 
-  ggplot() +
-    geom_spatraster(data = unwrap(m$burnable), maxcell = 5e6,
-                    show.legend = FALSE) +
+  e <- ext(prob)
+  lab_x <- e[1] + 0.03 * (e[2] - e[1])
+  lab_y <- e[4] - 0.03 * (e[4] - e[3])
+
+  p <- ggplot() +
+    geom_spatraster(data = unwrap(m$burnable), maxcell = 5e6) +
     scale_fill_manual(values = bg_colors, na.value = "transparent",
-                      na.translate = FALSE, name = NULL) +
+                      na.translate = FALSE, name = NULL,
+                      guide = guide_legend(order = 2, keywidth = unit(3.5, "mm"),
+                                           keyheight = unit(3.5, "mm"))) +
     ggnewscale::new_scale_fill() +
 
     geom_spatraster(data = prob, maxcell = 5e6) +
     scale_fill_viridis(option = prob_option, begin = prob_begin,
                        end = prob_end, limits = c(0, 1),
                        na.value = "transparent",
-                       name = "Burn\nprobability") +
+                       name = "Burn\nprobability",
+                       guide = guide_colourbar(order = 1)) +
 
     # The observed perimeter, haloed so it reads over both ends of the magma
     # ramp — a plain black line vanishes on the unburned-but-reachable cells.
@@ -318,21 +293,46 @@ panel <- function(m, mode, title, ylab = NULL) {
     geom_spatvector(data = unwrap(m$ig_pt), fill = "white", color = "black",
                     shape = 21, size = 1.4, stroke = 0.5) +
 
-    ggspatial::annotation_scale(
+    annotate("label", x = lab_x, y = lab_y, hjust = 0, vjust = 1,
+             label = sprintf("%.3f", ov), size = 2.4, colour = "black",
+             fill = "white", linewidth = 0.15,
+             label.padding = unit(0.7, "mm")) +
+    map_theme() +
+    labs(title = title, y = ylab)
+
+  # The graticule is drawn only where it is labelled. `label_axes = "-NE-"`
+  # reads clockwise from the top — nothing on top, parallels on the RIGHT (so
+  # they never land between the two panels of a fire), meridians on the bottom,
+  # nothing on the left. It has to be the string or a named LIST; a named
+  # character vector like c(bottom = "E") is silently read as the string form
+  # and puts the labels somewhere else entirely.
+  p <- p + if (coords) {
+    coord_sf(expand = FALSE, datum = sf::st_crs(4326), label_axes = "-NE-")
+  } else coord_sf(expand = FALSE, datum = NA)
+
+  if (scalebar) {
+    p <- p + ggspatial::annotation_scale(
       location = "br", height = unit(1.2, "mm"), width_hint = 0.28,
       bar_cols = c("grey20", "white"), text_col = "grey20",
       text_cex = 0.55, line_width = 0.3, pad_x = unit(1, "mm"),
-      pad_y = unit(1, "mm")) +
-
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_y_continuous(expand = c(0, 0)) +
-    coord_sf(expand = FALSE) +
-    map_theme() +
-    labs(title = title, y = ylab)
+      pad_y = unit(1, "mm"))
+  }
+  if (coords) {
+    # Break count set by hand: these panels span anything from 1 to 40 km, and
+    # the default graticule puts six meridians on the narrow ones, whose labels
+    # ("71.53°W") are then wider than the gaps between them.
+    ll <- ext(project(as.polygons(ext(prob), crs = crs(prob)), "EPSG:4326"))
+    p <- p +
+      scale_x_continuous(breaks = pretty(c(ll[1], ll[2]), n = 2)) +
+      scale_y_continuous(breaks = pretty(c(ll[3], ll[4]), n = 3)) +
+      theme(axis.text = element_text(size = 6.5, colour = "grey30"),
+            axis.ticks = element_line(colour = "grey30", linewidth = 0.2),
+            axis.ticks.length = unit(0.7, "mm"))
+  }
+  p
 }
 
 panels <- list()
-letters_ <- LETTERS[1:(2 * length(maps))]
 k <- 0
 for (f in names(maps)) {
   m <- maps[[f]]
@@ -340,19 +340,26 @@ for (f in names(maps)) {
   dig <- if (ha < 100) 1 else 0
   lab <- sprintf("%s - %s ha", f,
                  formatC(ha, format = "f", big.mark = ",", digits = dig))
+  first_row <- k == 0
   for (mode in c("fit", "sim")) {
     k <- k + 1
     panels[[k]] <- panel(
       m, mode,
-      sprintf("(%s) %s random effect", letters_[k],
-              if (mode == "fit") "fitted" else "simulated"),
-      ylab = if (mode == "fit") sub(" - ", "\n", lab, fixed = TRUE) else NULL)
+      title = if (first_row) {
+        sprintf("(%s) %s random effect",
+                if (mode == "fit") "A" else "B",
+                if (mode == "fit") "fitted" else "simulated")
+      } else NULL,
+      ylab = if (mode == "fit") base::sub(" - ", "\n", lab, fixed = TRUE) else NULL,
+      scalebar = mode == "fit",
+      coords = mode == "sim")
   }
 }
 
 fig <- wrap_plots(panels, ncol = 2, byrow = TRUE) +
   plot_layout(guides = "collect") &
-  theme(legend.position = "right")
+  theme(legend.position = "right", legend.box = "vertical",
+        legend.box.just = "left", legend.spacing.y = unit(3, "mm"))
 
 ggsave(file.path(fig_dir, "fig5_burn_probability.png"), plot = fig,
        width = 15, height = 24, units = "cm", dpi = 400, bg = "white")

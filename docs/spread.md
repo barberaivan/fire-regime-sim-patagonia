@@ -42,28 +42,39 @@ The largest, most complex module. Fits the fire spread model in two stages, driv
 
 ### Burn-probability maps — `figure_burn_probability.R` (paper Fig. 5)
 
-Per-cell burn probability from 1000 simulations under the **fitted** random effect and 1000
+Per-cell burn probability from **2000** simulations under the **fitted** random effect and 2000
 under a **newly simulated** one, on the same landscape and the same ignition point, for four
 focal fires — 8 panels. Written to `manuscript-spread/figures/fig5_burn_probability.{png,pdf}`,
 with the per-cell counts kept in `files/hierarchical_model/burn_probability_maps.rds` so the
-figure can be retuned without re-simulating (`do_simulate <- FALSE`). About 2 minutes on 8
+figure can be retuned without re-simulating (`do_simulate <- FALSE`). About 4 minutes on 8
 cores, nearly all of it `2015_50`.
 
-The simulation block is lifted from this file's *Assessing model fit* section (~L2526–2620) —
-same `ranef_fit` / `ranef_sim` construction, one posterior draw per simulated fire, full
-posterior — with a per-cell burn count accumulated instead of a `metrics_table` row. **The trap
-to respect when copying it:** `draws$ranef` row 6 (`steps`) is stored on the *natural* scale
-while rows 1–5 are on the logit scale, so only rows 1:(n_coef − 1) get back-transformed; the
-simulated random effects come out of `rmvn()` entirely on the logit scale and all six are
-transformed, with `Upar["steps"]` set per draw from `draws$stepsU`. The mean simulated sizes
-reproduce the `metrics_table` size quotients (1.03, 1.11, 0.53, 2.39 against 1.04, 1.11, 0.53,
-2.49), which is the cheapest check that the chain was copied correctly.
+The random effects come from `R/focal_simulation_functions.R`, shared with
+`spread/simulate_focal_metrics.R` — including the `steps`-scale trap, documented there. What is
+special here is only that a per-cell burn **count** is accumulated instead of a row of metrics,
+chunked so each worker returns one integer matrix rather than one mask per simulation (42 MB
+against 42 GB for `2015_50`). Each simulation's overlap with the observed fire comes back too,
+for the panel labels.
 
 The four fires and the criteria behind them are in `manuscript-spread/ijwf/designing.txt` →
 Fig. 5: a monotone gradient of posterior-median overlap (0.84 / 0.64 / 0.35 / 0.27 against a
 57-fire median of 0.535), three orders of magnitude in size, and the strongest under- and
 overestimate in the set. Caption numbers: median fitted-ranef overlap over the 57 focal fires
 0.535, median size quotient 1.04, 36 of 57 fires overestimated.
+
+**What each panel carries, and why it is only there.** The two columns *are* the two
+random-effect modes, so the titles "(A) fitted" / "(B) simulated" appear only in the top row.
+The fire id and its size label the left column, as the row title. The scale bar is on the left
+panel only, because the two panels of a fire share an extent. The right panels carry the
+coordinates, as a lat/long graticule over the EPSG:5343 rasters — `label_axes = "-NE-"` puts the
+parallels on the far right, where they cannot be read as belonging to the left panel, and the
+meridian breaks are set by hand (`pretty(n = 2)`) because the default graticule puts six
+"71.5x°W" labels on a panel one kilometre wide. Every panel is labelled with its **mean overlap**
+with the observed fire, in a white box: **0.832 / 0.637 / 0.349 / 0.235** under fitted random
+effects and **0.226 / 0.041 / 0.128 / 0.071** under simulated ones, in the panel order of the
+figure. Those are means over the 2000 simulations; the 0.84 / 0.64 / 0.35 / 0.27 gradient the
+fires were selected on is a median of posterior medians, which is why the smallest fire's number
+differs a little.
 
 Aesthetics follow the burn-probability maps made for the thesis defence
 (`fire regime simulations/plots_defensa*.R` in the old PhD repo): a burnable / non-burnable base
@@ -86,6 +97,41 @@ fires, saved to `files/spread_validation/observed_signature.rds` and `observed_s
 `spread/validation_analysis.R` (the comparison — figures into
 `files/spread_validation/figures/`, numbers into `validation_summary.rds`). Results below under
 *Results of the validation*.
+
+### How it is run — order, commands and cost
+
+Everything below was run over 2026-08-21…31. In order, with what each step needs and what it
+leaves on disk:
+
+| # | step | script | needs | writes | cost |
+|---|------|--------|-------|--------|------|
+| 0 | landscapes | `data_prep/landscapes_simulation.R` (tiles) and `data_prep/landscapes_preparation.R` (`do_signature` stage → the 184 reduced landscapes) | the GEE exports downloaded into `data/simulation_landscapes/raw_gee/` and `data/signature_landscapes/raw_gee/` | the tile and reduced-landscape `.rds` | WindNinja hours for the tiles; seconds for the 184 |
+| 1 | eligible ignition cells | `spread/validation_ignition_cells.R` | the four tiles | `files/spread_validation/ignition_cells.rds` | run once |
+| 2 | simulated side | `spread/validation_simulate.R` | 1 + `spread_model_samples.rds` + the FWI csv | `simulated_fires.rds` (12.8 MB, 64,836 fires) | **15 min on 14 cores** |
+| 3 | observed side | `spread/validation_observed.R` | the 57 focal + 184 reduced landscapes | `observed_signature.rds`, `observed_shape.rds` (241 rows each) | 1.4 min |
+| 4 | comparison | `spread/validation_analysis.R` | 2 + 3 | four figures in `files/spread_validation/figures/`, every number in `validation_summary.rds` | < 1 min |
+| 5 | focal re-simulation | `spread/simulate_focal_metrics.R` | the hierarchical fit + the 57 focal landscapes | `files/hierarchical_model/focal_metrics.rds` | ~30 min on 14 cores |
+| 6 | paper figures | `spread/figure_burn_probability.R` (Fig. 5), `spread/figure_dharma_metrics.R` (Fig. 6, needs 5), `spread/figure_validation_metrics.R` (Fig. 7, needs 4) | as noted | `manuscript-spread/figures/` | 4 min / seconds / seconds |
+
+Shared metrics live in `R/spread_validation_functions.R`; steps 2–4 read nothing from each other
+except through those `.rds` files, so any one of them can be re-run alone.
+
+Step 2 is the only long one and is best launched detached:
+
+```bash
+tmux new-session -d -s spread_sim -c ~/dev/fire-regime-sim-patagonia \
+  "stdbuf -oL -eL Rscript spread/validation_simulate.R 2>&1 | tee files/spread_validation/run.log; exec bash"
+```
+
+It accepted 64,836 fires ≥ 10 ha out of 148,649 proposals (43.6 %), so the single pass overshot
+`n_target = 50 000` and no second pass was needed; the 83,813 rejected proposals keep their sizes
+in `small_sizes`. Only 14 of the accepted fires (0.02 %) have an NA signature, where
+`donor_strata()` found nothing to fit; fires split 13,987 / 18,348 / 19,941 / 12,560 across
+tiles 1–4.
+
+Step 4's figures and `validation_summary.rds` are analysis output and stay in `files/`; the
+paper's validation figures are Figs. 6 and 7 (step 6), decided with Iván on 2026-08-31 —
+see *The paper's validation figures* below.
 
 ### Why not classical train/test
 
@@ -197,6 +243,12 @@ mean direction to mean anything. `fire_shape()` also returns the burned cells' c
 (`cov_ee`/`cov_nn`/`cov_en`), from which `elongation_along()` recovers elongation against *any*
 reference axis after the fact — including the fixed 293° needed to treat the simulated fires
 exactly as the observed ones must be treated — without re-running the simulation.
+
+Terrain steering is real and worth knowing when reading either elongation: over the 64,836
+simulated fires, `wdir` averaged over a fire's burned cells has a 5–95 % range of **277–311°**
+around the 293° the tiles were driven with, though the per-fire fields are highly coherent
+(median `rbar` 0.99). Measuring against each fire's own mean wind rather than the fixed 293°
+changes the answer very little (see the results table below), which is itself informative.
 
 **3. Per-fire spatial signature.** For each fire, a **donor-centred conditional logit**: one
 stratum per burned cell with at least one burnable unburned neighbour, members = that cell's
@@ -402,6 +454,109 @@ is flat (1.93 → 2.12, no trend), and simulated `b_vfi` *falls* with FWI (1.78 
 observed is noisy. Every simulated fire falls inside the observed FWI range, because FWI is
 resampled from the 233 mapped fires — which is also why the FWI panels are visibly striped:
 `fwi_z` takes only 233 distinct values.
+
+### The paper's validation figures — Figs. 6 and 7
+
+Decided with Iván on 2026-08-31 (his answers in `manuscript-spread/ijwf/designing.txt`): the four
+figures `validation_analysis.R` writes stay as analysis output in `files/`, and the paper carries
+two figures instead. **`vfi`/`tfi` are dropped from the paper**, and of the shape metrics only
+compactness and the deviation from the wind axis survive — elongation and convex-hull fill are
+largely redundant with compactness, and elongation along the fixed 293° adds nothing.
+
+**Fig. 6 — `spread/simulate_focal_metrics.R` → `spread/figure_dharma_metrics.R` →
+`fig6_dharma_metrics.{png,pdf}`.** DHARMa uniform Q-Q of eight metrics, for the **57 focal fires
+only**, under fitted and under simulated random effects. Eight panels in a 3 × 3 grid, filled by
+row — all vegetation / wet / subalpine, dry / shrubland / grassland, compactness / wind-axis
+deviation — with the legend in the ninth cell (`legend.position = "inside"`; `facet_wrap` cannot
+put a guide in an empty panel any other way).
+
+Why focal fires only, for the paper's text: burned area per vegetation class is comparable
+between observed and simulated only from the *same* ignition point, because what is available to
+burn around that point dominates the answer — and the shape metrics are asked the same per-fire
+way, so they need the ignition point too. The 184 fires without a mapped ignition point carry the
+record-wide size/shape validation instead (Fig. 7).
+
+**The simulations behind it are their own script.** `metrics_table.rds`, written by the
+*Assessing model fit* block of `hierarchical_fit.R`, stores only size and size by vegetation
+class — shape needs each simulated fire's burned cells, which it never kept. So
+`spread/simulate_focal_metrics.R` re-runs the whole thing, 57 fires × 2000 × 2 modes, and reduces
+each simulated fire to overlap, size, size by vegetation class, compactness, orientation and the
+wind-axis deviation, into `files/hierarchical_model/focal_metrics.rds`. 25 minutes on 14 cores,
+`2015_50` alone 4.7 of them. Every panel of the figure then comes from one simulation set.
+
+Three checks the script prints, all of which passed on the 2026-09-01 run:
+
+- the observed sizes it measures are **identical** to `size_obs.rds` — which also proves the two
+  share a fire order, worth knowing because `size_obs` has no row names and everything downstream
+  indexes it positionally;
+- the medians over fires reproduce the old table — overlap 0.527 against 0.526, size quotient
+  1.086 against 1.088 (fitted) and 1.510 against 1.505 (simulated). The draws differ, the
+  distributions do not;
+- 7.2 % of simulated fires burn fewer than 3 cells and so have no principal axis (33 % in the
+  worst fire). Those draws are **resampled from the same fire's valid ones**, which keeps the
+  matrix rectangular for `createDHARMa` and makes the two shape panels ask the conditional
+  question they should: *given the model produced a fire at all*, is the observed shape typical?
+
+**The wind axis is per fire**, not the fixed 293° of the record-wide validation: these 57 fires
+each have their own wind direction, so the deviation is measured against the circular mean of
+`wdir` over the **observed** fire's burned cells — one fixed axis per fire, scoring the observed
+fire and all 4000 of its simulations alike.
+
+**`drop_unavailable` is now `TRUE`, and the rule is `< 30` available cells, not `== 0`.** A
+vegetation class with a handful of pixels in the landscape is a structural zero in all but name:
+observed 0, nearly every simulation 0, and a residual that is pure tie randomization. At 30 cells
+(2.7 ha) this drops 8 fires from the wet-forest panel, 11 from subalpine, 8 from dry, 2 from
+grassland and none from shrubland.
+
+**Results — and these supersede the numbers this file used to carry.** The old ones (fitted mean
+0.28 overall, grassland worst at 0.29 / *D* = 0.43, dry forest best at 0.54 / *D* = 0.19) were
+written before the panel-label shift of 2026-08-31 was fixed and were never updated: they are
+this table's values displaced by one vegetation class. Recomputed, and confirmed against the old
+`metrics_table.rds` (which gives 0.374 for the same quantity, against this run's 0.373):
+
+| panel | *n* | mean residual, fitted | KS *D* | mean residual, simulated | KS *D* |
+|---|---|---|---|---|---|
+| All vegetation types | 57 | 0.373 | 0.252 | 0.686 | 0.341 |
+| Wet forest | 49 | 0.446 | 0.285 | 0.649 | 0.305 |
+| Subalpine forest | 46 | 0.534 | 0.221 | 0.709 | 0.386 |
+| Dry forest | 49 | 0.485 | 0.263 | 0.652 | 0.275 |
+| Shrubland | 57 | 0.291 | 0.420 | 0.649 | 0.275 |
+| Grassland | 55 | 0.231 | 0.523 | 0.596 | 0.215 |
+| Compactness | 57 | 0.429 | 0.348 | 0.163 | 0.518 |
+| Deviation from wind axis | 57 | 0.325 | 0.428 | 0.245 | 0.465 |
+
+Every panel rejects uniformity at *p* < 0.05 in both modes. Read in words:
+
+- **Size** behaves as the thesis version did. Under **fitted** random effects the observed areas
+  sit low in their own predictive distributions (0.373 overall, 65 % of fires below the simulated
+  median) — the model burns too much — while **simulated** ones overshoot the other way (0.686,
+  only 19 % below). **Grassland** is the worst class under fitted parameters (0.231, *D* = 0.523)
+  and **subalpine forest** the best (0.534, *D* = 0.221).
+- **Shape** puts the headline result in the calibration frame. Compactness: under simulated
+  random effects the mean residual is **0.163** and **96 %** of observed fires are less compact
+  than the model's median simulation — the same "simulated fires are too round" finding as Fig. 7,
+  now per fire and from the fire's own ignition point. Wind-axis deviation: 0.245, with 90 % of
+  observed fires better aligned with their own wind than the median simulation. Under fitted
+  random effects both are much closer to calibration (0.429 and 0.325), which is the expected
+  gap between a fit diagnostic and an out-of-sample one — but even there the fires are
+  systematically less compact and better aligned than the model makes them.
+
+**Fig. 7 — `spread/figure_validation_metrics.R` → `fig7_validation.{png,pdf}`.** One figure in
+two parts, stacked by patchwork with the letters written by `ggtitle()` on each part's first
+panel (heights 1 : 2.6). Part A is the size density + Q-Q. Part B is a 3 × 2 grid:
+one metric per row (size, compactness, deviation from the wind axis), conditioned on FWI in the
+left column and on fire size in the right. The size row has no size-vs-size panel, so the
+top-right cell holds the two shared legends — line colour (Simulated / Observed) and the
+`N° of simulated fires` colourbar. **Every size axis in the figure is drawn on a log10 scale and
+labelled in hectares** — ticks read 10 / 100 / 1,000, never 1 / 2 / 3. Part A gets there by
+plotting raw areas under `area_scale()` and putting its Q-Q quantiles back with `10^`, so the
+plot is unchanged and only its ticks are; Part A also has to repeat `metric_panel()`'s type sizes
+by hand (`part_theme()`), or it comes out in theme_bw's larger default and the two halves stop
+looking like one figure. Axis titles appear once per column (bottom) and once per row (left),
+since every column shares an x scale and every row a y scale.
+
+The vertical striping in the FWI panels is deliberate: `fwi_z` is resampled from only 233 distinct
+observed values, and jittering would hide a real property of the simulated set.
 
 ### What each test can and cannot diagnose
 

@@ -1,11 +1,13 @@
-Fig. 1: Study area. map similar to chapter 3 in thesis, showing the fires,
-        separating by colour the known and unknown ignition point ids.
-        (no plotting the points, just different color among those 2
-        classes.).
-        Also the topographi and vegetation layers.
-        I did the figure for that paper/chapter in qgis, but try to do
-        this one in R.
-
+Fig. 1: 
+  Study area map. Remake the one in 
+  /home/ivan/Insync/patagonian_fires/data_analyses/figures/01) study area 6.jpeg,
+  which is in the paper, but show fires with ignition point known on a different
+  color from the rest. So only panel A has to change. The figure was made in QGIS,
+  but remake it in R.   
+  Probably all the necessary files are in 
+  home/Ivan/Insync/patagonian_fires_paper/study area map/
+  But do not get confused by the figures in there, which are older versions.
+        
 What we will show in results (mostly figures).
 
 **Core results**
@@ -16,154 +18,14 @@ Fig. 3: Spread parameters as a function of FWI (Fig. 4.8 in thesis).
 
 Fig. 4: Vegetation effect (Fig. 4.9 in thesis).
 
-Fig. 5: Maps for a few focal landscapes showing the observed fire and 
-        the burn probability from 1000 simulations. 
-        Simulations always use the full posterior; each simulated fire uses
-        a single posterior draw. Uncertainty is considered for both simulated and
-        fitted random effects.
-        Multipanel figure. It must show 4 fires, both simulated with fitted
-        and simulated random effects, but always on the same data and ignition
-        point.
-        I have done maps like this for presentations, maybe for the thesis or
-        for RAE. Search code like this to copy the aesthetics.
-        We must choose 4 fires to show:
-            Small and large observed fire, where the model
-            either underestimates or overestimates burned area.
-            Ideally, also show a gradient of overlap, from the best to the worst,
-            judged by the overlap from fitted ranef.
-            I used the Figure C5 in thesis to choose, besides choosing based on 
-            the posterior-median overlap (or mean) with fitted ranef.
-
-        --- PROPOSED FOUR (Claude, 2026-08-28) --------------------------------
-        Computed from files/hierarchical_model/metrics_table.rds, rows fit_*
-        (2000 sims per fire with the FITTED random effect) and size_obs.rds.
-        q = simulated size / observed size, so q > 1 = the model overestimates.
-        Script: scratchpad pick_fires.R (re-runnable, reads only those two files).
-
-          fire_id      obs ha   overlap med/mean   q med/mean   q 95%      P(q>1)
-          1999_25j       724.0     0.838 / 0.832   1.04 / 1.04  0.97-1.23   0.85
-          2015_50     28,567.3     0.636 / 0.637   1.11 / 1.11  1.09-1.13   1.00
-          2004_23        320.1     0.350 / 0.349   0.44 / 0.53  0.36-1.66   0.07
-          2002_34         19.9     0.266 / 0.237   2.67 / 2.49  0.01-3.20   0.95
-
-        Why these four:
-          - overlap runs 0.84 / 0.64 / 0.35 / 0.27, a clean monotone gradient
-            from the best fit in the set to nearly the worst (the 57-fire median
-            is 0.535, the worst is 1999_27j_N at 0.149);
-          - sizes run 20 ha to 28,567 ha, i.e. the smallest class up to the
-            largest fire in the whole record;
-          - bias covers both directions and both magnitudes: unbiased (1.04),
-            mild overestimate (1.11), strong UNDERestimate (0.44, the strongest
-            in the set) and strong OVERestimate (2.67, the strongest);
-          - none of them is a split fire, so no panel needs a caption caveat.
-
-        The panels tell a story in that order: the model can nail a fire
-        (1999_25j), it holds up on the largest one (2015_50), and it fails in
-        both directions on mid and small fires (2004_23, 2002_34).
-
-        Swaps, if a different balance is wanted:
-          - want a LARGE underestimate: 2021_2146405150_E (8,342 ha, ov 0.499,
-            q 0.74) or 1999_2140469994_r (26,976 ha, ov 0.390, q 0.75)
-          - want a LARGE overestimate with bad overlap: 2021_865 (9,662 ha,
-            ov 0.240, q 1.61) or 2015_16 (982 ha, ov 0.340, q 1.89)
-          - want a small fire the model gets RIGHT: CoCampana (18.5 ha,
-            ov 0.750, q 1.02)
-          - the true worst overlap is 1999_27j_N (518 ha, ov 0.149) but its q is
-            1.02 with a 0.00-3.80 interval, so it reads as noise, not as bias.
-
-        Context for the caption: over the 57 focal fires the median fitted-ranef
-        overlap is 0.535 and the median size quotient is 1.04, with 36 of 57
-        fires overestimated.
-
-        Note the sims above are 2000 per fire, not the 1000 written above; the
-        figure can use either, the summaries would barely move.
-
-        --- DONE (2026-08-28) -------------------------------------------------
-        spread/figure_burn_probability.R -> figures/fig5_burn_probability.{png,pdf}
-        1000 sims per fire per mode, the four fires above, ~2 min on 8 cores.
-        Per-cell counts cached in files/hierarchical_model/burn_probability_maps.rds,
-        so the figure restyles with do_simulate <- FALSE.
-        Aesthetics copied from the defence maps (plots_defensa*.R in the old repo).
-        Note for the caption: the square outer edge of the burned region in some
-        panels is the `steps` budget, not a landscape border.
-        ----------------------------------------------------------------------
-
+Fig. 5: Burn probability maps for a few focal fires. 
+        
 **Validation results**
 
-(let's discuss about it before implementing)
+Fig. 6: Focal fires DHARMa: burned by veg and 2 shape metrics.
 
-        --- ANALYSIS RUN, FIGURES NOT YET CHOSEN (Claude, 2026-08-28) ---------
-        spread/validation_analysis.R has produced four candidate panels in
-        files/spread_validation/figures/ (not in manuscript figures/, because
-        this section still says "discuss before implementing"):
-
-          size_distribution.png   density + Q-Q in log10(area)
-          shape_by_size.png       elongation, elongation along 293, compactness,
-                                  hull fill, deviation from the wind axis, all
-                                  vs log10(area)
-          signature_by_size.png   b_vfi, b_tfi vs log10(area)
-          metrics_by_fwi.png      all seven metrics vs standardized FWI
-
-        Style is the designed one: simulated as hex-binned 2-D density,
-        observed as red points, GAM smoother on each.
-
-        Suggested pairing when we discuss it: Fig. 6 = shape + signature
-        conditioned on size (the headline: observed fires are elongated and
-        wind-aligned at every size class, simulated ones are not); Fig. 7 =
-        the FWI-conditioned version. The size Q-Q is a supplementary figure at
-        best — the simulated set is truncated at 10 ha and the observed record
-        is not a draw from the same process.
-
-        One cosmetic thing to decide for the FWI figure: the hex bins are
-        visibly striped, because FWI is resampled from only 233 distinct
-        observed values. Jittering fwi_z would hide it; leaving it is honest.
-        
-        ---- Iván's answers for Claude, 2026-08-31 ----
-        
-        We'll ignore vfi and tfi.
-        We'll use probably two different figures here:
-        
-        1) DHARMa residuals of burned area by veg class for the 57 focal 
-           fires, using fitted and simulated ranef.
-           This figure lives in the olde repo:
-           /home/ivan/Insync/Fire spread modelling/fire_spread/spread/figures/dharma_size_fit_sim.png
-           Find the code that made it there and reproduce it.
-           The text will have to explain that we validate this only on focal fires
-           (known ig point) because the burned area by veg is only comparable
-           from the same ignition point, as the available veg matters a lot.
-        
-        2) Simplified figure from what you already did in this turn.
-        
-        Two parts, both multi-panel.
-        A. (above) size_distribution.png, is perfect
-        B. One metric by row, conditioning on FWI (left) and on log10-size (right).
-           Metrics will be:
-        	B1: size, log10. Always with the axis labels in the not-log scale
-        	    (ggplot has a log10 axis function to get this). This applies
-        	    to size in y and also in x. This panel has only left side, as
-        	    size ~ FWI, not size ~ size in the right, obviously.
-        	B2: Compactness.
-        	B3: Deviation from wind.
-	    
-	    Choose of metrics in B: I noticed elongation, compactness, convex_hull
-	    are quite redundant. Elongation along 293 is pointless.
-	    Perhaps compactness is nicer to show for it shows more patterns.
-	    And its computation is probably easier to explain.
-	    
-	    FWI and size titles in the x axis must only appear in the bottom panel,
-	    not in every one. Same for the title of metrics in the y axis: only show 
-	    at the leftmost panel.
-	    
-	    Add a shared reference for the line color (simulated vs. observed),
-	    and a title for the colorbar: N° of simulated fires.
-	    These legends might live in the top right empty space left by the 
-	    size ~ size missing panel.
-	    
-	About your cosmetic comment above, it's fine, keep it like it is now
-	and remove the comment.
-	
-	
-        ----------------------------------------------------------------------
+Fig. 7: Comparing simulations in the whole landscape against the
+        wide (233) fire database.
 
 ---
 

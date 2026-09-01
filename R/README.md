@@ -12,3 +12,4 @@ Planned files (migrated from the old repo):
 | `fortnight_functions.R` | 14-day fortnight indexing (`date2fort()`), origin fixed at 1996 for FWI compatibility |
 | `mcmc_functions_smc.R` | Core MCMC utilities for the hierarchical spread model (SMC variant) |
 | `spread_validation_functions.R` | Shape metrics and the donor-centred conditional-logit spatial signature, applied identically to observed and simulated fires |
+| `focal_simulation_functions.R` | Turns posterior draws into simulator parameters for re-simulating a focal fire — fitted vs newly drawn random effects, and the `steps` scale trap. Shared by the Fig. 5 and Fig. 6 runs |

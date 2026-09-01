@@ -100,6 +100,16 @@ The script excludes the 57 by an explicit `fire_id` list taken from the landscap
 not from `ig_points`: `ig_points.distinct("Name")` has only 53 entries, because some fires were
 split in two after the ignition points were drawn.
 
+All **185** export tasks succeeded (the 184 fires plus a `2015_41` focal smoke test, kept in
+`data/signature_landscapes/smoke_test/` to diff against `data/focal_fires/raw_gee/` if the two
+vintages are ever doubted again — it is not an input).
+
+> ⚠️ **Before re-submitting a batch:** the Python driver's `--status` collapses tasks by
+> description and reports the best state per name, so a re-submission of an already-finished
+> batch looks like "185 SUCCEEDED" while the duplicates sit in the queue. On 2026-08-28 a second
+> full wave was launched by mistake and had to be cancelled by hand. Check
+> `ee.data.listOperations()` for live states first.
+
 Elevation, slope and aspect are still *exported*, because `tfi` is computed from them, but no
 elevation layer is kept — nothing downstream reads it. That is what
 `build_landscape(wind = NULL)` does: it emits the reduced layer set `land_names_reduced` =
@@ -162,6 +172,29 @@ to GEE: the rectangles are derived there from the `study_area` asset.
 tiles, read back from the exported rasters' own extents, so it coincides with them exactly. It is
 not an input to GEE. `landscapes_simulation.R` also prints how much of the study area the tiles
 cover, which cropping to the assets can leave below 100%.
+
+**What the four tiles came out as** (built 2026-08-20, `landscapes_simulation.R` run end to end
+over the four exports: rectangles → `study_area_tiles.shp`, WindNinja → `wind/`, landscapes →
+`landscapes/study_area_tile_{1..4}.rds`, 303–443 MB on disk and ~0.7–1.0 GB in memory each):
+
+| tile | size | Mpix | burnable | NA-masked |
+|------|------|------|----------|-----------|
+| 1 | 126 × 158 km | 22.2 | 90.5 % | 0.27 % |
+| 2 | 106 × 170 km | 20.1 | 81.6 % | 0.38 % |
+| 3 | 122 × 142 km | 19.2 | 77.1 % | 0.92 % |
+| 4 | 112 × 132 km | 16.4 | 84.5 % | 0.47 % |
+
+They cover **99.1 %** of the study area, and no tile came near the 2 % NA warning threshold. The
+per-tile circular mean of the mapped fires' wind direction (291, 292, 288, 291°) confirms the
+single fixed 293° all four wind fields were built with.
+
+**The tiles are deliberately broader than the study area** — 70,158 km² of tile against
+29,158 km² of study area, roughly 2–3×. Nothing is clipped or NA'd at the study-area boundary:
+the GEE script uses `study_area` only as a map layer for drawing the rectangles by eye, and the
+burnable fraction outside the boundary matches the fraction inside (90.4 vs 90.6, 82.3 vs 81.0,
+76.5 vs 77.7, 86.1 vs 81.0 %). Simulated fires can therefore spread past the study area and are
+stopped only by a tile's own border. The `terra::intersect()` line in `landscapes_simulation.R`
+is a one-way coverage *check* (is any of the study area untiled?), not a crop.
 
 ### What a tile `.rds` contains
 

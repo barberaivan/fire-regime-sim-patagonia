@@ -96,6 +96,26 @@ build from source and put `WindNinja_cli` on `PATH`. See `docs/migration.md` TOD
 full build recipe (flags, dependency gotchas, the release tag to use) and set
 `config$windninja_dir` in `R/config.R` to a scratch directory on your machine.
 
+**Already done on Iván's machine:** built from source and installed at
+`~/.local/bin/WindNinja_cli` (on `PATH`), source tree at `~/.local/src/windninja`. Two gotchas
+that cost time the first time and will cost it again on a new machine:
+
+- the CMake flag is `NINJA_QTGUI`, **not** `NINJA_GUI`;
+- `momentum_flag` is incompatible with a NINJAFOAM-off build — leave it out;
+- never point a test run at a real elevation file in the store (WindNinja writes its outputs
+  beside the input).
+
+### Google Earth Engine assets
+
+The GEE scripts (`~/dev/fire_spread-gee/`, see `CLAUDE.md`) read the assets from the cloud
+project **`projects/ivanbarbera-001/assets/`**; the legacy `users/IvanBarbera/Fire_spread/`
+paths still resolve and are still what the 57 focal-fire landscapes were exported from. The
+migrated NDVI and vegetation rasters were verified pixel-identical to the legacy ones at 30 m
+with unchanged band order, so the two vintages are interchangeable — with one exception:
+`projects/ivanbarbera-001/assets/patagonian_fires` has only 238 features, so the fire polygons
+are still read from the legacy `patagonian_fires_spread` (241 features). Detail in
+`docs/spread.md` → *Reduced landscapes*.
+
 ---
 
 ## ⚠️ Before sharing the store with anyone
@@ -123,4 +143,5 @@ TODO register, especially:
   superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
 
 See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.
-**Picking this back up after a break? See `docs/roadmap.md`** for current state + next steps.
+**Picking this back up after a break? See `docs/roadmap.md`** — it lists what is still open. What
+is already done is written up in the `docs/*.md` for the module it belongs to.

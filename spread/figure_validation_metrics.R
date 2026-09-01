@@ -4,7 +4,7 @@
 # against the 241 observed ones from spread/validation_observed.R. This is the
 # validation that does NOT need a mapped ignition point, so it uses the whole
 # record (57 focal + 184 reduced landscapes), unlike the burned-area-by-
-# vegetation calibration of spread/figure_dharma_size.R.
+# vegetation calibration of spread/figure_dharma_metrics.R.
 #
 #   Part A  the regional size distribution: a density over log10(area) and the
 #           matching Q-Q. Marginal, not conditioned — and read with the
@@ -163,28 +163,46 @@ metric_panel <- function(yvar, xvar, ylab = NULL, xlab = NULL,
 
 # Part A — the size distribution ------------------------------------------
 
+# Part A is built by hand rather than through `metric_panel()`, so it has to
+# repeat that function's type sizes — otherwise A comes out in theme_bw's
+# default (bigger) type and the two halves do not look like one figure.
+part_theme <- function() {
+  theme(panel.grid = element_blank(),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        plot.title = element_text(size = 10),
+        plot.margin = margin(1.5, 1.5, 1.5, 1.5, unit = "mm"))
+}
+
+# Sizes are drawn on a log10 axis and labelled in hectares, exactly as in Part
+# B — the quantiles are still computed in log10 and put back with 10^, so the
+# Q-Q is the same plot it always was, only its ticks read 100 / 1,000 / 10,000
+# instead of 2 / 3 / 4.
 lo <- log10(obs_shp$area_ha)
 ls <- log10(sim$area_ha)
 pp <- ppoints(length(lo))
-qq <- data.frame(obs = quantile(lo, pp, type = 8),
-                 sim = quantile(ls, pp, type = 8))
+qq <- data.frame(obs = 10^quantile(lo, pp, type = 8),
+                 sim = 10^quantile(ls, pp, type = 8))
 
-p_dens <- ggplot(mapping = aes(log_area, after_stat(density))) +
-  geom_histogram(data = data.frame(log_area = ls), bins = 60,
+p_dens <- ggplot(mapping = aes(area_ha, after_stat(density))) +
+  geom_histogram(data = data.frame(area_ha = sim$area_ha), bins = 60,
                  fill = "grey70", colour = NA) +
   # Default (nrd0) bandwidth: the SJ selector over 241 fires resolves bumps
   # that are sampling noise at this n.
-  geom_density(data = data.frame(log_area = lo), colour = obs_col,
+  geom_density(data = data.frame(area_ha = obs_shp$area_ha), colour = obs_col,
                linewidth = 0.7) +
-  labs(x = expression(paste(log[10], " area (ha)")), y = "Density") +
-  theme(panel.grid = element_blank())
+  area_scale("x") +
+  labs(x = lab_size, y = "Density") +
+  ggtitle("(A)") +
+  part_theme()
 
 p_qq <- ggplot(qq, aes(sim, obs)) +
   geom_abline(slope = 1, intercept = 0, colour = "grey60", linewidth = 0.4) +
   geom_point(size = 0.9, colour = obs_col) +
-  labs(x = expression(paste("Simulated ", log[10], " area (ha)")),
-       y = expression(paste("Observed ", log[10], " area (ha)"))) +
-  theme(panel.grid = element_blank())
+  area_scale("x") + area_scale("y") +
+  labs(x = paste("Simulated", tolower(lab_size)),
+       y = paste("Observed", tolower(lab_size))) +
+  part_theme()
 
 fig_a <- p_dens + p_qq
 
@@ -192,7 +210,8 @@ fig_a <- p_dens + p_qq
 # Part B — the conditioned metrics ----------------------------------------
 
 # Row 1 has no size ~ size panel; the guides go in the gap it leaves.
-p_size_fwi <- metric_panel("area_ha", "fwi_z", ylab = lab_size, legend = TRUE)
+p_size_fwi <- metric_panel("area_ha", "fwi_z", ylab = lab_size, legend = TRUE) +
+  ggtitle("(B)") + theme(plot.title = element_text(size = 10))
 p_comp_fwi <- metric_panel("compactness", "fwi_z", ylab = lab_compact)
 p_comp_size <- metric_panel("compactness", "area_ha")
 p_dev_fwi <- metric_panel("axis_dev", "fwi_z", ylab = lab_dev, xlab = lab_fwi)
@@ -223,5 +242,9 @@ save_both <- function(p, name, width, height) {
   }
 }
 
-save_both(fig_a, "fig7a_size_distribution", 18, 8)
-save_both(fig_b, "fig7b_metrics_conditioned", 17, 19)
+# One figure, not two: Part A on top, Part B under it, the letters written with
+# ggtitle on each part's first panel. Heights 1:2.6 keep Part B's six panels
+# roughly square while Part A stays a strip.
+fig <- fig_a / fig_b + plot_layout(heights = c(1, 2.6))
+
+save_both(fig, "fig7_validation", 17, 25)

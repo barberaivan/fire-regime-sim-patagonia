@@ -85,6 +85,15 @@ R/fortnight_functions.R
 R/mcmc_functions_smc.R
     ↑ sourced by: spread/hierarchical_fit.R
 
+R/spread_validation_functions.R
+    ↑ sourced by: spread/validation_{simulate,observed,analysis}.R,
+                  spread/simulate_focal_metrics.R, spread/figure_validation_metrics.R
+
+R/focal_simulation_functions.R
+    ↑ sourced by: spread/simulate_focal_metrics.R, spread/figure_burn_probability.R
+    (posterior draws -> simulator parameters for one focal fire; the `steps`
+     natural-vs-logit scale trap lives here)
+
 ../FireSpread  (library + R spread wrappers)
     ↑ used by: data_prep/landscapes_{preparation,simulation}.R, spread/stage1_smc.R,
                spread/hierarchical_fit.R, fire_regime/{simulate,plots}.R

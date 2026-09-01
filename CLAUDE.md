@@ -45,7 +45,7 @@ Two tiers: the short per-folder `README.md` (orientation) and the deep `docs/*.m
 
 | Doc | Covers |
 |-----|--------|
-| `docs/roadmap.md` | **Coming back after a break? Start here.** Living doc: current state + next steps, kept short and edited in place |
+| `docs/roadmap.md` | **Coming back after a break? Start here.** Living doc: **open tasks only** — what is still to do, kept short and edited in place. Nothing finished lives here |
 | `docs/architecture.md` | Module map, the **dependency tree**, data flow, canonical pipeline, migration status & tech debt |
 | `docs/data-prep.md` | flammability indices, FWI processing, landscape arrays |
 | `docs/spread.md` | spread model — ABC-SMC stage 1 + hierarchical fit (paper 1) |
@@ -55,6 +55,25 @@ Two tiers: the short per-folder `README.md` (orientation) and the deep `docs/*.m
 
 `docs/` carries the architectural/computational detail; the papers' **supplementary** carry the
 model/statistical detail. Keep them in sync, not duplicated.
+
+### Roadmap discipline
+
+**The roadmap is for open tasks, not for finished ones.** When a task from `docs/roadmap.md` is
+finished, in the same session:
+
+1. **Write the procedure into the corresponding `docs/*.md`** — briefly, and as a *workflow*: what
+   is downloaded or exported first, which script is run next, what it needs and what it writes,
+   how long it takes, and the traps. The test is that a future Iván reads the doc and can say
+   "right — first I export this from GEE, then I run that". Results and numbers worth keeping go
+   there too.
+2. **Delete the entry from the roadmap.** Do not leave a "DONE ✅" block behind; git log and
+   `docs/migration.md` are the history. What may stay is a one-line pointer to where it was
+   written up.
+3. **Ask Iván which doc it belongs in** whenever it is not obvious (e.g. a fact that is half
+   method, half machine setup). Do not silently pick.
+
+The reason: the roadmap grew to 400 lines of finished work and stopped being usable as a roadmap.
+Keep it short enough to read in one screenful.
 
 ## Prior work — PhD thesis
 
