@@ -691,12 +691,26 @@ to the pole).
 differing only in where the panel A and B keys sit — see `docs/roadmap.md`. Once Iván picks one,
 drop the other from `variants` and the suffix goes away.
 
-**Base layers live outside the store.** The elevation mosaic (240 MB), the vegetation raster, the
-lakes and the country/province shapefiles are still in the Insync folders the QGIS project used,
-reached through two new `R/config.R` entries, `study_area_map_dir` and `vegetation_lara_dir`.
-Nothing else in the pipeline reads them. Runtime is about 90 s, nearly all of it those two
-rasters; `maxcell_plot` caps what is actually rendered at 3 × 10⁶ cells, since the elevation
-mosaic is 121 million cells at 30 m and each panel is 3.5 cm wide.
+**Base layers live in the store**, in `data/study_area_figure_layers/` — moved there on
+2026-09-01 from the two Insync folders the QGIS project used, so the figure rebuilds on any
+machine that has run `./setup.sh`. `R/config.R` keeps one entry, `study_area_map_dir`, pointing
+at that folder (`vegetation_lara_dir` is gone), and the folder's own `README.txt` records where
+each file came from:
+
+| file in the store | source |
+|---|---|
+| `elevation_study_area.tif` (240 MB) | `study area map/elevation_study_area_clipped.tif` |
+| `lakes.*` | `Mapa vegetación WWF - Lara et al. 1999/lakes in study area.*` |
+| `provinces_ign.*`, `countries_ign.*` | `study area map/Mapa_Argentina_Bicontinental_QGIS/datos_shp/{Provincias,referencias}.*` |
+| `south_america.*` | `study area map/South_America/South_America.*` |
+| `vegetation_lara.tif` | `Mapa vegetación .../vegetation_valdivian_img.tif` (only for `veg_source <- "lara"`) |
+| `vegetation_merged_120m.tif` | moved in from `data/vegetation_merged/`, which is gone |
+
+Only the IGN province file was copied, not the FAO GAUL one that sat beside it — see the inset
+note above. Nothing else in the pipeline reads this folder. Runtime is about 90 s, nearly all of
+it the elevation and vegetation rasters; `maxcell_plot` caps what is actually rendered at
+3 × 10⁶ cells, since the elevation mosaic is 121 million cells at 30 m and each panel is 3.5 cm
+wide.
 
 **Panel C draws the merged vegetation map** (`veg_source <- "merged"`, the default since
 2026-09-01) — the CIEFAP + Lara99 merge the spread model actually runs on, not the WWF / Lara99
@@ -734,6 +748,48 @@ resamples, and a class that is the average of two others does not exist — the 
 GEE script's `reduceResolution`/`mode` guards against, one step further downstream.
 
 Departures from the QGIS original, and the open questions on it, are listed in `docs/roadmap.md`.
+
+### The manuscript — how it is built, and what is written
+
+`manuscript-spread/ijwf/` holds two documents now, both built by its `Makefile`:
+
+| target | output | class |
+|---|---|---|
+| `make` | `build/spread-paper.pdf` **and** `build/supplementary.pdf` | — |
+| `make supp` | `build/supplementary.pdf` only | plain `article` |
+| `make words` | the 6000-word budget for the paper only | — |
+
+**The supplementary is a separate document on purpose.** IJWF numbers supplementary items
+separately (Fig. S1, Eqn S1) and wants them submitted as separate file(s), so
+`supplementary.tex` is its own `article`-class document sharing `references.bib` and `ijwf.bst`
+with the paper. The two share no `.aux`, so every cross-reference into the paper is written by
+hand ("Eqn 2 of the main text") — a `\ref` cannot reach across. Its content is the thesis's
+chapter 4 appendix translated and renotated to the manuscript's symbols.
+
+**The CSIRO class is two-column, and that bites twice.**
+
+1. `\textwidth` is 524 pt but a column is only 252 pt, so every multi-panel figure has to be a
+   **starred float** (`figure*`/`table*`, which can only be placed `[tp]`) sized against
+   `\textwidth`. A `figure` at `width=\textwidth` overflows its column by 271 pt in silence.
+2. **Tables must use the class's `\tbl{caption\label{}}{body}{notes}` macro**, not a bare
+   `\caption` + `tabular`. The class sets a table caption at `\tablewidth`, which only `\tbl`
+   ever assigns — with a plain `\caption` the caption renders as a one-word-wide vertical strip
+   and nothing warns. The body inside `\tbl` is a `tabular*` at `\textwidth` with
+   `@{\extracolsep{\fill}}`; booktabs rules work fine inside it.
+
+**What is written, as of 2026-09-01.** Methods complete (its validation subsection rewritten
+against what was actually run); Results complete, with Figs. 1-7, their captions and two tables
+(Table 2, the DHARMa calibration; Table 3, shape by size class); Discussion is a deliberate
+partial draft — the validation paragraphs only, with a comment block naming what is missing;
+supplementary complete. **Introduction, Conclusion, abstract, keywords and online summary are
+still stubs.** `make words` is at ~5690 of 6000 with those stubs in place, so the Methods cut
+Iván flagged is now unavoidable rather than optional.
+
+**The conditional-logistic spatial signature is not in the paper.** `vfi`/`tfi` were dropped
+from the figures on 2026-08-31, so the Methods paragraph describing `edge_clogit()` was removed
+with them and no result is reported. The analysis itself stays in the repo and in this file —
+`observed_signature.rds` and `validation_summary.rds$signature` are still written and still the
+place the `tfi` sign mismatch is recorded.
 
 ### What each test can and cannot diagnose
 

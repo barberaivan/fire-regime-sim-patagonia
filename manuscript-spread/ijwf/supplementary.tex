@@ -12,6 +12,15 @@
 %  NOT the CSIRO class: that class is built for a full article (title block,
 %  running heads, two columns, author statements) and none of it belongs here.
 %
+%  CROSS-REFERENCES INTO THE PAPER ARE HAND-MAINTAINED: the two documents share
+%  no .aux, so "Eqn 5 of the main text" is a literal string, not a \ref. As of
+%  2026-09-01 the paper's numbered equations are
+%    1 flammability indices   2 the data model      3 the hierarchical mean
+%    4 the parameter bounds   5 the covariance      6 the spatial overlap
+%  and its figures are 1 study area, 2 spread curves, 3 parameters vs FWI,
+%  4 vegetation effect, 5 burn probability, 6 DHARMa, 7 the regional validation.
+%  Re-check these after any edit that adds or removes a numbered equation.
+%
 %  Contents follow the thesis's chapter 4 appendix (Barberá 2025), translated
 %  and renotated to the manuscript's symbols: a_v/b_v/c_v for the flammability
 %  coefficients (the thesis's alpha/beta/omega, which collided with the spread
@@ -189,7 +198,7 @@ pair of parameters, computed on the scale the simulator uses rather than on the
 unconstrained scale the multivariate normal is defined on, by simulating a full
 set of fires from each posterior draw and back-transforming. Two distributions
 are shown per pair. The one conditional on FWI fixes FWI at the mean of the
-spread data and so represents the posterior of $\boldsymbol{\Omega}$ (Eqn~4 of
+spread data and so represents the posterior of $\boldsymbol{\Omega}$ (Eqn~5 of
 the main text); the marginal one lets each fire take its own FWI, and therefore
 also carries any association induced by two parameters responding to fire
 weather in the same, or in the opposite, direction. Where the two coincide, FWI
@@ -202,7 +211,7 @@ explains none of the association between that pair.
 each pair of spread parameters, marginal to or conditional on FWI. Coefficients
 were computed by simulating parameter vectors from the fitted multivariate
 distribution. The distributions conditional on FWI fix it at the mean of the
-spread data and represent the posterior of $\boldsymbol{\Omega}$ (Eqn~4 of the
+spread data and represent the posterior of $\boldsymbol{\Omega}$ (Eqn~5 of the
 main text); the marginal ones include the effect of FWI, so that parameters
 affected by it in a similar (or opposite) way show a marginal correlation of
 larger (or smaller) magnitude than the conditional one.}
@@ -235,7 +244,7 @@ in each mode.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.5\textwidth]{figS4_overlap}
-\caption{Spatial overlap (Eqn~5 of the main text) between simulated and observed
+\caption{Spatial overlap (Eqn~6 of the main text) between simulated and observed
 fires, using the parameters fitted to each fire or new parameters simulated from
 the estimated distribution. Each point is one of the 57 fires with a known
 ignition point; points and lines are the mean and the 95\,\% credible interval
