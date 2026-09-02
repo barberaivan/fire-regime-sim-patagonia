@@ -94,7 +94,7 @@ topographic variables were standardized for fitting and their coefficients
 transformed back to the original scale afterwards. The subscript $v[i]$ is the
 vegetation type of cell $i$, numbered as in Table~1 of the main text. The
 vegetation parameters $a$, $b$ and $c$ were given hierarchical priors so that
-types with few data --- dry forest above all --- could be estimated; $b$ was
+types with few data (dry forest above all) could be estimated; $b$ was
 forced to be negative so that the effect of NDVI is unimodal, with $c_v$ the
 NDVI at which burn probability peaks.
 
@@ -141,7 +141,7 @@ of slope and wind, and their joint variation over the landscape, we sampled 500
 cells of the burnable area of Nahuel Huapi National Park, in the centre of the
 study area, from the same raster used for simulation, which carries wind speed
 and slope among other layers. To weigh uphill and downhill spread equally we
-duplicated the set of cells and set slope to $0^\circ$ in the second half --- the
+duplicated the set of cells and set slope to $0^\circ$ in the second half: the
 spread model assumes that downhill spread is like spread on flat ground
 (Eqn~2 of the main text).
 
@@ -236,8 +236,8 @@ Model fit can therefore be assessed in two ways: with the parameters
 estimated distribution. Simulated fires are expected to resemble the observed
 ones more closely in the first case. In the second we are simulating fires that
 differ from the observed ones precisely in the unobserved variables those
-parameters absorb --- wind speed, suppression, rainfall and so on --- so the
-comparison is not a test of the deterministic part of the model but a
+parameters absorb, such as wind speed, suppression and rainfall. The
+comparison is therefore not a test of the deterministic part of the model but a
 measurement of how wide that distribution is. Each fire was simulated 2000 times
 in each mode.
 
@@ -273,7 +273,7 @@ with simulated parameters is therefore not by itself a reason to reject the
 model. Indeed, despite having been estimated with limited or no information on
 atmospheric conditions and fire suppression, the model produces fires whose
 sizes are of the same order as the observed ones (Fig.~\ref{fig:quotient}B).
-Where it does fail --- fire shape --- the failure is structural, and is discussed
+Where it does fail, in fire shape, the failure is structural, and is discussed
 in the main text.
 
 \bibliographystyle{ijwf}
