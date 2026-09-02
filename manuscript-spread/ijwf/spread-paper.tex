@@ -126,9 +126,9 @@ temperature ranges from about 0 to 13\,$^\circ$C. Lakes, glaciers, unvegetated
 high-Andean ground and urban areas make up about a quarter of the area and are treated
 as non-burnable.
 
-\begin{figure}[htbp]
+\begin{figure*}[tp]
 \centering
-\includegraphics[width=0.88\textwidth]{fig1_study_area_stacked}
+\includegraphics[width=0.95\textwidth]{fig1_study_area_stacked}
 \caption{The study area, on the eastern slope of the Andes in north-western
 Patagonia, Argentina. (A) The fire record: every fire $\ge$\,10\,ha mapped
 between 1999 and 2022 \citep{barbera_patterns}, with the 57 fires whose
@@ -143,7 +143,7 @@ two meet; the dashed lines are the boundaries between the three Argentine
 provinces the study area spans, named in (C). The inset locates the study area
 in South America.}
 \label{fig:study-area}
-\end{figure}
+\end{figure*}
 
 Vegetation follows the precipitation gradient, elevation and local topography.
 Wet forests are dominated by the evergreen \textit{Nothofagus dombeyi} (Mirb.) Oerst.
@@ -257,12 +257,10 @@ forests and lowest in wet forests, and TFI decreases with elevation and increase
 north-facing slopes.
 
 %TC:ignore
-\begin{table}[htbp]
-\caption{Coefficients defining the vegetation flammability index (VFI, Eqn~\ref{eq:FI}),
-one set per vegetation type. NDVI, Normalized Difference Vegetation Index.}
-\label{tab:vfi-params}
-\centering
-\begin{tabular}{lrrr}
+\begin{table*}[tp]
+\tbl{Coefficients defining the vegetation flammability index (VFI, Eqn~\ref{eq:FI}),
+one set per vegetation type. NDVI, Normalized Difference Vegetation Index.\label{tab:vfi-params}}{%
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrr}
 \toprule
 Vegetation type & $a_v$ & $b_v$ & $c_v$ \\
 \midrule
@@ -272,8 +270,8 @@ Dry forest       & $-2.707386$ & $-3.716391$  & 0.6537689 \\
 Shrubland        & $-2.603914$ & $-4.409584$  & 0.6669274 \\
 Grassland        & $-2.625388$ & $-10.730352$ & 0.6233552 \\
 \bottomrule
-\end{tabular}
-\end{table}
+\end{tabular*}}{}
+\end{table*}
 %TC:endignore
 
 \subsubsection*{The cellular automaton}
@@ -605,7 +603,251 @@ distinctive structural claim --- that the parameters of spread shift with fire w
 
 \section{Results}
 
-Bla.
+\subsection{What drives spread probability}
+
+Spread probability responded most strongly to the two directional terms. At the mean
+FWI of the mapped fires, and holding every other predictor at its mean, spread
+probability rose from 0.06 on flat ground to 0.79 towards a neighbour 45$^\circ$ uphill,
+and from 0.01 for a neighbour directly upwind to 0.76 for one directly downwind
+(Fig.~\ref{fig:curves}). The two flammability indices moved it far less over their
+observed ranges: from 0.03 to 0.25 across VFI and from 0.04 to 0.23 across TFI. Both
+indices act mostly through their upper half, since the logistic curve is flat where
+spread probability is already low; decomposed into the raw predictors they are built
+from (Fig.~S2), the strongest single gradient is elevation, with spread probability
+falling from 0.25 at 500\,m\,a.s.l.\ to 0.08 at 1200\,m, and northness moves it
+hardly at all (0.07 to 0.09 from fully south- to fully north-facing).
+
+Fire weather shifted the curves, but not all of them and not equally. Raising the FWI
+anomaly from $-0.60$ to 2.38 --- the 2.5th and 97.5th percentiles of the mapped fires
+--- lifted downwind spread probability from 0.59 to 0.88 and nearly doubled spread
+probability on flat ground, from 0.055 to 0.100, while leaving the top of the slope
+curve unchanged (0.80 to 0.78) and the probability of spreading directly upwind
+negligible throughout (0.014 to 0.009) (Fig.~\ref{fig:curves}).
+
+\subsection{Between-fire variation and its relation to fire weather}
+
+The spread parameters varied greatly among fires, and FWI explained only part of that
+variation (Fig.~\ref{fig:params}). The number of steps $\kappa$ increased with FWI with
+complete certainty (posterior probability of a positive population slope, $P = 1.00$),
+and the wind coefficient $\beta_4$ increased too ($P = 0.92$). The other four were
+indistinguishable from flat: $P = 0.74$ for the intercept, 0.55 for TFI, 0.34 for slope
+and 0.23 for VFI. Fire weather therefore acts mainly on how far a fire runs and on how
+strongly wind steers it, and hardly at all on how the local landscape modulates spread.
+
+Across fires the parameters were correlated (Fig.~S3). The strongest association was a
+negative one between the VFI and the wind coefficients (posterior mean correlation
+$-0.45$): a fire whose spread was strongly wind-driven was one whose spread depended
+little on vegetation. The wind coefficient and the number of steps were positively
+correlated (0.25) --- windier fires ran further --- and the slope and wind coefficients
+negatively ($-0.18$), so that fires tend to be dominated by slope or by wind rather than
+by both. Conditioning on FWI left most of these unchanged; the pairs that moved were
+those involving $\kappa$ (its correlation with the intercept went from $-0.13$ to
+$-0.25$), which is the signature of fire weather acting through the number of steps.
+
+Because the logistic link is nonlinear, a coefficient that does not respond to FWI can
+still have a weather-dependent effect on the probability. At the lowest FWI, mean spread
+probability ranged from 50\,\% in wet forest through 59\,\% in subalpine forest, 65\,\%
+in grassland and 69\,\% in dry forest to 72\,\% in shrubland; at the highest FWI every
+type rose, to 71, 79, 83, 86 and 87\,\% respectively (Fig.~\ref{fig:vegeffect}B). The
+vegetation effect --- the mean absolute deviation among the five types --- fell from 6.8
+to 4.9 percentage points, with posterior probability 0.79 that it declines
+(Fig.~\ref{fig:vegeffect}A). Severe fire weather thus narrows the differences among
+vegetation types without erasing them, and it narrows them by lifting every type rather
+than by holding the flammable ones back.
+
+\subsection{Re-simulating the mapped fires}
+
+Given each fire's own fitted parameters, the simulator reproduced the mapped fires
+reasonably well: the median spatial overlap over the 57 fires was 0.53 (range
+0.15--0.83; Fig.~S4) and the median ratio of simulated to observed size was 1.09, with
+55 of 57 fires within a factor of two (Fig.~S5). Under parameters drawn afresh from the
+population distribution, both collapsed --- median overlap 0.11 (range 0.03--0.24) and
+median size ratio 1.51, with only 28 of 57 fires within a factor of two. The per-cell
+picture is the same (Fig.~\ref{fig:bp}): with fitted parameters the high-probability
+region follows the observed perimeter closely, whereas with simulated parameters
+probability spreads out around the ignition point and the perimeter is no longer traced.
+
+The quantile residuals sharpen this into a statement about calibration
+(Fig.~\ref{fig:dharma}, Table~\ref{tab:dharma}). For burned area, the observed values sat
+low in their own predictive distributions under fitted parameters (mean residual 0.373
+over all vegetation types, 65\,\% of fires below the simulated median), so the model
+burns somewhat too much; under simulated parameters it overshot much further (0.686, only
+19\,\% below). Among vegetation classes, grassland was the least calibrated under fitted
+parameters (0.231, Kolmogorov--Smirnov $D = 0.52$) and subalpine forest the best (0.534,
+$D = 0.22$).
+
+The two shape statistics behaved differently, and they are the paper's main negative
+result. Under simulated parameters the mean compactness residual was 0.163, with 96\,\%
+of observed fires less compact than the median simulation of their own fire, and the
+mean wind-axis residual was 0.245, with 90\,\% of observed fires better aligned with
+their own wind than the median simulation. Under fitted parameters both are closer to
+calibration (0.429 and 0.325), as expected of a fit diagnostic against an out-of-sample
+one, but the sign is the same: real fires are less compact and better aligned with the
+wind than the model makes them. Every panel departs from uniformity at $P < 0.05$ in
+both modes.
+
+\subsection{The regional simulation}
+
+Over the whole study area, the 64\,836 simulated fires were larger than the mapped
+record, and uniformly so rather than in one tail: the quantile--quantile relation sits
+below the 1:1 line over the entire range (Fig.~\ref{fig:validation}A), the
+Kolmogorov--Smirnov statistic is $D = 0.187$ ($P = 1.1 \times 10^{-7}$), and the offset
+is a factor of about two to three through the middle of the distribution --- median 151
+against 58\,ha, 75th percentile 904 against 321\,ha, 95th percentile 10\,143 against
+3249\,ha. The response of size to fire weather, in contrast, matched: across quartiles of
+FWI the observed median area rose from 40 to 278\,ha and the simulated median from 54 to
+398\,ha (Fig.~\ref{fig:validation}B), the same relative increase carrying the same
+offset.
+
+Shape did not match at any size (Table~\ref{tab:shape}). Simulated fires were rounder
+than observed ones in every size class --- median compactness 0.33 against 0.24 below
+100\,ha, 0.26 against 0.10 between 100 and 1000\,ha, and 0.09 against 0.03 above 1000\,ha
+--- and they were not aligned with the wind. The median deviation of a fire's principal
+axis from the regional wind axis was 31, 32 and 20$^\circ$ for observed fires in the three
+size classes, against 45$^\circ$ under random orientation, but 54, 58 and 60$^\circ$ for
+simulated ones: the observed record is wind-aligned, most strongly among the largest
+fires, whereas the simulated set is if anything oriented slightly across the wind.
+Conditioning on FWI does not change the picture (Fig.~\ref{fig:validation}B): observed
+compactness falls with FWI and simulated compactness falls in parallel, roughly 0.15
+higher throughout, and the deviation from the wind axis is flat in both, near 35$^\circ$
+observed and 50$^\circ$ simulated.
+
+%TC:ignore
+\begin{table*}[tp]
+\tbl{Calibration of the model against the 57 fires with a known ignition point
+(Fig.~\ref{fig:dharma}). For each statistic and each way of setting the spread
+parameters, the mean scaled quantile residual over fires (0.5 under perfect
+calibration), the fraction of fires whose observed value falls below the median of its
+own 2000 simulations (0.5 under perfect calibration) and the Kolmogorov--Smirnov
+statistic against the uniform distribution. $n$ is the number of fires entering the
+panel; a fire is excluded from a vegetation class if fewer than 30 cells of that class
+were available to burn in its landscape.\label{tab:dharma}}{%
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrr}
+\toprule
+& & \multicolumn{3}{c}{Fitted parameters} & \multicolumn{3}{c}{Simulated parameters} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Statistic & $n$ & Residual & Frac. below & $D$ & Residual & Frac. below & $D$ \\
+\midrule
+Burned area, all types    & 57 & 0.373 & 0.65 & 0.25 & 0.686 & 0.19 & 0.34 \\
+\quad Wet forest          & 49 & 0.446 & 0.51 & 0.29 & 0.649 & 0.27 & 0.31 \\
+\quad Subalpine forest    & 46 & 0.534 & 0.41 & 0.22 & 0.709 & 0.13 & 0.39 \\
+\quad Dry forest          & 49 & 0.485 & 0.53 & 0.26 & 0.652 & 0.27 & 0.28 \\
+\quad Shrubland           & 57 & 0.291 & 0.75 & 0.42 & 0.649 & 0.23 & 0.28 \\
+\quad Grassland           & 55 & 0.231 & 0.80 & 0.52 & 0.596 & 0.35 & 0.22 \\
+Compactness               & 57 & 0.429 & 0.56 & 0.35 & 0.163 & 0.96 & 0.52 \\
+Deviation from wind axis  & 57 & 0.325 & 0.70 & 0.43 & 0.245 & 0.90 & 0.47 \\
+\bottomrule
+\end{tabular*}}{}
+\end{table*}
+
+\begin{table*}[tp]
+\tbl{Median shape of observed and simulated fires by size class, over the whole study
+area: 241 mapped fire perimeters against 64\,836 simulated fires. Compactness is
+$4\pi \times$ area / perimeter$^2$, larger for rounder fires. Deviation from the wind axis
+is the angle between a fire's principal axis and the regional wind direction, folded into
+0--90$^\circ$; a set of randomly oriented fires would have a median of 45$^\circ$ and a
+fraction within 30$^\circ$ of the axis of 0.33.\label{tab:shape}}{%
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}llrrr}
+\toprule
+& & $<$ 100 ha & 100--1000 ha & $>$ 1000 ha \\
+\midrule
+Number of fires & observed   & 146 & 59 & 36 \\
+Compactness & observed       & 0.24 & 0.10 & 0.03 \\
+            & simulated      & 0.33 & 0.26 & 0.09 \\
+Deviation from wind axis ($^\circ$) & observed  & 31 & 32 & 20 \\
+                                    & simulated & 54 & 58 & 60 \\
+Fraction within 30$^\circ$ of the axis & observed  & 0.48 & 0.46 & 0.72 \\
+                                       & simulated & 0.30 & 0.27 & 0.26 \\
+\bottomrule
+\end{tabular*}}{}
+\end{table*}
+%TC:endignore
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=0.75\textwidth]{fig2_spread_curves}
+\caption{Spread probability as a function of each predictor, at three contrasting values
+of accumulated FWI --- the mean and the 2.5th and 97.5th percentiles of the mapped fires,
+shown on the original anomaly scale. Each curve is the average over the estimated
+distribution of parameters, obtained by simulation; lines and bands are the mean and the
+95\,\% credible interval of the posterior. VFI, vegetation flammability index; TFI,
+topographic flammability index (Eqn~\ref{eq:FI}); both are dimensionless, and higher
+values mean more flammable. Slope and wind speed are signed: positive values are uphill
+and downwind. The remaining predictors are held at their means.}
+\label{fig:curves}
+\end{figure*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=1.0\textwidth]{fig3_params_fwi}
+\caption{The six spread parameters as a function of accumulated FWI. Lines and bands are
+the mean and the 95\,\% credible interval of the population mean; points and vertical
+lines are the parameter estimated for each of the 57 fires with a known ignition point,
+as a posterior mean and 95\,\% credible interval. The percentage in each panel is the
+posterior probability that the population mean increases with FWI (0\,\% is certainty of
+a negative effect, 50\,\% complete uncertainty about the sign, 100\,\% certainty of a
+positive one). $\kappa$ is the maximum number of simulation steps
+(Eqn~\ref{eq:datamodel}).}
+\label{fig:params}
+\end{figure*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=0.58\textwidth]{fig4_vegetation_effect}
+\caption{(A) The effect of vegetation type on spread probability as a function of
+accumulated FWI, computed as the mean absolute deviation among the five types' spread
+probabilities shown in (B). (B) Spread probability by vegetation type. To make the types
+comparable, elevation is fixed at 900\,m\,a.s.l.\ and aspect at 90$^\circ$ (northness
+$= 0$), and the prediction is marginalized over the distribution of NDVI, slope and wind
+speed in the study area and over the estimated distribution of parameters. Lines and
+bands are the mean and the 95\,\% credible interval of the posterior.}
+\label{fig:vegeffect}
+\end{figure*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=0.65\textwidth]{fig5_burn_probability}
+\caption{Per-cell burn probability for four of the fires with a known ignition point,
+from 2000 simulations under the fire's own fitted parameters (A) and 2000 under
+parameters drawn afresh from the estimated distribution (B). The four fires span three
+orders of magnitude in size and a gradient of goodness of fit. The observed perimeter is
+outlined in white and the ignition point is the white dot; the base map distinguishes
+burnable from non-burnable ground. The number in each panel is the mean spatial overlap
+(Eqn~\ref{eq:overlap}) between the simulated and the observed fire over the 2000
+simulations. The blocky outer boundary of the probability surface is the limit set by the
+number of steps $\kappa$, not a landscape edge.}
+\label{fig:bp}
+\end{figure*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=0.85\textwidth]{fig6_dharma_metrics}
+\caption{Scaled quantile residuals for the 57 fires with a known ignition point, against
+the expected uniform quantiles. Each point is one fire: the position of its observed
+value within the 2000 values simulated for that same fire from that same ignition point.
+Points on the 1:1 line indicate a calibrated model, points below it that the model
+simulates too much of the quantity and points above it too little. (A--F) burned area,
+overall and within each vegetation class; (G) compactness; (H) the deviation of the
+fire's principal axis from its own wind axis. Colours distinguish the two ways of setting
+the spread parameters. Summary statistics are in Table~\ref{tab:dharma}.}
+\label{fig:dharma}
+\end{figure*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=0.68\textwidth]{fig7_validation}
+\caption{The 64\,836 fires simulated over the whole study area against the mapped record.
+(A) The distribution of burned area, as overlaid densities and as a quantile--quantile
+plot; the grey line is the 1:1 relation. (B) Burned area, compactness and the deviation
+of the fire's principal axis from the regional wind axis, each conditioned on FWI (left)
+and on burned area (right). Simulated fires are shown as a hexagonal-bin density on a
+logarithmic count scale and observed fires as points, with a generalized additive
+smoother through each. FWI is on the scale used in the fit, standardized across the
+mapped fires. The vertical striping of the left-hand panels is real: FWI was resampled
+from the 233 distinct values of the mapped record, so the simulated set takes only those
+values.}
+\label{fig:validation}
+\end{figure*}
 
 \section{Discussion}
 
