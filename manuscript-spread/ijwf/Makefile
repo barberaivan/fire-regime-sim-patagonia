@@ -1,5 +1,6 @@
 # Build the IJWF spread manuscript.
 #   make          -> PDF (build/spread-paper.pdf)
+#   make supp     -> supplementary PDF (build/supplementary.pdf)
 #   make words    -> word count of Introduction..Conclusion (the 6000-word budget)
 #   make docx     -> Word version for collaborators who want to edit
 #   make watch    -> rebuild the PDF on every save
@@ -9,15 +10,23 @@ MAIN    := spread-paper
 OUT     := build
 PANDOC  := $(shell command -v pandoc 2>/dev/null || echo "quarto pandoc")
 
-.PHONY: all pdf words docx watch clean
+.PHONY: all pdf supp words docx watch clean
 
-all: pdf
+all: pdf supp
 
 pdf: $(OUT)/$(MAIN).pdf
 
 $(OUT)/$(MAIN).pdf: $(MAIN).tex references.bib
 	latexmk -pdf -bibtex -interaction=nonstopmode -halt-on-error -outdir=$(OUT) $(MAIN).tex
 	@echo "--> $(OUT)/$(MAIN).pdf"
+
+# The supplementary is its own document (IJWF numbers and submits it separately),
+# in the plain article class — the CSIRO class is for the article itself.
+supp: $(OUT)/supplementary.pdf
+
+$(OUT)/supplementary.pdf: supplementary.tex references.bib
+	latexmk -pdf -bibtex -interaction=nonstopmode -halt-on-error -outdir=$(OUT) supplementary.tex
+	@echo "--> $(OUT)/supplementary.pdf"
 
 # IJWF counts Introduction..Conclusion only: title, abstract, references, figure
 # captions and tables are excluded. Those parts sit inside %TC:ignore blocks in

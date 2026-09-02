@@ -99,3 +99,22 @@ goes out of LaTeX.
 Coming back the other way: ask for the edited `.docx`, then
 `quarto pandoc edited.docx -t markdown` to read the changes, or open it and transcribe. Do not
 round-trip the Word file back into the `.tex` — the LaTeX source stays the single source of truth.
+
+## The supplementary
+
+`supplementary.tex` is its own document — IJWF numbers supplementary items separately
+(Fig. S1, Eqn S1) and wants them submitted as separate file(s). It uses the plain
+`article` class, not the CSIRO one (which exists to lay out an *article*: title block,
+running heads, two columns, author statements), but shares `references.bib` and `ijwf.bst`
+with the paper, so a key cited in both prints identically.
+
+```bash
+make supp       # -> build/supplementary.pdf
+make            # both PDFs
+```
+
+Its content is a translation of the thesis's chapter 4 appendix, renotated to the
+manuscript's symbols (see `docs/spread.md` → *Notation in the manuscript deliberately
+differs from the thesis*). Cross-references into the paper are written by hand
+("Eqn~2 of the main text"): the two documents do not share an `.aux`, so `\ref` cannot
+reach across.
