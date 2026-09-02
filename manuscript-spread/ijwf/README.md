@@ -18,7 +18,7 @@ The `.tex` header repeats the ones you have to keep honouring while writing.
 | `CSIRO_LaTeX_Template.cls` | CSIRO's class file, unmodified |
 | `Logos/` | assets the class needs |
 | `Makefile` | build targets |
-| `build/` | everything the compile generates — gitignored |
+| the `.aux`/`.bbl`/`.log`/`.pdf` next to the `.tex` | everything the compile generates — all gitignored |
 
 The pristine CSIRO template (class, `samplebib.bst`, Word template, author guide) is in
 `guidelines/CSIRO_LaTeX_Author_Template.zip`.
@@ -27,29 +27,50 @@ The pristine CSIRO template (class, `samplebib.bst`, Word template, author guide
 
 Everything works with the TeX Live already on this machine — no extra packages.
 
-> **Compile only through `make`.** A build launched without `-outdir` (LaTeX Workshop's
-> default recipe, say) drops `spread-paper.aux`/`.bbl`/`.pdf` next to the `.tex`, and
-> `latexmk` then finds that stale `.bbl` and silently skips BibTeX, so every citation renders
-> as `?`. The compiled PDF at the folder root is gitignored for the same reason. If citations
-> stop resolving, delete the stray files in this folder and `make` again.
+**Everything is compiled in place, next to the `.tex`** — no `-outdir`, no `build/`. That is
+deliberate: the editor's build (LaTeX Workshop, `latex-workshop.latex.outDir` = `%DIR%`) and
+`make` then share one `.aux`/`.bbl` instead of each keeping its own, which is what used to make
+citations render as `?` depending on which one had run last. All of it is gitignored.
 
 ```bash
 cd manuscript-spread/ijwf
-make            # -> build/spread-paper.pdf   (latexmk + bibtex)
+make            # -> spread-paper.pdf   (latexmk + bibtex)
 make words      # the 6000-word budget and the 200-word abstract
-make docx       # -> build/spread-paper.docx  (for collaborators who edit)
+make docx       # -> spread-paper.docx  (for collaborators who edit)
 make watch      # rebuild on every save
-make clean
+make clean      # latexmk -C: back to the sources
 ```
 
 ### Editing in Positron
 
-Positron has no LaTeX extension installed. Two options:
+**LaTeX Workshop** (`James-Yu.latex-workshop`, on Open VSX) builds on save, straight into this
+folder. The settings it needs are already in the Positron user settings:
 
-- **Terminal**: keep `make watch` running in a split terminal and a PDF viewer open on
-  `build/spread-paper.pdf`. Zero setup, works today.
-- **LaTeX Workshop** (`James-Yu.latex-workshop`, on Open VSX so Positron can install it) if you
-  want build-on-save, SyncTeX click-through and inline errors. Point its recipe at `latexmk`.
+```jsonc
+"latex-workshop.latex.outDir": "%DIR%",   // compile in place, same files as make
+"latex-workshop.latex.autoBuild.run": "onSave",
+"latex-workshop.view.pdf.viewer": "tab",
+```
+
+The alternative, with zero extension setup, is `make watch` in a split terminal and a PDF
+viewer open on `spread-paper.pdf`.
+
+**Reading the errors.** Do not try to copy them out of the terminal — the whole run is written
+to `spread-paper.log` in this folder, and that is the file to open (or to hand to Claude). The
+useful lines are the ones starting with `!`; `grep -n '^!' spread-paper.log` finds them.
+
+### The framedbox segfault
+
+If a build dies with **no error message at all** — the log stops mid-sentence, `latexmk` reports
+`pdflatex ... gave return code 139`, and a `spread-paper.synctex(busy)` is left behind — that is
+pdflatex **segfaulting**, not an error in your text.
+
+The cause is the compulsory author-statements box at the end of the paper. The class builds
+`framedbox` as an `mdframed` inside a full-width `strip`; when the box has to be split across a
+page, mdframed's split loop crashes pdftex. It shows up on the *first* pass of a clean build,
+because the still-unresolved `\ref`/`\cite` placeholders shift the page breaks onto the bad
+one — so passes 2 and 3 then succeed and the crash looks intermittent. `\mdfsetup{nobreak=true}`
+before `\begin{framedbox}` in the `.tex` keeps the box whole and is what fixes it. Keep that line.
 
 ### Word count
 
@@ -109,7 +130,7 @@ running heads, two columns, author statements), but shares `references.bib` and 
 with the paper, so a key cited in both prints identically.
 
 ```bash
-make supp       # -> build/supplementary.pdf
+make supp       # -> supplementary.pdf
 make            # both PDFs
 ```
 

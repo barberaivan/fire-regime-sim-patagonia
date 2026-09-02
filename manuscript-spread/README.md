@@ -32,4 +32,5 @@ Conventions (see the root `README.md` / `~/Insync/Claude/repo-store-structure.md
 - **If a final figure is genuinely huge**, symlink `figures/` (or one file) into the store —
   LaTeX reads through a symlink transparently; the only requirement is that whoever compiles
   has run `./setup.sh` so the symlink resolves.
-- **Build artifacts are gitignored** — `latexmk` writes everything into `ijwf/build/`.
+- **Build artifacts are gitignored** — `latexmk` compiles in place, next to the `.tex` in
+  `ijwf/`, so that `make` and the editor's build-on-save share one `.aux`/`.bbl`.

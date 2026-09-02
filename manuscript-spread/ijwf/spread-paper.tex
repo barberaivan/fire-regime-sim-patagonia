@@ -1022,6 +1022,13 @@ fit the spread model.
 %------------------------------------------------------------------------------
 % COMPULSORY AUTHOR STATEMENTS
 %------------------------------------------------------------------------------
+% The class builds framedbox as an mdframed inside a full-width `strip'. If the box
+% has to be split across a page, mdframed's split loop sends pdflatex into a
+% SEGMENTATION FAULT (exit 139, log truncated mid-line, no error message). It bites
+% on the first pass of a clean build, when the unresolved \ref/\cite placeholders
+% shift the page breaks. nobreak keeps the box whole -- it moves to the next page
+% instead of splitting -- which is how CSIRO means it to be set anyway.
+\mdfsetup{nobreak=true}
 \begin{framedbox}
 
 \boxsection{Data availability (compulsory)}

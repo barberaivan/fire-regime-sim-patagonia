@@ -1,13 +1,16 @@
 # Build the IJWF spread manuscript.
-#   make          -> PDF (build/spread-paper.pdf)
-#   make supp     -> supplementary PDF (build/supplementary.pdf)
+#   make          -> PDF (spread-paper.pdf)
+#   make supp     -> supplementary PDF (supplementary.pdf)
 #   make words    -> word count of Introduction..Conclusion (the 6000-word budget)
 #   make docx     -> Word version for collaborators who want to edit
 #   make watch    -> rebuild the PDF on every save
-#   make clean    -> remove build/
+#   make clean    -> remove everything the compile generates, PDFs included
 
 MAIN    := spread-paper
-OUT     := build
+# Everything is compiled in place, next to the .tex, so that a build launched from
+# the editor (LaTeX Workshop, outDir %DIR%) and one launched from make share the
+# same .aux/.bbl instead of fighting over two of them.
+OUT     := .
 PANDOC  := $(shell command -v pandoc 2>/dev/null || echo "quarto pandoc")
 
 .PHONY: all pdf supp words docx watch clean
@@ -56,4 +59,5 @@ watch:
 	latexmk -pdf -bibtex -pvc -interaction=nonstopmode -outdir=$(OUT) $(MAIN).tex
 
 clean:
-	rm -rf $(OUT)
+	latexmk -C $(MAIN).tex supplementary.tex
+	rm -f $(MAIN).docx *.synctex\(busy\) *.synctex.gz

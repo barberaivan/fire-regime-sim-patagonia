@@ -766,8 +766,8 @@ Departures from the QGIS original are listed above; there are no open questions 
 
 | target | output | class |
 |---|---|---|
-| `make` | `build/spread-paper.pdf` **and** `build/supplementary.pdf` | — |
-| `make supp` | `build/supplementary.pdf` only | plain `article` |
+| `make` | `spread-paper.pdf` **and** `supplementary.pdf` | — |
+| `make supp` | `supplementary.pdf` only | plain `article` |
 | `make words` | the 6000-word budget for the paper only | — |
 
 **The supplementary is a separate document on purpose.** IJWF numbers supplementary items
@@ -776,6 +776,22 @@ separately (Fig. S1, Eqn S1) and wants them submitted as separate file(s), so
 with the paper. The two share no `.aux`, so every cross-reference into the paper is written by
 hand ("Eqn 2 of the main text") — a `\ref` cannot reach across. Its content is the thesis's
 chapter 4 appendix translated and renotated to the manuscript's symbols.
+
+**Everything compiles in place, next to the `.tex`** — there is no `build/` any more
+(removed 2026-09-02). The point is that `make` and LaTeX Workshop's build-on-save inside
+Positron (`latex-workshop.latex.outDir` = `%DIR%`) write the same `.aux`/`.bbl` instead of each
+keeping a private copy, which used to leave citations rendering as `?` depending on which had
+run last. All of it is gitignored.
+
+**`framedbox` segfaults pdflatex when it has to split across a page.** The compulsory
+author-statements box at the end of the paper is an `mdframed` inside a full-width `strip`, and
+mdframed's page-splitting loop crashes pdftex outright: exit code 139, the `.log` truncated
+mid-sentence, no `!` line anywhere, and a `spread-paper.synctex(busy)` left behind. It only
+bites on the *first* pass of a clean build — the unresolved `\ref`/`\cite` placeholders shift
+the page breaks onto the bad one — so passes 2 and 3 succeed and the whole thing looks
+intermittent. `\mdfsetup{nobreak=true}` immediately before `\begin{framedbox}` keeps the box
+whole and fixes it; that line must stay in the `.tex`. If a build ever dies with no error
+message, this is the first thing to check.
 
 **The CSIRO class is two-column, and that bites twice.**
 
