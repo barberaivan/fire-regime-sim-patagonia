@@ -28,11 +28,12 @@
 #     the 238-feature base record the QGIS figure drew, because only the
 #     `_spread` file carries the split ids the 57 focal fires are keyed on.
 #
-# Inputs: the two shapefiles in the repo's store, plus the elevation, country
-# and vegetation layers of the old QGIS project, which are still outside the
-# store — see `R/config.R` -> `study_area_map_dir` / `vegetation_lara_dir`.
-# Runs in a couple of minutes, nearly all of it reading the 240 MB elevation
-# mosaic and the vegetation raster.
+# Inputs: the fire and study-area shapefiles in the repo's store, plus the
+# elevation, lake, country/province and vegetation base layers of the old QGIS
+# project, which were copied into the store on 2026-09-01 and now live together
+# in `data/study_area_figure_layers/` (`R/config.R` -> `study_area_map_dir`;
+# provenance in that folder's README.txt). Runs in a couple of minutes, nearly
+# all of it reading the 240 MB elevation mosaic and the vegetation raster.
 
 library(terra)
 library(ggplot2)
@@ -92,6 +93,9 @@ col_fire_ig <- viridis::magma(1, begin = 0.38)   # "#842681"
 #             drew, in its own 8 display classes. Keeps continuity with the
 #             Fire Ecology paper, but is not the landscape the model sees.
 #
+# Both rasters live in `data/study_area_figure_layers/` with the other base
+# layers.
+#
 # The two differ in more than resolution: the merge patches every pixel burned
 # before 2014 with Lara cover and takes the rest from CIEFAP 2016, and its
 # classes come through `veg_crosswalk()` — the same table the landscape builder
@@ -99,7 +103,7 @@ col_fire_ig <- viridis::magma(1, begin = 0.38)   # "#842681"
 veg_source <- "merged"
 
 # Where the GEE export lands once it has been run and moved into the store.
-veg_merged_file <- file.path("data", "vegetation_merged",
+veg_merged_file <- file.path(config$study_area_map_dir,
                              "vegetation_merged_120m.tif")
 
 # The vegetation ramp: inferno sampled at 8 levels, as set in the QGIS project
@@ -135,12 +139,10 @@ maxcell_plot <- 3e6
 fig_dir <- file.path("manuscript-spread", "figures")
 
 sam_dir <- config$study_area_map_dir
-veg_dir <- config$vegetation_lara_dir
-for (d in c(sam_dir, veg_dir)) {
-  if (!dir.exists(d)) {
-    stop("missing base-layer folder: ", d,
-         "\n  edit R/config.R (study_area_map_dir / vegetation_lara_dir)")
-  }
+if (!dir.exists(sam_dir)) {
+  stop("missing base-layer folder: ", sam_dir,
+       "\n  it is part of the store — run ./setup.sh, or edit R/config.R",
+       " (study_area_map_dir)")
 }
 
 # Data --------------------------------------------------------------------
@@ -162,12 +164,11 @@ fires <- to_map(fires)
 cat(nrow(fires), "mapped fires,", sum(fires$has_ignition),
     "with a mapped ignition point\n")
 
-lakes <- to_map(vect(file.path(veg_dir, "lakes in study area.shp")))
+lakes <- to_map(vect(file.path(sam_dir, "lakes.shp")))
 
 # Chile: the grey half of every panel. The international border needs no line
 # of its own — it is where the grey meets the white.
-countries <- vect(file.path(sam_dir, "Mapa_Argentina_Bicontinental_QGIS",
-                            "datos_shp", "referencias.shp"))
+countries <- vect(file.path(sam_dir, "countries_ign.shp"))
 chile <- to_map(countries[countries$nom_abrev == "Chile", ])
 stopifnot(nrow(chile) > 0)
 
@@ -181,8 +182,7 @@ stopifnot(nrow(chile) > 0)
 # folder: GAUL's Argentina is missing six provinces, Río Negro and Chubut among
 # them.
 prov_names <- c("Neuquén", "Río Negro", "Chubut")
-provinces_all <- vect(file.path(sam_dir, "Mapa_Argentina_Bicontinental_QGIS",
-                                "datos_shp", "Provincias.shp"))
+provinces_all <- vect(file.path(sam_dir, "provinces_ign.shp"))
 provinces <- provinces_all[provinces_all$NAM %in% prov_names, ]
 stopifnot(nrow(provinces) == length(prov_names))
 provinces <- to_map(provinces)
@@ -197,7 +197,7 @@ clip_to_study <- function(r) {
   mask(crop(r, sa), sa)
 }
 
-elev <- rast(file.path(sam_dir, "elevation_study_area_clipped.tif"))
+elev <- rast(file.path(sam_dir, "elevation_study_area.tif"))
 names(elev) <- "elevation"
 elev <- clip_to_study(elev)
 
@@ -207,7 +207,7 @@ elev <- clip_to_study(elev)
 #' prints them, and the labels and colours to go with it.
 veg_layer <- function(source) {
   if (source == "lara") {
-    r <- rast(file.path(veg_dir, "vegetation_valdivian_img.tif"))
+    r <- rast(file.path(sam_dir, "vegetation_lara.tif"))
     names(r) <- "class"
     r <- clip_to_study(r)
     labels <- veg_labels_lara
@@ -428,11 +428,11 @@ p_c <- ggplot() +
 # it.
 #
 # The provinces come from the SAME IGN layer the panels use. The FAO GAUL file
-# in the neighbouring folder is the trap here: its Argentina has 17 of the 24
-# provinces, so drawing the inset from it leaves the whole east and south of
-# the country grey, as if it were another country.
-sa <- to_map(crop(vect(file.path(sam_dir, "South_America",
-                                 "South_America.shp")), inset_bbox))
+# that sat next to it in the original QGIS folder is the trap here, and is the
+# reason only the IGN one was copied into the store: GAUL's Argentina has 17 of
+# the 24 provinces, so drawing the inset from it leaves the whole east and
+# south of the country grey, as if it were another country.
+sa <- to_map(crop(vect(file.path(sam_dir, "south_america.shp")), inset_bbox))
 # Cropping also drops the Antarctic claim carried by Tierra del Fuego, which
 # would otherwise stretch the inset to the pole.
 ar <- to_map(crop(provinces_all, inset_bbox))

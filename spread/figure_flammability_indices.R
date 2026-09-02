@@ -105,7 +105,7 @@ tfi_elev <- ggplot(elev_df) +
 
 tfi_north <- ggplot(north_df) +
   geom_line(aes(northing, tfi), linewidth = 0.6) +
-  xlab("Northing") +
+  xlab("Northness") +
   scale_y_continuous(breaks = seq(-2, 2, 1), limits = c(-2, 2)) +
   panel_theme() +
   theme(axis.title.y = element_blank())

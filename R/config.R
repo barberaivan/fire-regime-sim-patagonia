@@ -20,16 +20,11 @@ config <- list(
   veg_equiv_xlsx_ciefap = file.path("data", "vegetation_equivalences_ciefap.xlsx"),
 
   # Base layers for the study-area map (paper Fig. 1, spread/figure_study_area.R):
-  # the elevation mosaic, the country/province polygons and the Argentine
-  # bicontinental shapefiles. These came from the QGIS project the thesis-era
-  # figure was drawn in ("mapa area de estudio 6.qgz") and still live in the
-  # Insync folder it used, NOT in the repo's store — nothing else in the
-  # pipeline reads them, and the elevation raster alone is 240 MB. Machine-local:
-  # edit per machine, or copy the folder into the store and repoint here.
-  study_area_map_dir = "/home/ivan/Insync/patagonian_fires paper/study area map",
-
-  # The WWF / Lara et al. (1999) vegetation folder, for the same figure: the
-  # regional vegetation raster it colours panel C with and the lakes polygons.
-  # Also machine-local, and also outside the store.
-  vegetation_lara_dir = "/home/ivan/Insync/Mapa vegetación WWF - Lara et al. 1999"
+  # the elevation mosaic, the lakes, the IGN country/province polygons, the
+  # South America outline for the inset and the two vegetation rasters. They
+  # came from the QGIS project the thesis-era figure was drawn in ("mapa area de
+  # estudio 6.qgz") and lived in two Insync folders until 2026-09-01, when they
+  # were copied into the store so the figure rebuilds on any machine. Nothing
+  # else in the pipeline reads them; provenance is in the folder's README.txt.
+  study_area_map_dir = file.path("data", "study_area_figure_layers")
 )

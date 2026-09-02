@@ -110,15 +110,14 @@ Bla bla.
 % assumptions behind every statistical method.
 % Species: scientific name + authority at first mention.
 
-[Claude, make and add the study area figure].
-
 \subsection{Study area}
 
 The study area covers 29\,214\,km$^2$ of the Subantarctic and High-Andean
 phytogeographic provinces of Argentina \citep{oyarzabal_vegetation_2018}, between
 39.0$^\circ$ and 44.5$^\circ$\,S: a strip roughly 600\,km from north to south and
-50\,km from west to east along the eastern slope of the Andes. It contains  % TODO cite the study-area figure here if one is included
-almost all of the continuous forests and shrublands of northwestern Andean Patagonia.
+50\,km from west to east along the eastern slope of the Andes. It contains
+almost all of the continuous forests and shrublands of northwestern Andean
+Patagonia (Fig.~\ref{fig:study-area}).
 Precipitation falls steeply from west to east, from 3000--4000\,mm\,year$^{-1}$ to
 about 500\,mm\,year$^{-1}$ over a few tens of kilometres \citep{villalba_large-scale_2003},
 with wet, snowy winters and dry summers. Elevation ranges from 200 to 3700\,m\,a.s.l.,
@@ -126,6 +125,25 @@ but burnable vegetation is confined below $\approx$\,1750\,m\,a.s.l., where mean
 temperature ranges from about 0 to 13\,$^\circ$C. Lakes, glaciers, unvegetated
 high-Andean ground and urban areas make up about a quarter of the area and are treated
 as non-burnable.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.88\textwidth]{fig1_study_area_stacked}
+\caption{The study area, on the eastern slope of the Andes in north-western
+Patagonia, Argentina. (A) The fire record: every fire $\ge$\,10\,ha mapped
+between 1999 and 2022 \citep{barbera_patterns}, with the 57 fires whose
+ignition point could be established --- the fires the spread model was fitted
+to --- in the darker colour. (B) Elevation, from the 30\,m SRTM V3 digital
+elevation model \citep{DEMfarr2007}; the colour scale is clamped at 2400\,m, so
+that the two summits above it take the top colour. (C) Vegetation type, in the
+five burnable classes the model uses plus non-burnable ground, from the merged
+regional map the simulations run on \citep{lara_vegetacion_1999,mapa_ciefap}.
+Grey is Chile and white is Argentina, so the international border is where the
+two meet; the dashed lines are the boundaries between the three Argentine
+provinces the study area spans, named in (C). The inset locates the study area
+in South America.}
+\label{fig:study-area}
+\end{figure}
 
 Vegetation follows the precipitation gradient, elevation and local topography.
 Wet forests are dominated by the evergreen \textit{Nothofagus dombeyi} (Mirb.) Oerst.
@@ -156,8 +174,8 @@ $\ge$\,10\,ha in the study area over the 24 fire seasons from July 1998 to June 
 from Landsat imagery at 30\,m resolution. Weather data were available for 235 of them, and
 those are the fires used here. Fitting the spread model requires the ignition point as well
 as the final perimeter, and the ignition point could be established for 57 fires, supplied
-by fire management personnel and by a lightning-ignition database.
-% TODO cite the study-area figure here once it exists
+by fire management personnel and by a lightning-ignition database
+(Fig.~\ref{fig:study-area}A).
 The remaining 178 fires were used to inform the parameters that control simulated fire
 size, as described below.
 
@@ -506,16 +524,47 @@ emergent properties of the regime they generate rather than on point predictions
 individual fires \citep{parisien2020commentary}. We therefore validated the model in the
 pattern-oriented sense \citep{grimm2005pattern, hartig2011statistical}: we asked whether
 statistical patterns emerging from many simulated fires match those of the observed
-record, using patterns the fitting procedure did not target.
+record, using patterns the fitting procedure did not target. Two exercises did this at
+two scales --- one mapped fire at a time, from its own ignition point, and the whole
+record at once --- and neither recalibrated any parameter.
 
-\subsubsection*{The simulation experiment}
+\subsubsection*{Re-simulating the mapped fires}
 
-We simulated fires over the whole study area, partitioned into four latitudinal tiles that
-together cover 99.1\,\% of it --- the domain over which the observed record is complete.
-For each simulated fire we drew, in this order: an FWI value, resampled with replacement
-from the values of the mapped fires, so the simulated marginal matches the observed one
-exactly; a draw from the joint posterior of the hyperparameters; a parameter vector for a
-\emph{new} fire from the population distribution
+For each of the 57 fires with a known ignition point we simulated 2000 fires from that
+fire's ignition cell on that fire's landscape, twice: once under the fire's own fitted
+parameter vector and once under a vector drawn afresh from the population distribution at
+that fire's FWI --- the fitted and the simulated parameters defined above. Each simulated
+fire was reduced to its spatial overlap with the observed one (Eqn~\ref{eq:overlap}), its
+burned area overall and within each of the five vegetation classes, its compactness
+($4\pi \times$ area / perimeter$^2$) and the deviation of its principal axis from the
+fire's wind axis. Orientation is the bearing of the leading eigenvector of a principal
+component analysis of the coordinates of the burned cells; the wind axis of a fire is the
+circular mean of wind direction over the cells the \emph{observed} fire burned, and the
+same axis scores that fire and all of its simulations, since WindNinja steers the field
+by terrain and one regional direction does not describe every fire.
+
+Each statistic was then turned into a scaled quantile residual
+(\texttt{DHARMa} v0.4.7; \citealt{DHARMa}): the position of the observed value within the
+2000 simulated ones, randomized across ties for the discrete areas, which is uniform on
+$(0, 1)$ if the model is calibrated for that statistic. Sorting the 57 residuals against
+the expected uniform quantiles gives one quantile--quantile plot per statistic; points
+below the 1:1 line mean the model simulates too much of the quantity, points above it too
+little. A vegetation class with fewer than 30 burnable cells (2.7\,ha) in a fire's
+landscape was dropped from that class's panel: with almost nothing of the class available
+to burn, observed and simulated areas are both zero and the residual is only tie
+randomization. Simulations that burned fewer than three cells have no principal axis, and
+were resampled from the same fire's remaining draws, so the two shape statistics ask a
+conditional question --- given that the model produced a fire at all, is the observed
+shape a typical one?
+
+\subsubsection*{The regional simulation experiment}
+
+We also simulated fires over the whole study area, partitioned into four latitudinal tiles
+that together cover 99.1\,\% of it --- the domain over which the observed record is
+complete. For each simulated fire we drew, in this order: an FWI value, resampled with
+replacement from the values of the mapped fires, so the simulated marginal matches the
+observed one exactly; a draw from the joint posterior of the hyperparameters; a parameter
+vector for a \emph{new} fire from the population distribution
 $\text{MVLN}(\boldsymbol{\mu}(\mathrm{FWI}), \boldsymbol{\Sigma})$, so that both
 hyperparameter and between-fire uncertainty are propagated and no fitted fire's own
 parameters are reused; a tile, with probability proportional to the number of eligible
@@ -528,49 +577,31 @@ marginal distribution of $\kappa$ untouched and so does not shrink the simulated
 distribution.
 
 Simulated fires below 10\,ha were discarded, because the mapping records nothing smaller
-and they have no observed counterpart; about 56\,\% of proposals fall below the threshold,
-and the run proceeded in passes until 64\,836 fires of at least 10\,ha had been accepted.
-No recalibration of any parameter was applied.
+and they have no observed counterpart. One pass of 148\,649 proposals left 64\,836 fires
+of at least 10\,ha (43.6\,\%), and those are the simulated fires analysed below.
 
 \subsubsection*{Analyses}
 
-We compared simulated and observed fires in three ways, all of them conditioned on fire
-size where the statistic depends on it.
+We compared simulated and observed fires in two ways.
 
-\textbf{Size distribution.} Simulated against observed $\log_{10}(\mathrm{area})$, as a
-quantile--quantile plot and a Kolmogorov--Smirnov statistic.
+\textbf{Size distribution.} Simulated against observed $\log_{10}(\mathrm{area})$, as
+overlaid densities, a quantile--quantile plot and a Kolmogorov--Smirnov statistic.
 
 \textbf{Shape.} From the burned cells of each fire in raster space we computed area,
-perimeter, compactness ($4\pi \times$ area / perimeter$^2$), the convex-hull fill ratio,
-and --- by principal component analysis of the coordinates of the burned cells ---
-elongation, as the ratio of the principal axes, and orientation, as the bearing of the
-leading eigenvector. Orientation is compared with the dominant wind axis, so that
-wind-driven fires should run along it. These metrics need only a rasterized perimeter, so
-the observed reference is every mapped fire in every size class, not only the 57 with a
-known ignition point --- and, for the same reason, it does not require a fire to have
-usable weather data. For simulated fires, where the wind field is known, we additionally
-measured elongation \emph{along the wind axis} --- spread along it divided by spread across
-it --- taking the axis as the circular mean of wind direction over the cells the fire
-burned, since WindNinja steers the field by terrain.
+perimeter, compactness and orientation, the last reported as its deviation from the
+dominant wind axis --- $0^\circ$ for a fire running along the wind, $90^\circ$ across it,
+and $45^\circ$ the expectation if fires were oriented at random. Here the axis is the
+fixed regional direction the tiles were driven with (113/293$^\circ$), because the
+observed fires without a mapped ignition point carry no wind field of their own. These
+metrics need only a rasterized perimeter, so the observed reference is every mapped fire
+in the record across every size class --- 241 perimeters, including the six the model
+could not use for lack of weather data --- and not only the 57 with a known ignition
+point.
 
-\textbf{Spatial signature.} For each fire we summarized how the spatial predictors relate
-to burning at its edges, and compared the distribution of those summaries across fires.
-For every burned cell with at least one burnable unburned neighbour we formed a stratum
-whose members are that cell's burnable neighbours and whose response is whether each
-burned; this is exactly the set of Bernoulli trials the simulator itself performs. We then
-fitted a conditional logistic regression per fire \citep{survival}, with VFI and TFI as
-predictors in a single multiple regression. Holding the donor cell fixed conditions out
-the fire, the weather, suppression and the donor itself, and the intercept drops out of the
-conditional likelihood, so only contrasts between neighbouring cells are compared. The
-slope and wind terms of Eqn~\ref{eq:datamodel} are deliberately excluded: they are
-directional, and for an observed fire the order in which cells burned is unknown, so the
-donor is a guess at the arrival direction rather than a measurement. They are tested
-through fire shape instead. Donors were subsampled to 1500 per fire, and the identical
-procedure was applied to simulated and to observed fires.
-
-Finally, we repeated the shape and signature comparisons within quartiles of FWI, which
-tests the model's most distinctive structural claim --- that the spatial coefficients of
-spread shift with fire weather.
+Both shape statistics depend strongly on fire size, and size is itself one of the things
+being tested, so the comparisons are made conditionally on burned area as well as
+marginally. We repeated them conditionally on FWI, which tests the model's most
+distinctive structural claim --- that the parameters of spread shift with fire weather.
 
 \section{Results}
 

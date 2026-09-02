@@ -109,7 +109,7 @@ save_fig(fig2, "fig2_spread_curves", width = 14, height = 12)
 raw <- curves_raw
 raw$varying_var2 <- as.character(raw$varying_var)
 raw$varying_var2[raw$varying_var == "elevation"] <- "Elevation (m a.s.l.)"
-raw$varying_var2[raw$varying_var == "northing"] <- "Northing"
+raw$varying_var2[raw$varying_var == "northing"] <- "Northness"
 
 curves_veg <- ggplot(raw[raw$varying_var == "ndvi", ],
                      aes(varying_val, mean,
