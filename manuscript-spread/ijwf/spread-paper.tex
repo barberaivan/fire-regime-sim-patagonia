@@ -851,7 +851,118 @@ values.}
 
 \section{Discussion}
 
-Bla.
+% DRAFT — only the validation-related paragraphs are written. Still to write:
+%   * an opening paragraph on what the fitted model says about spread in this
+%     region (wind and slope dominate locally; fire weather acts through the
+%     number of steps and the wind coefficient, not through the flammability
+%     indices; vegetation keeps its grip as weather worsens);
+%   * the two-stage ABC fit as a method — what it buys, what it costs, and how
+%     it compares with the thesis-era estimation;
+%   * implications for the regime simulator this model feeds (paper 2).
+
+\subsection*{Fitted and simulated parameters mean different things}
+
+The model reproduces a mapped fire well when it is given that fire's own
+parameters and poorly when it is given parameters drawn from the population.
+That gap is not a failure of the fit; it is a measurement of how much of a
+fire's behaviour is carried by the things the parameters absorb. Within a
+fortnight the model sees one wind direction, one regional wind speed, one FWI
+value and no suppression at all, so a fire that was fanned by an unusually
+strong wind, or stopped early by rain or by fire crews, can only be represented
+through its own parameter vector. Simulating with a fresh vector is therefore
+simulating a different fire under the same weather index and on the same
+landscape, and the drop in overlap from 0.53 to 0.11 measures the width of that
+distribution rather than an error. The same reading applies to the size
+statistics: under fitted parameters simulated and observed sizes agree within a
+factor of two for 55 of the 57 fires, and under simulated parameters they do
+not. What the regime simulator needs is the second mode --- it has to generate
+plausible fires, not to retrodict particular ones --- which is why the
+record-wide experiment, and not the per-fire overlap, is the test that matters
+for the model's intended use.
+
+One consequence of the model's structure should be stated plainly rather than
+diagnosed away: a simulated fire stops either because propagation failed at
+every edge cell or because the step budget $\kappa$ ran out, and the model does
+not distinguish the two. $\kappa$ is a lumped stand-in for everything that ends
+a fire in time --- a weather change, rain, successful suppression --- and we
+make no attempt to attribute individual edges to one mechanism or the other.
+
+\subsection*{The model cannot make an elongated fire}
+
+The clearest mismatch in both validation exercises is shape, and it is
+structural rather than a matter of tuning. In the automaton the spread
+\emph{rate} is isotropic: the front advances at most one cell per step in each
+of the eight directions, and the wind term
+$\cos(A_{ij} - D_i)\,V_i\,\beta_4$ changes only \emph{whether} a neighbour
+ignites, never how fast the front reaches it. The downwind front therefore
+cannot outrun the flanks, which is exactly what makes a real fire a cigar.
+
+Once the wind term is strong enough to matter it drives spread probability
+towards 1 downwind and 0 upwind, so downwind and lateral cells both ignite at
+nearly every step and the burned set converges on the downwind half of the
+square reachable in $\kappa$ steps. The elongation of that half-lobe is fixed by
+geometry --- 1.89 for a half-disc and 2.0 for the half-square the eight-neighbour
+automaton actually reaches --- and simulations on a flat synthetic landscape
+confirm the ceiling: sweeping the base spread probability against $\beta_4$,
+elongation never exceeded 1.92 wherever the wind term was active, and beyond
+$\beta_4 \approx 4$ every value of the base probability collapsed onto 1.83--1.85,
+the wind term having saturated. The
+fitted fires sit firmly in that saturated regime: the median fitted wind
+coefficient is 4.9, which over typical wind speeds in these landscapes gives a
+median downwind-to-upwind logit difference of about 25, and 82\,\% of fires
+exceed a difference of 6. Against a ceiling of about 1.9, 61\,\% of the 241
+mapped fires are more elongated than the model can be, rising to 78\,\% among
+fires larger than 1000\,ha; the observed distribution runs 1.31, 2.12 and 3.78 at
+the 10th, 50th and 90th percentiles, with a maximum of 7.55. No value of the
+parameters would close that gap.
+
+The one regime in which the automaton does produce cigars is marginal
+propagation, where spread probability is low enough that the effective front
+speed itself differs between downwind and lateral directions. Forcing it there
+--- capping spread probability at 0.5 with a weak base probability --- reached an
+elongation of 5.0, but the resulting fire burned 84\,ha. Under this
+parameterisation the model can be elongated or large, not both.
+
+We suspect this also explains the size overshoot, and that the two are one
+finding rather than two. The step budget itself is not at fault: all 235 fires
+inform it, and $\kappa$ drawn from the population reproduces the fitted values
+closely (median 40 against 31 steps, 95th percentile 368 against 349). But given
+the same reach, a fire that spreads as a round blob burns far more area than one
+that spreads as a cigar, so the roundness and the inflated size distribution
+point in the same direction, from shape to size. Anything that restored
+realistic anisotropy would be expected to pull the simulated size distribution
+down with it.
+
+Reproducing fire shape would require a term the model does not have. The two
+obvious candidates are rate anisotropy --- letting the front advance more than
+one cell per step downwind, as elliptical growth models do
+\citep{rothermel_mathematical_1972, finney1998farsite, sullivan2009wildland} ---
+or a spread probability capped well below 1 combined with a much larger step
+budget, so that the front speed becomes directional through marginal
+propagation. Either is a change to the automaton, not a re-estimation of it, and
+we did not attempt one here. A second, more prosaic contributor is worth naming:
+the wind field is spatially uniform in direction and near-constant in magnitude,
+in fitting as in simulation, so the fitted coefficient has no way to express the
+day-to-day gustiness that drives real head-fire runs.
+
+\subsection*{Why we did not use classical cross-validation}
+
+Holding out a fifth of the fires would have degraded the model without testing
+what matters about it. Fifty-seven fires is already few for a six-parameter
+hierarchical model with sign-constrained bounds, a multivariate logit-normal on
+the transformed parameters and an auxiliary regression of area on the number of
+steps that depends on the fitted $\kappa_f$; the observed size distribution is
+heavy-tailed and sharply peaked, which makes it an unstable target to estimate
+from a few dozen fires; and the hierarchical structure is itself a regulariser,
+so a held-out fire's parameters would mostly reproduce the population mean plus
+noise. The model is also deliberately underparameterised for the process ---
+fixed functional forms, sign restrictions, a fixed decay $\tau$, bounded
+parameter ranges --- so overfitting is not the failure mode cross-validation is
+designed to catch. What we want to know is whether the simulator generates fires
+with the statistical properties of the ones that actually occur, which is the
+question pattern-oriented validation asks
+\citep{grimm2005pattern, hartig2011statistical}, and it is the standard by which
+burn-probability models are usually judged \citep{parisien2020commentary}.
 
 \section{Conclusion}
 
