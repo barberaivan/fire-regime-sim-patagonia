@@ -43,17 +43,22 @@ make clean      # latexmk -C: back to the sources
 
 ### Editing in Positron
 
-**LaTeX Workshop** (`James-Yu.latex-workshop`, on Open VSX) builds on save, straight into this
-folder. The settings it needs are already in the Positron user settings:
+**LaTeX Workshop** (`James-Yu.latex-workshop`, on Open VSX) builds straight into this folder,
+**on demand, not on save** — a full latexmk run on every Ctrl+S is slower than it is useful.
+The settings it needs are already in the Positron user settings:
 
 ```jsonc
 "latex-workshop.latex.outDir": "%DIR%",   // compile in place, same files as make
-"latex-workshop.latex.autoBuild.run": "onSave",
+"latex-workshop.latex.autoBuild.run": "never",
 "latex-workshop.view.pdf.viewer": "tab",
 ```
 
+Build with **Ctrl+Alt+B** (*LaTeX Workshop: Build LaTeX project*, also in the TeX sidebar and
+the command palette). Set `autoBuild.run` back to `"onSave"` if you ever want the old
+behaviour.
+
 The alternative, with zero extension setup, is `make watch` in a split terminal and a PDF
-viewer open on `spread-paper.pdf`.
+viewer open on `spread-paper.pdf` — rebuild-on-save for as long as it runs, and Ctrl+C ends it.
 
 **Reading the errors.** Do not try to copy them out of the terminal — the whole run is written
 to `spread-paper.log` in this folder, and that is the file to open (or to hand to Claude). The
@@ -71,6 +76,17 @@ page, mdframed's split loop crashes pdftex. It shows up on the *first* pass of a
 because the still-unresolved `\ref`/`\cite` placeholders shift the page breaks onto the bad
 one — so passes 2 and 3 then succeed and the crash looks intermittent. `\mdfsetup{nobreak=true}`
 before `\begin{framedbox}` in the `.tex` keeps the box whole and is what fixes it. Keep that line.
+
+### Subsubsection headings printed on top of the paragraph above
+
+The class gives `\subsubsection` a beforeskip of `12pt \@plus -1pt`
+(`CSIRO_LaTeX_Template.cls` line 1035) — 12 pt of space whose stretch component is
+**negative**. In a column stretched to fill the page height, that glue shrinks instead of
+growing and the heading rides up onto the last line of the paragraph above it; it did exactly
+that to *Hierarchical structure*. `\subsection` (line 1034 of the class) uses the well-formed
+`12pt \@plus 1pt \@minus 1pt`, so the fix is to redefine `\subsubsection` the same way in the
+paper's preamble, which is what the `\renewcommand\subsubsection` block after `\usepackage{booktabs}`
+does. The class itself is left untouched — production applies their own copy.
 
 ### Word count
 

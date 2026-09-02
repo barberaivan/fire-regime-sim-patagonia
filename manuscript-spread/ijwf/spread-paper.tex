@@ -40,6 +40,18 @@
 % The class does not load booktabs; the tables here use \toprule/\midrule/\bottomrule.
 \usepackage{booktabs}
 
+% --- Class fix: \subsubsection can collide with the preceding paragraph --------
+% CSIRO_LaTeX_Template.cls line 1035 gives \subsubsection a beforeskip of
+% "12pt \@plus -1pt": 12pt of space with NEGATIVE stretch. In a column the class
+% stretches to fill the page, that glue shrinks instead of growing, and the
+% heading rides up onto the last line of the paragraph above it (it did so to
+% "Hierarchical structure"). Same definition, well-formed glue -- \subsection
+% (line 1034 of the class) already uses this form.
+\makeatletter
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {12pt \@plus 1pt \@minus 1pt}{.1pt}{\subsubsectionfont}}
+\makeatother
+
 \graphicspath{{figures/}{../figures/}}
 
 \begin{document}
@@ -71,7 +83,7 @@
 \corau{*Correspondence to: Email: ivanbarbera93@gmail.com}
 
 %------------------------------------------------------------------------------
-% ABSTRACT — HARD LIMIT 200 WORDS. Structured, these six labels, this order.
+% ABSTRACT, 200 WORDS. Structured, these six labels, this order.
 % No citations, no equations, no lists. Include the keywords. Define any
 % abbreviation here AND again at first use in the body.
 %------------------------------------------------------------------------------
@@ -134,14 +146,11 @@ Patagonia, Argentina. (A) The fire record: every fire $\ge$\,10\,ha mapped
 between 1999 and 2022 \citep{barbera_patterns}, with the 57 fires whose
 ignition point could be established (the fires the spread model was fitted
 to) in the darker colour. (B) Elevation, from the 30\,m SRTM V3 digital
-elevation model \citep{DEMfarr2007}; the colour scale is clamped at 2400\,m, so
-that the two summits above it take the top colour. (C) Vegetation type, in the
+elevation model \citep{DEMfarr2007}. (C) Vegetation type, in the
 five burnable classes the model uses plus non-burnable ground, from the merged
 regional map the simulations run on \citep{lara_vegetacion_1999,mapa_ciefap}.
-Grey is Chile and white is Argentina, so the international border is where the
-two meet; the dashed lines are the boundaries between the three Argentine
-provinces the study area spans, named in (C). The inset locates the study area
-in South America.}
+The dashed lines are the boundaries between the three Argentine
+provinces the study area spans, named in (C).}
 \label{fig:study-area}
 \end{figure*}
 
@@ -169,13 +178,12 @@ fire-prone years are those with warm summers preceded by dry springs
 
 \subsection{Data}
 
-Fires were taken from the atlas of \citet{barbera_patterns}, which maps every fire
-$\ge$\,10\,ha in the study area over the 24 fire seasons from July 1998 to June 2022
-from Landsat imagery at 30\,m resolution. Weather data were available for 235 of them, and
-those are the fires used here. Fitting the spread model requires the ignition point as well
+We used the 235 fires $\ge$\,10\,ha mapped by \citet{barbera_patterns}, 
+over the 24 fire seasons from July 1998 to June 2022
+from Landsat imagery at 30\,m resolution. 
+Fitting the spread model requires the ignition point as well
 as the final perimeter, and the ignition point could be established for 57 fires, supplied
-by fire management personnel and by a lightning-ignition database
-(Fig.~\ref{fig:study-area}A).
+by fire management personnel and by a lightning-ignition database (\citealt{kitzbergerLightning}, Fig.~\ref{fig:study-area}A).
 The remaining 178 fires were used to inform the parameters that control simulated fire
 size, as described below.
 
@@ -207,10 +215,8 @@ disagreed with it. The regional speed is held constant, but the model estimates 
 fire-level coefficient that absorbs between-fire variation in wind forcing.
 
 \item \textbf{Atmospheric conditions}, summarized by the Fire Weather Index
-(FWI; \citealt{van_wagner_development_1987}), the single weather variable in the model
-because it integrates relative humidity, temperature, precipitation and wind speed and
-so keeps the number of parameters low. We used the ERA5-based daily FWI of
-\citet{vitolo_era5-based_2020} at $\approx$\,24\,km resolution. Because the index varies
+(FWI; \citealt{van_wagner_development_1987}), which integrates relative humidity, temperature, precipitation and wind speed and
+so keeps the number of parameters low. We used the ERA5-based daily FWI of \citet{vitolo_era5-based_2020} at $\approx$\,24\,km resolution. Because the index varies
 strongly along the precipitation gradient while our data cannot inform that variation,
 we standardized it per pixel using the mean and standard deviation of the 1998--2023
 series, so the predictor represents climatic variation in time and not in space; the
@@ -218,26 +224,23 @@ long-term spatial effects of climate are absorbed by the vegetation variables
 \citep{barbera_patterns}. Standardized daily values were averaged by fortnight and then
 accumulated as a weighted mean over the focal fortnight and the 10 preceding ones, with
 weights decaying into the past as $w_l = \exp[-(l/\tau)^2]$. The decay $\tau$ was fixed
-at 2.82 fortnights, the joint posterior mode of a model of fire size as a function of
-accumulated FWI.
+at 2.82 fortnights, the joint posterior mode of a model of fire size as a function of accumulated FWI.
 \end{itemize}
-
-Space and time are discrete throughout: the landscape is a rectangular grid of
-30\,m\,$\times$\,30\,m cells and the calendar is divided into 14-day fortnights, with
-years running from 1 July to 30 June and named after the month in which they end.
 
 \subsection{The spread model}
 
 \subsubsection*{Flammability indices}
 
-Representing the effects of vegetation type, productivity and topography on
-flammability with one coefficient each would have required more parameters than the
-data can support. We therefore summarized those predictors into two indices: a
+To represent the effects of vegetation type, productivity and topography on
+flammability using a small number of parameters we summarized these predictors 
+into two indices: a
 \textbf{vegetation flammability index} (VFI) and a \textbf{topographic flammability
 index} (TFI). Rather than an ordination, we used the linear predictor of a logistic
 regression of the probability that a cell burned at least once over the study period,
-fitted at the regional scale to a sample of 9194 points at least 800\,m apart
-\citep{barbera_patterns}, and split it into a vegetation and a topographic part:
+fitted at the regional scale to a sample of 9194 points at least 800\,m apart (see Supplementary Information), 
+and split it into a vegetation and a topographic part:
+
+% [Claude, if the Supp has section, we should cite specific sections as we did in the thesis.]
 
 \begin{equation}
 \label{eq:FI}
@@ -277,7 +280,7 @@ Grassland        & $-2.625388$ & $-10.730352$ & 0.6233552 \\
 \subsubsection*{The cellular automaton}
 
 The spread model propagates fire from burning cells to their eight neighbours, with a
-structure close to that of \citet{morales_stochastic_2015}. Cells are in one of  % TODO cite the model-schematic figure here if one is included
+structure close to that of \citet{morales_stochastic_2015}. Cells are in one of  
 three states (burning, burnable or non-burnable), and a burning cell stays burning
 for exactly one iteration (\textit{step} from here on), after which it becomes
 non-burnable. Cells may be non-burnable from the start (water, unvegetated ground) or
@@ -291,6 +294,7 @@ assumed to occur entirely within one fortnight, so the model is atemporal within
 period.
 
 Spread $y \in \{0, 1\}$ from cell $i$ to a burnable neighbour $j$ at step $k$ is
+defined as follows:
 
 \begin{equation}
 \label{eq:datamodel}
@@ -339,6 +343,7 @@ $G_{ij}$ and directions $A_{ij}$ (in degrees) are
 not to affect spread probability. The unknowns are the five coefficients and the number
 of steps, collected as
 $\boldsymbol{\beta} = \{\beta_0, \beta_1, \beta_2, \beta_3, \beta_4, \kappa\}$.
+
 
 \subsubsection*{Hierarchical structure}
 
@@ -409,7 +414,7 @@ approximately uniform on $(-1, 1)$.
 
 Because the parameters have a distribution, a mapped fire can be simulated either with a
 parameter vector drawn from that distribution given its FWI, or with the vector estimated
-for that particular fire. We call these \textit{simulated} and \textit{fitted} parameters
+for that particular fire. We call these \textit{simulated} and \textit{fitted} random effects
 respectively.
 
 \subsection{Parameter estimation}
@@ -420,94 +425,40 @@ fire moved from cell to cell is not, and could not be recorded, since fire advan
 continuously in space and time. Without those data the likelihood cannot be evaluated, so
 we used Approximate Bayesian Computation (ABC; \citealt{beaumont2010approximate,
 sisson2018handbook}), as \citet{morales_stochastic_2015} did for the same purpose. ABC
-applies when a model can simulate data but its likelihood cannot be computed: parameter
-values are favoured in proportion to how similar the data they simulate are to the
-observed ones. The ABC posterior conditions on a summary of the data rather than on the
-data themselves,
-
-\[
-p_{\mathrm{ABC}}(\vartheta \mid s_{\text{obs}}) \propto
-\int K(||s_{\text{obs}} - s||) \ p(s \mid \vartheta) \ p(\vartheta) \ ds,
-\]
-
-\noindent where $s_{\text{obs}}$ summarizes the observed data and $s$ the simulated ones,
-$||\cdot||$ is a distance and $K(\cdot)$ a kernel mapping distances to (unnormalized)
-densities, larger at smaller distances. Here $y_{\text{obs}}$ would be the unobserved
-binary vector of spread events and $s_{\text{obs}}$ is the set of cells the fire burned.
-Our dissimilarity is $||s_i - s_j|| = 1 - O_{ij}$, with $O_{ij}$ the spatial overlap
-between the observed and a simulated fire,
-
-\begin{equation}
-\label{eq:overlap}
-O_{ij} = \frac{|A_i \cap A_j|}{|A_i \cup A_j|},
-\end{equation}
-
-\noindent where $A$ is the set of cells burned by each fire, so that $O_{ij} = 1$ for
-identical fires and 0 when they share no burned cell. Every simulation of a mapped fire
-uses that fire's own data: its spatial predictors, its FWI and its ignition point.
+applies when a model can simulate data but its likelihood cannot be computed: it replaces
+the likelihood with simulation, favouring parameter values in proportion to how similar
+the fires they simulate are to the observed one. Similarity was measured by the spatial
+overlap between a simulated and the observed fire, the number of cells burned by both
+divided by the number burned by either, which is 1 for identical fires and 0 when they
+share no burned cell. Every simulation of a mapped fire used that fire's own data: its
+spatial predictors, its FWI and its ignition point.
 
 The full hierarchical model could not be sampled directly: the parameters are many, the
-kernel is stochastic, and it varies abruptly with $\boldsymbol{\beta}$, which makes
+ABC kernel is stochastic, and it varies abruptly with $\boldsymbol{\beta}$, which makes
 conventional MCMC prohibitively expensive. We therefore fitted it in two stages, following
-\citet{lunn2013fully}: stage 1 samples the posterior of $\boldsymbol{\beta}_f$ separately
-for each fire under a placeholder prior, and stage 2 combines those samples to estimate the
-hyperparameters, discounting the placeholder prior in the process. Splitting the model this
-way lets the difficult step, sampling $\boldsymbol{\beta}_f$, be handled with
-whatever algorithm suits it.
-
-\subsubsection*{Stage 1: fire-wise posteriors}
-
-For each of the 57 fires with a known ignition point we sampled $\boldsymbol{\beta}_f$
-with adaptive ABC sequential Monte Carlo \citep{delmoral2012adaptive}. The placeholder prior
-is uniform over the bounded parameter space $[\mathbf{L}, \mathbf{U}]$, which is a
-standard logistic distribution on the unconstrained scale on which the sampler works. We
-used $N = 10\,000$ particles, initialized from a Sobol sequence, and one simulated fire
-per particle. At each iteration the tolerance $\varepsilon$ was lowered by bisection to
-the value that halves the effective sample size, particles were reweighted under the
-kernel
-
-\[
-K(d) = (1 - d) \ \mathbb{I}_{d \le \varepsilon},
-\]
-
-\noindent that is, the spatial overlap truncated at the current tolerance, and then moved
-by one Metropolis step with a differential-evolution proposal
-\citep{terbraak2006markov}: the proposal for a particle is its current position plus the
-scaled difference between two other particles drawn with probability proportional to
-their weights, plus a small Gaussian jitter (scale $10^{-3}$). Sampling stopped when the
-acceptance rate fell below 0.015, when fewer than 300 distinct particles survived a move,
-or when $\varepsilon$ stopped decreasing appreciably (less than $10^{-4}$ for ten
-consecutive iterations). The upper bound on $\kappa$ was set separately for each fire, by
-simulating that fire's landscape with a spread probability of 1 and no step limit and
-recording the number of steps consumed before no burnable cell remained within reach.
-Beyond that value more steps cannot change the simulated fire, so the bound restricts the
-search without excluding any attainable fire size.
-
-\subsubsection*{Stage 2: hierarchical fit}
-
-Stage 2 ran an MCMC over all parameters, using the stage-1 samples as the proposal
-distribution for each $\boldsymbol{\beta}_f$, discounting the stage-1 placeholder prior, and
-updating most hyperparameters by Gibbs steps \citep{lunn2013fully}.
+\citet{lunn2013fully}. Stage 1 sampled the posterior of $\boldsymbol{\beta}_f$ separately
+for each of the 57 fires with a known ignition point, under a placeholder prior uniform
+over $[\mathbf{L}, \mathbf{U}]$, with adaptive ABC sequential Monte Carlo
+\citep{delmoral2012adaptive} whose particles move by Metropolis steps with a
+differential-evolution proposal \citep{terbraak2006markov}. Stage 2 combined those samples
+into the hierarchical model with a Metropolis-within-Gibbs sampler: each fire's stage-1
+sample served as the proposal for its own random effects, with the placeholder prior
+discounted in the acceptance ratio, while most hyperparameters were drawn directly from
+their conditional distributions in conjugate Gibbs steps. Splitting the model this way
+lets the difficult step, sampling $\boldsymbol{\beta}_f$, be handled with whatever
+algorithm suits it, and confines the fire simulator to stage 1.
 
 The 57 fires with a known ignition point are larger, on average, than the mapped record as
 a whole, which would bias the parameters that govern simulated fire size: the number of
 steps $\kappa_f$ and its hyperparameters $\gamma_{06}$, $\gamma_{16}$ and $\sigma_6$. To
 correct that bias we fitted, jointly with the rest of the model, an auxiliary regression
-relating the estimated number of steps to fire size, which lets the steps of the 178 fires
-with unknown ignition point, which cannot be simulated, be inferred from their area:
+relating fire area to the number of steps, which lets the steps of the 178 fires with
+unknown ignition point, which cannot be simulated, be inferred from their area.
 
-\begin{equation}
-\begin{aligned}
-    \log(a_f) &\sim \ \text{Normal}(\mu_f, \sigma_a)\text{T}[\log(10), ] \\
-    \mu_f &= \alpha_0 + \alpha_1 \, \log(\kappa_f), \qquad
-    \alpha_0 \sim \ \text{Normal}(-1.52, 10), \quad
-    \alpha_1 \sim \ \text{Normal}(0, 10),
-\end{aligned}
-\end{equation}
-
-\noindent with $a_f$ the area of fire $f$ (ha), truncated below at the 10\,ha mapping
-threshold. The prior on $\alpha_0$ was centred on the mean of $\log(a)$ over all mapped
-fires so as not to bias its estimation.
+Section~2 of the Supplementary material gives the full specification: the ABC posterior
+and the overlap, the tolerance schedule and the stopping rules of stage 1, the update used
+for each block of parameters in stage 2, the auxiliary regression and its priors, and the
+convergence diagnostics.
 
 The fire simulator is written in C\texttt{++} and distributed as the R package
 \texttt{FireSpread} v1.4 \citep{firespread} through \texttt{Rcpp} v1.1.0 \citep{Rcpp}. All
@@ -516,90 +467,48 @@ fitting and analysis was done in R 4.5.3 \citep{R}, with \texttt{terra} v1.8.70
 
 \subsection{Validation}
 
-Classical train/test validation is not appropriate here, for reasons we return to in the
-Discussion, and burn-probability models of this kind are conventionally judged on the
+Classical train/test validation is not appropriate here, for reasons given in Section~3 of
+the Supplementary material, and burn-probability models of this kind are conventionally judged on the
 emergent properties of the regime they generate rather than on point predictions of
 individual fires \citep{parisien2020commentary}. We therefore validated the model in the
 pattern-oriented sense \citep{grimm2005pattern, hartig2011statistical}: we asked whether
 statistical patterns emerging from many simulated fires match those of the observed
-record, using patterns the fitting procedure did not target. Two exercises did this at
-two scales: one mapped fire at a time, from its own ignition point, and the whole
-record at once. Neither recalibrated any parameter.
+record, using patterns the fitting procedure did not target. Two exercises did this at two
+scales, one mapped fire at a time and the whole record at once, and neither recalibrated
+any parameter.
 
-\subsubsection*{Re-simulating the mapped fires}
+The first re-simulated the mapped fires. For each of the 57 fires with a known ignition
+point we simulated 2000 fires from that fire's own ignition cell and landscape under its
+fitted random effects, and 2000 more under random effects drawn afresh from the population
+distribution at that fire's FWI. Each simulated fire was reduced to its spatial overlap
+with the observed one, its burned area overall and within each of the five vegetation
+classes, its compactness ($4\pi \times$ area / perimeter$^2$) and the deviation of its
+principal axis from the fire's own wind axis. Each statistic was then turned into a scaled
+quantile residual \citep{dunn1996randomized}, the position of the observed value among the
+2000 simulated ones, computed with \texttt{DHARMa} v0.4.7 \citep{DHARMa}: uniform on
+$(0, 1)$ if the model is calibrated for that statistic.
 
-For each of the 57 fires with a known ignition point we simulated 2000 fires from that
-fire's ignition cell on that fire's landscape, twice: once under the fire's own fitted
-parameter vector and once under a vector drawn afresh from the population distribution at
-that fire's FWI: the fitted and the simulated parameters defined above. Each simulated
-fire was reduced to its spatial overlap with the observed one (Eqn~\ref{eq:overlap}), its
-burned area overall and within each of the five vegetation classes, its compactness
-($4\pi \times$ area / perimeter$^2$) and the deviation of its principal axis from the
-fire's wind axis. Orientation is the bearing of the leading eigenvector of a principal
-component analysis of the coordinates of the burned cells; the wind axis of a fire is the
-circular mean of wind direction over the cells the \emph{observed} fire burned, and the
-same axis scores that fire and all of its simulations, since WindNinja steers the field
-by terrain and one regional direction does not describe every fire.
+The second simulated a fire regime over the whole study area, partitioned into four
+latitudinal tiles that together cover 99.1\,\% of it. Every simulated fire took an FWI
+value resampled from the mapped record, a draw from the joint posterior of the
+hyperparameters, random effects drawn afresh for a \emph{new} fire, and an ignition cell
+in a tile, so that both hyperparameter and between-fire uncertainty are propagated and no
+fitted fire's own random effects are reused. Fires below the 10\,ha mapping threshold have
+no observed counterpart and were discarded, leaving 64\,836 simulated fires. We compared
+these with the observed record in two respects: the distribution of fire size, compared
+as overlaid densities, a quantile--quantile plot and a Kolmogorov--Smirnov statistic, and
+fire shape, measured as compactness and as the deviation of a fire's principal axis from the
+dominant regional wind axis. Both need only a rasterized perimeter, so the observed
+reference is every mapped fire in the record, and not only the 57 with a known ignition
+point. Both shape statistics depend strongly on fire size, and size is
+itself one of the things being tested, so the comparisons were made conditionally on
+burned area as well as marginally, and repeated conditionally on FWI, which tests the
+model's most distinctive structural claim: that the parameters of spread shift with fire
+weather.
 
-Each statistic was then turned into a scaled quantile residual
-(\texttt{DHARMa} v0.4.7; \citealt{DHARMa}): the position of the observed value within the
-2000 simulated ones, randomized across ties for the discrete areas, which is uniform on
-$(0, 1)$ if the model is calibrated for that statistic. Sorting the 57 residuals against
-the expected uniform quantiles gives one quantile--quantile plot per statistic; points
-below the 1:1 line mean the model simulates too much of the quantity, points above it too
-little. A vegetation class with fewer than 30 burnable cells (2.7\,ha) in a fire's
-landscape was dropped from that class's panel: with almost nothing of the class available
-to burn, observed and simulated areas are both zero and the residual is only tie
-randomization. Simulations that burned fewer than three cells have no principal axis, and
-were resampled from the same fire's remaining draws, so the two shape statistics ask a
-conditional question: given that the model produced a fire at all, is the observed
-shape a typical one?
-
-\subsubsection*{The regional simulation experiment}
-
-We also simulated fires over the whole study area, partitioned into four latitudinal tiles
-that together cover 99.1\,\% of it, the domain over which the observed record is
-complete. For each simulated fire we drew, in this order: an FWI value, resampled with
-replacement from the values of the mapped fires, so the simulated marginal matches the
-observed one exactly; a draw from the joint posterior of the hyperparameters; a parameter
-vector for a \emph{new} fire from the population distribution
-$\text{MVLN}(\boldsymbol{\mu}(\mathrm{FWI}), \boldsymbol{\Sigma})$, so that both
-hyperparameter and between-fire uncertainty are propagated and no fitted fire's own
-parameters are reused; a tile, with probability proportional to the number of eligible
-cells it contains; and an ignition cell, uniformly among those. Eligible cells are those
-inside the study area, burnable, and far enough from the tile borders that a fire of
-$\kappa$ steps cannot reach them. Since the automaton advances at most one cell per
-step, this guarantees that no fire is truncated by a tile border. Drawing $\kappa$ before
-the tile and the ignition cell, rather than rejecting ignitions that do not fit, leaves the
-marginal distribution of $\kappa$ untouched and so does not shrink the simulated size
-distribution.
-
-Simulated fires below 10\,ha were discarded, because the mapping records nothing smaller
-and they have no observed counterpart. One pass of 148\,649 proposals left 64\,836 fires
-of at least 10\,ha (43.6\,\%), and those are the simulated fires analysed below.
-
-\subsubsection*{Analyses}
-
-We compared simulated and observed fires in two ways.
-
-\textbf{Size distribution.} Simulated against observed $\log_{10}(\mathrm{area})$, as
-overlaid densities, a quantile--quantile plot and a Kolmogorov--Smirnov statistic.
-
-\textbf{Shape.} From the burned cells of each fire in raster space we computed area,
-perimeter, compactness and orientation, the last reported as its deviation from the
-dominant wind axis: $0^\circ$ for a fire running along the wind, $90^\circ$ across it,
-and $45^\circ$ the expectation if fires were oriented at random. Here the axis is the
-fixed regional direction the tiles were driven with (113/293$^\circ$), because the
-observed fires without a mapped ignition point carry no wind field of their own. These
-metrics need only a rasterized perimeter, so the observed reference is every mapped fire
-in the record across every size class (241 perimeters, including the six the model
-could not use for lack of weather data), and not only the 57 with a known ignition
-point.
-
-Both shape statistics depend strongly on fire size, and size is itself one of the things
-being tested, so the comparisons are made conditionally on burned area as well as
-marginally. We repeated them conditionally on FWI, which tests the model's most
-distinctive structural claim: that the parameters of spread shift with fire weather.
+Section~3 of the Supplementary material gives both exercises in full: the definition of
+each statistic and the cases it excludes, how tiles and ignition cells were drawn, and the
+conditional comparisons.
 
 \section{Results}
 
@@ -658,30 +567,30 @@ than by holding the flammable ones back.
 
 \subsection{Re-simulating the mapped fires}
 
-Given each fire's own fitted parameters, the simulator reproduced the mapped fires
+Given each fire's own fitted random effects, the simulator reproduced the mapped fires
 reasonably well: the median spatial overlap over the 57 fires was 0.53 (range
 0.15--0.83; Fig.~S4) and the median ratio of simulated to observed size was 1.09, with
-55 of 57 fires within a factor of two (Fig.~S5). Under parameters drawn afresh from the
+55 of 57 fires within a factor of two (Fig.~S5). Under random effects drawn afresh from the
 population distribution, both collapsed: median overlap 0.11 (range 0.03--0.24) and
 median size ratio 1.51, with only 28 of 57 fires within a factor of two. The per-cell
-picture is the same (Fig.~\ref{fig:bp}): with fitted parameters the high-probability
-region follows the observed perimeter closely, whereas with simulated parameters
+picture is the same (Fig.~\ref{fig:bp}): with fitted random effects the high-probability
+region follows the observed perimeter closely, whereas with simulated random effects
 probability spreads out around the ignition point and the perimeter is no longer traced.
 
 The quantile residuals sharpen this into a statement about calibration
 (Fig.~\ref{fig:dharma}, Table~\ref{tab:dharma}). For burned area, the observed values sat
-low in their own predictive distributions under fitted parameters (mean residual 0.373
+low in their own predictive distributions under fitted random effects (mean residual 0.373
 over all vegetation types, 65\,\% of fires below the simulated median), so the model
-burns somewhat too much; under simulated parameters it overshot much further (0.686, only
-19\,\% below). Among vegetation classes, grassland was the least calibrated under fitted
-parameters (0.231, Kolmogorov--Smirnov $D = 0.52$) and subalpine forest the best (0.534,
+burns somewhat too much; under simulated random effects it overshot much further (0.686, only
+19\,\% below). Among vegetation classes, grassland was the least calibrated under fitted random
+effects (0.231, Kolmogorov--Smirnov $D = 0.52$) and subalpine forest the best (0.534,
 $D = 0.22$).
 
 The two shape statistics behaved differently, and they are the paper's main negative
-result. Under simulated parameters the mean compactness residual was 0.163, with 96\,\%
+result. Under simulated random effects the mean compactness residual was 0.163, with 96\,\%
 of observed fires less compact than the median simulation of their own fire, and the
 mean wind-axis residual was 0.245, with 90\,\% of observed fires better aligned with
-their own wind than the median simulation. Under fitted parameters both are closer to
+their own wind than the median simulation. Under fitted random effects both are closer to
 calibration (0.429 and 0.325), as expected of a fit diagnostic against an out-of-sample
 one, but the sign is the same: real fires are less compact and better aligned with the
 wind than the model makes them. Every panel departs from uniformity at $P < 0.05$ in
@@ -716,8 +625,8 @@ observed and 50$^\circ$ simulated.
 %TC:ignore
 \begin{table*}[tp]
 \tbl{Calibration of the model against the 57 fires with a known ignition point
-(Fig.~\ref{fig:dharma}). For each statistic and each way of setting the spread
-parameters, the mean scaled quantile residual over fires (0.5 under perfect
+(Fig.~\ref{fig:dharma}). For each statistic and each way of setting the
+random effects, the mean scaled quantile residual over fires (0.5 under perfect
 calibration), the fraction of fires whose observed value falls below the median of its
 own 2000 simulations (0.5 under perfect calibration) and the Kolmogorov--Smirnov
 statistic against the uniform distribution. $n$ is the number of fires entering the
@@ -725,7 +634,7 @@ panel; a fire is excluded from a vegetation class if fewer than 30 cells of that
 were available to burn in its landscape.\label{tab:dharma}}{%
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrr}
 \toprule
-& & \multicolumn{3}{c}{Fitted parameters} & \multicolumn{3}{c}{Simulated parameters} \\
+& & \multicolumn{3}{c}{Fitted random effects} & \multicolumn{3}{c}{Simulated random effects} \\
 \cmidrule(lr){3-5} \cmidrule(lr){6-8}
 Statistic & $n$ & Residual & Frac. below & $D$ & Residual & Frac. below & $D$ \\
 \midrule
@@ -743,7 +652,7 @@ Deviation from wind axis  & 57 & 0.325 & 0.70 & 0.43 & 0.245 & 0.90 & 0.47 \\
 
 \begin{table*}[tp]
 \tbl{Median shape of observed and simulated fires by size class, over the whole study
-area: 241 mapped fire perimeters against 64\,836 simulated fires. Compactness is
+area: the mapped fire perimeters against the 64\,836 simulated fires. Compactness is
 $4\pi \times$ area / perimeter$^2$, larger for rounder fires. Deviation from the wind axis
 is the angle between a fire's principal axis and the regional wind direction, folded into
 0--90$^\circ$; a set of randomly oriented fires would have a median of 45$^\circ$ and a
@@ -809,12 +718,12 @@ bands are the mean and the 95\,\% credible interval of the posterior.}
 \centering
 \includegraphics[width=0.65\textwidth]{fig5_burn_probability}
 \caption{Per-cell burn probability for four of the fires with a known ignition point,
-from 2000 simulations under the fire's own fitted parameters (A) and 2000 under
-parameters drawn afresh from the estimated distribution (B). The four fires span three
+from 2000 simulations under the fire's own fitted random effects (A) and 2000 under
+random effects drawn afresh from the estimated distribution (B). The four fires span three
 orders of magnitude in size and a gradient of goodness of fit. The observed perimeter is
 outlined in white and the ignition point is the white dot; the base map distinguishes
 burnable from non-burnable ground. The number in each panel is the mean spatial overlap
-(Eqn~\ref{eq:overlap}) between the simulated and the observed fire over the 2000
+between the simulated and the observed fire over the 2000
 simulations. The blocky outer boundary of the probability surface is the limit set by the
 number of steps $\kappa$, not a landscape edge.}
 \label{fig:bp}
@@ -830,7 +739,7 @@ Points on the 1:1 line indicate a calibrated model, points below it that the mod
 simulates too much of the quantity and points above it too little. (A--F) burned area,
 overall and within each vegetation class; (G) compactness; (H) the deviation of the
 fire's principal axis from its own wind axis. Colours distinguish the two ways of setting
-the spread parameters. Summary statistics are in Table~\ref{tab:dharma}.}
+the random effects. Summary statistics are in Table~\ref{tab:dharma}.}
 \label{fig:dharma}
 \end{figure*}
 
@@ -845,8 +754,8 @@ and on burned area (right). Simulated fires are shown as a hexagonal-bin density
 logarithmic count scale and observed fires as points, with a generalized additive
 smoother through each. FWI is on the same anomaly scale as
 Figs.~\ref{fig:curves}--\ref{fig:vegeffect}. The vertical striping of the left-hand
-panels is real: FWI was resampled from the 233 distinct values of the mapped record, so
-the simulated set takes only those values.}
+panels is real: FWI was resampled from the values of the mapped record, so the simulated
+set takes only those values.}
 \label{fig:validation}
 \end{figure*}
 
@@ -861,21 +770,21 @@ the simulated set takes only those values.}
 %     it compares with the thesis-era estimation;
 %   * implications for the regime simulator this model feeds (paper 2).
 
-\subsection*{Fitted and simulated parameters mean different things}
+\subsection*{Fitted and simulated random effects mean different things}
 
 The model reproduces a mapped fire well when it is given that fire's own
-parameters and poorly when it is given parameters drawn from the population.
+random effects and poorly when it is given random effects drawn from the population.
 That gap is not a failure of the fit; it is a measurement of how much of a
-fire's behaviour is carried by the things the parameters absorb. Within a
+fire's behaviour is carried by the things the random effects absorb. Within a
 fortnight the model sees one wind direction, one regional wind speed, one FWI
 value and no suppression at all, so a fire that was fanned by an unusually
 strong wind, or stopped early by rain or by fire crews, can only be represented
-through its own parameter vector. Simulating with a fresh vector is therefore
+through its own random effects. Simulating with a fresh draw is therefore
 simulating a different fire under the same weather index and on the same
 landscape, and the drop in overlap from 0.53 to 0.11 measures the width of that
 distribution rather than an error. The same reading applies to the size
-statistics: under fitted parameters simulated and observed sizes agree within a
-factor of two for 55 of the 57 fires, and under simulated parameters they do
+statistics: under fitted random effects simulated and observed sizes agree within a
+factor of two for 55 of the 57 fires, and under simulated random effects they do
 not. What the regime simulator needs is the second mode: it has to generate
 plausible fires, not to retrodict particular ones. That is why the
 record-wide experiment, and not the per-fire overlap, is the test that matters
@@ -911,7 +820,7 @@ the wind term having saturated. The
 fitted fires sit firmly in that saturated regime: the median fitted wind
 coefficient is 4.9, which over typical wind speeds in these landscapes gives a
 median downwind-to-upwind logit difference of about 25, and 82\,\% of fires
-exceed a difference of 6. Against a ceiling of about 1.9, 61\,\% of the 241
+exceed a difference of 6. Against a ceiling of about 1.9, 61\,\% of the
 mapped fires are more elongated than the model can be, rising to 78\,\% among
 fires larger than 1000\,ha; the observed distribution runs 1.31, 2.12 and 3.78 at
 the 10th, 50th and 90th percentiles, with a maximum of 7.55. No value of the
@@ -946,25 +855,6 @@ the wind field is spatially uniform in direction and near-constant in magnitude,
 in fitting as in simulation, so the fitted coefficient has no way to express the
 day-to-day gustiness that drives real head-fire runs.
 
-\subsection*{Why we did not use classical cross-validation}
-
-Holding out a fifth of the fires would have degraded the model without testing
-what matters about it. Fifty-seven fires is already few for a six-parameter
-hierarchical model with sign-constrained bounds, a multivariate logit-normal on
-the transformed parameters and an auxiliary regression of area on the number of
-steps that depends on the fitted $\kappa_f$; the observed size distribution is
-heavy-tailed and sharply peaked, which makes it an unstable target to estimate
-from a few dozen fires; and the hierarchical structure is itself a regulariser,
-so a held-out fire's parameters would mostly reproduce the population mean plus
-noise. The model is also deliberately underparameterised for the process
-(fixed functional forms, sign restrictions, a fixed decay $\tau$, bounded
-parameter ranges), so overfitting is not the failure mode cross-validation is
-designed to catch. What we want to know is whether the simulator generates fires
-with the statistical properties of the ones that actually occur, which is the
-question pattern-oriented validation asks
-\citep{grimm2005pattern, hartig2011statistical}, and it is the standard by which
-burn-probability models are usually judged \citep{parisien2020commentary}.
-
 \section{Conclusion}
 
 Bla.
@@ -995,7 +885,10 @@ Fig.~\ref{fig:vegeffect} rests on; spread probability against the raw predictors
 than the indices (Fig.~S2); the posterior correlations among the six spread parameters,
 marginal to and conditional on FWI (Fig.~S3); and the fit to the 57 fires with a known
 ignition point, as spatial overlap (Fig.~S4) and as the ratio of simulated to observed
-size (Fig.~S5).
+size (Fig.~S5). It also gives in full the parameter-estimation procedure --- the ABC
+posterior, the two-stage fit and the samplers used in each stage (Section~2) --- and the
+two validation exercises, with the definition of every statistic they use and the reasons
+for not using classical cross-validation (Section~3).
 
 \section{Acknowledgements}
 
