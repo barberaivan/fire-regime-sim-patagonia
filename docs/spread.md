@@ -258,6 +258,9 @@ shared intercept drops out. Fitted with `survival::clogit(method = "exact")` —
 8 members and often several cases, where Breslow/Efron genuinely differ. Donors subsampled to
 1500 per fire.
 
+**None of this is in the paper**, deliberately and for good — see *The manuscript* below. The
+analysis, the code and the numbers stay here; that is the whole record of it.
+
 **Predictors: `vfi` and `tfi` only, both in one multiple regression.** The slope and wind terms
 of `spread_one_cell_prob()` are *directional* — they depend on which cell the fire actually
 arrived from — and for an observed fire the burn order is unknown, so the donor is a guess at
@@ -692,9 +695,12 @@ same layer the panels' provincial boundaries come from, and crop to the inset bo
 drops the Antarctic claim carried by Tierra del Fuego, and it would otherwise stretch the inset
 to the pole).
 
-**The script writes two versions**, `fig1_study_area_stacked` and `fig1_study_area_below`,
-differing only in where the panel A and B keys sit — see `docs/roadmap.md`. Once Iván picks one,
-drop the other from `variants` and the suffix goes away.
+**The keys sit under their panels** (Iván, 2026-09-02): panel A's legend under panel A and
+panel B's colourbar under panel B, as the published QGIS figure has them, with only the
+vegetation legend pulled out into the fourth column under the inset. It costs the maps about a
+fifth of their height, which is why the figure is 18.5 cm tall rather than 16.5. The script used
+to write a second, more compact `stacked` version with all three legends in the fourth column;
+that variant is gone, and the file is plain `fig1_study_area.{png,pdf}` with no suffix.
 
 **Base layers live in the store**, in `data/study_area_figure_layers/` — moved there on
 2026-09-01 from the two Insync folders the QGIS project used, so the figure rebuilds on any
@@ -752,7 +758,7 @@ One more trap on the R side: the vegetation layer is drawn with
 resamples, and a class that is the average of two others does not exist — the same failure the
 GEE script's `reduceResolution`/`mode` guards against, one step further downstream.
 
-Departures from the QGIS original, and the open questions on it, are listed in `docs/roadmap.md`.
+Departures from the QGIS original are listed above; there are no open questions left on it.
 
 ### The manuscript — how it is built, and what is written
 
@@ -790,11 +796,20 @@ supplementary complete. **Introduction, Conclusion, abstract, keywords and onlin
 still stubs.** `make words` is at ~5690 of 6000 with those stubs in place, so the Methods cut
 Iván flagged is now unavoidable rather than optional.
 
-**The conditional-logistic spatial signature is not in the paper.** `vfi`/`tfi` were dropped
-from the figures on 2026-08-31, so the Methods paragraph describing `edge_clogit()` was removed
-with them and no result is reported. The analysis itself stays in the repo and in this file —
-`observed_signature.rds` and `validation_summary.rds$signature` are still written and still the
-place the `tfi` sign mismatch is recorded.
+**The software entries in `references.bib` must match the machine the analysis was run on.**
+They had drifted (the `R` entry still said 2022 against the Methods' R 4.5.3), so they are now
+set from `packageDescription()` and were checked on 2026-09-02: R 4.5.3 (2026), `terra` 1.8-70
+(2025), `DHARMa` 0.4.7 (2024), `survival` 3.8-9 (2026). Re-check them at submission — the year
+of a `@misc` software entry is the release year of *that version*, not of the package.
+
+**The conditional-logistic spatial signature is not in the paper, and is not coming back.**
+`vfi`/`tfi` were dropped from the figures on 2026-08-31, so the Methods paragraph describing
+`edge_clogit()` was removed with them and no result is reported. Iván confirmed the omission on
+2026-09-02, knowing its cost: a real negative result — the simulated `tfi` edge signature has
+the wrong sign at small sizes — goes unreported, and it is not to be rescued as a supplementary
+figure either. Treat it as settled rather than as an open question. The analysis itself stays in
+the repo and in this file — `observed_signature.rds` and `validation_summary.rds$signature` are
+still written and still the place the `tfi` sign mismatch is recorded.
 
 ### What each test can and cannot diagnose
 
@@ -966,11 +981,12 @@ Of the 241, **six have no FWI record** (`1999_1319185782`, `1999_1689435445`,
 use; collapsing the two splits gives the csv's 233 distinct fires.
 
 **For the paper, always say 235 = 57 + 178.** The one place that does not match is the shape
-analysis, which was run over the 238 polygons of the base shapefile — it needs no weather and
-no ignition point, so it can use fires the fit cannot. Either re-run it on the 235 for a single
-number throughout, or keep 238 and say in the text that the shape reference set is every mapped
-polygon rather than only the fires the model was fitted to. The manuscript currently takes the
-second route and gives no count there.
+comparison, whose observed reference is the full **241** (57 focal + 184 reduced landscapes,
+`validation_observed.R`): shape needs neither weather nor an ignition point, so it can use the
+six fires the fit cannot. **Decided 2026-09-02: leave the two numbers as they are** — the
+Methods state 241 there and say in one clause why, and the shape analysis is *not* re-run on
+the 235 to make one number hold throughout. The discrepancy is not worth the rerun, and it is
+not to be raised again as an open question.
 
 ### Cost and parallelization
 

@@ -6,7 +6,7 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-02
 
 Where finished work is written up:
 
@@ -17,6 +17,7 @@ Where finished work is written up:
 | Spread validation — design, run order, results, Figs. 5–7 | `docs/spread.md` |
 | Every paper figure's script, and Fig. 1's base layers moving into the store | `docs/spread.md` |
 | The manuscript build (two documents, the two-column traps) and what prose is written | `docs/spread.md` → *The manuscript* |
+| The four answered questions of 2026-09-02 (shape's 241, the dropped spatial signature, Fig. 1's legend placement, the software citations) | `docs/spread.md` |
 | Machine setup (WindNinja build, GEE asset paths) | `README.md` → *Getting started* |
 
 ---
@@ -71,18 +72,3 @@ Methods, Results, the supplementary and a partial Discussion are written (see
 
 - **Author block.** Affiliations, ORCIDs, co-authors and the author-contributions
   statement are all still template text.
-
-### Questions for Iván (decide/review)
-
-1. **The shape reference set is 241 mapped perimeters**, not the 235 = 57 + 178 the paper
-   says everywhere else — shape needs no weather and no ignition point, so it can use the
-   six fires the fit cannot. The Methods now state 241 and say why. Accept, or re-run the
-   shape analysis on the 235 for one number throughout?
-2. **The spatial signature is out of the paper**, following the 2026-08-31 decision to drop
-   `vfi`/`tfi` from the figures: no figure carried it, so its Methods paragraph went too.
-   That loses a real negative result (the simulated `tfi` edge signature has the wrong sign
-   at small sizes). Leave it out, or bring it back as a supplementary figure?
-3. **Fig. 1 still builds both variants.** Only `stacked` is in the paper. Drop `below` from
-   `variants` in `spread/figure_study_area.R` and let the file name lose its suffix?
-4. **The `R` bibliography entry says 2022** while the Methods say R 4.5.3. Same for any
-   other package whose `note` field has drifted from the installed version.

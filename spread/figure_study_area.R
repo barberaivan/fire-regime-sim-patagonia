@@ -461,19 +461,9 @@ p_inset <- ggplot() +
 
 # Assembly ----------------------------------------------------------------
 
-# TWO VERSIONS, for Iván to choose between; they differ only in where the
-# panel A and panel B keys sit.
-#
-#   "stacked"  all three legends pulled out and stacked in a fourth column
-#              under the inset. Compact, and the three maps stay full height.
-#   "below"    A's key under panel A and B's colourbar under panel B, as the
-#              published QGIS figure has them; only the vegetation legend stays
-#              in the fourth column. Reads more directly, and costs the maps
-#              about a fifth of their height.
-#
-# Whichever wins, delete the other from `variants` and drop the suffix from its
-# file name.
-variants <- c("stacked", "below")
+# Panel A's key sits under panel A and panel B's colourbar under panel B, as the
+# published QGIS figure has them; only the vegetation legend is pulled out into
+# the fourth column, under the inset.
 
 strip_legend <- function(p) p + theme(legend.position = "none")
 grab <- function(p) ggpubr::as_ggplot(ggpubr::get_legend(p))
@@ -496,38 +486,26 @@ below_theme <- function(p, ...) {
 # the figure's height decides how wide the three maps come out, and a height
 # that is too generous just puts a white band above and below them. At 17 cm
 # wide the three panels plus the legend column leave each map about 3.5 cm, so
-# ~15 cm of drawn map: 16.5 cm of figure is the shape with no slack. The
-# "below" version needs the extra height its two keys take.
-assemble <- function(variant) {
-  if (variant == "stacked") {
-    leg_col <- grab(p_c) / grab(p_b) / grab(p_a) +
-      plot_layout(heights = c(1.6, 1, 1.3))
-    left <- list(strip_legend(p_a), strip_legend(p_b))
-    right <- p_inset / leg_col + plot_layout(heights = c(1, 2.7))
-  } else {
-    left <- list(
-      below_theme(p_a, fill = guide_legend(ncol = 1),
-                  colour = guide_legend(ncol = 1)),
-      below_theme(p_b, fill = guide_colourbar(
-        title.position = "top", barwidth = unit(4, "mm"),
-        barheight = unit(14, "mm"))))
-    right <- p_inset / grab(p_c) + plot_layout(heights = c(1, 2.2))
-  }
+# ~15 cm of drawn map; 18.5 cm of figure leaves that much map plus the height
+# the two keys under panels A and B take.
+assemble <- function() {
+  left <- list(
+    below_theme(p_a, fill = guide_legend(ncol = 1),
+                colour = guide_legend(ncol = 1)),
+    below_theme(p_b, fill = guide_colourbar(
+      title.position = "top", barwidth = unit(4, "mm"),
+      barheight = unit(14, "mm"))))
+  right <- p_inset / grab(p_c) + plot_layout(heights = c(1, 2.2))
   (left[[1]] | left[[2]] | strip_legend(p_c) | right) +
     plot_layout(widths = c(1, 1, 1, 1.3))
 }
 
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
-for (variant in variants) {
-  fig <- assemble(variant)
-  stem <- if (length(variants) == 1) "fig1_study_area"
-          else paste0("fig1_study_area_", variant)
-  for (ext_ in c("png", "pdf")) {
-    f <- file.path(fig_dir, paste0(stem, ".", ext_))
-    ggsave(f, plot = fig, width = 17,
-           height = if (variant == "below") 18.5 else 16.5, units = "cm",
-           dpi = 400, bg = "white",
-           device = if (ext_ == "pdf") grDevices::cairo_pdf else NULL)
-    cat("wrote", f, "\n")
-  }
+fig <- assemble()
+for (ext_ in c("png", "pdf")) {
+  f <- file.path(fig_dir, paste0("fig1_study_area.", ext_))
+  ggsave(f, plot = fig, width = 17, height = 18.5, units = "cm",
+         dpi = 400, bg = "white",
+         device = if (ext_ == "pdf") grDevices::cairo_pdf else NULL)
+  cat("wrote", f, "\n")
 }
