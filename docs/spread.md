@@ -606,7 +606,12 @@ posterior summary, renamed so it does not mask `dplyr::summarise`), `nice_theme(
    two are easy to confuse and differ by a lot: FWI was already a pixel-level standardized
    anomaly before the fit standardized it *again* across the 235 fires, so a model-internal 0 is
    an anomaly of **+0.86**. The three levels of Figs. 2 and S2 are stored as
-   -1.614 / 0 / 1.672 and printed as **-0.60 / 0.86 / 2.38**.
+   -1.614 / 0 / 1.672 and printed as **-0.60 / 0.86 / 2.38**. Fig. 7 was the last exception and
+   was converted on 2026-09-02, so every paper figure with an FWI axis now reads the same:
+   `figure_validation_metrics.R` sources `R/spread_figure_functions.R` and back-transforms the
+   simulated side with `fwi_to_original()`, while the observed side is read straight off
+   `observed_signature.rds$fwi`, which was already the anomaly (it used to be standardized and
+   then un-standardized, the same number by a longer road).
 
 3. **`draws$ranef` mixes scales.** Row `steps` is stored on the natural scale, the other five on
    the logit scale; only rows `1:(n_coef - 1)` are back-transformed. Documented at length in

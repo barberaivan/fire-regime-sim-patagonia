@@ -36,7 +36,11 @@
 # as points, a GAM smoother on each side.
 #
 # Axis sizes are drawn on a log10 scale but labelled in hectares, never in
-# log units. Axis TITLES appear only once per column (bottom) and once per row
+# log units. FWI is likewise shown on its ORIGINAL ANOMALY SCALE, not on the
+# standardized scale the fit works on, so this figure's x axis reads the same
+# as Figs. 2, 3, 4 and S2. The two are easy to confuse and far apart: FWI was
+# already a pixel-level standardized anomaly before the fit standardized it
+# again across the 235 fires, so a model-internal 0 is an anomaly of +0.86. Axis TITLES appear only once per column (bottom) and once per row
 # (left), since every column shares an x scale and every row a y scale.
 #
 # The hex bins are visibly striped in the FWI panels because FWI is resampled
@@ -52,6 +56,9 @@ library(viridis)
 library(scales)
 theme_set(theme_bw())
 source(file.path("R", "spread_validation_functions.R"))
+# for fwi_scale() and fwi_to_original() — the one place the back-transform is
+# written, shared with the other paper figures
+source(file.path("R", "spread_figure_functions.R"))
 
 # Settings ----------------------------------------------------------------
 
@@ -71,7 +78,7 @@ qq_col <- viridis_pal(option = "D", end = 0.5)(2)[2]
 set_levels <- c("Simulated", "Observed")
 set_cols <- setNames(c(sim_col, obs_col), set_levels)
 
-lab_fwi <- "FWI anomaly (standardized)"
+lab_fwi <- "Fire Weather Index anomaly"
 lab_size <- "Burned area (ha)"
 lab_compact <- "Compactness"
 lab_dev <- "Deviation from wind axis (°)"
@@ -83,22 +90,25 @@ obs_sig <- readRDS(file.path(val_dir, "observed_signature.rds"))
 obs_shp <- readRDS(file.path(val_dir, "observed_shape.rds"))
 stopifnot(identical(obs_sig$fire_id, obs_shp$fire_id))
 
-fwi_scale <- readRDS(file.path("files", "hierarchical_model",
-                               "fwi_mean_sd_spread.rds"))
+fwi_sc <- fwi_scale()
 
 # Angular distance to the 113/293 axis, in degrees (0 = perfectly wind-aligned,
 # 90 = perpendicular). `orientation` is a bearing mod 180, so the axis is 113.
 axis_dev <- function(ori) pmin(abs(ori - 113), 180 - abs(ori - 113))
 
+# `sim$fwi_z` is standardized (it is what the simulator drew the parameters
+# with) and `obs_sig$fwi` is already the anomaly the observed fire carried, so
+# only the simulated side is back-transformed. Standardizing the observed side
+# and then undoing it, as this did before, is the same number by a longer road.
 d <- rbind(
   data.frame(set = "Simulated",
              area_ha = sim$area_ha,
-             fwi_z = sim$fwi_z,
+             fwi = fwi_to_original(sim$fwi_z, fwi_sc),
              compactness = sim$compactness,
              axis_dev = axis_dev(sim$orientation)),
   data.frame(set = "Observed",
              area_ha = obs_shp$area_ha,
-             fwi_z = (obs_sig$fwi - fwi_scale$fwi_mean) / fwi_scale$fwi_sd,
+             fwi = obs_sig$fwi,
              compactness = obs_shp$compactness,
              axis_dev = axis_dev(obs_shp$orientation))
 )
@@ -109,7 +119,7 @@ d$set <- factor(d$set, levels = set_levels)
 # One x range per column and one y range per row, so the panels line up and the
 # titles can be dropped everywhere but the margins.
 finite_range <- function(x) range(x[is.finite(x)])
-xlim_fwi <- finite_range(d$fwi_z)
+xlim_fwi <- finite_range(d$fwi)
 xlim_size <- finite_range(d$area_ha)
 
 area_breaks <- 10^(1:6)
@@ -125,7 +135,7 @@ area_scale <- function(which_axis) {
 #' One conditioned panel.
 #'
 #' @param yvar column of `d` on the y axis; "area_ha" switches y to log10.
-#' @param xvar "fwi_z" or "area_ha"; the latter switches x to log10.
+#' @param xvar "fwi" or "area_ha"; the latter switches x to log10.
 #' @param ylab,xlab NULL drops the title (used everywhere but the margins).
 #' @param legend draw the two guides in this panel (collected by patchwork).
 metric_panel <- function(yvar, xvar, ylab = NULL, xlab = NULL,
@@ -238,11 +248,11 @@ fig_a <- p_dens + p_qq
 # Part B — the conditioned metrics ----------------------------------------
 
 # Row 1 has no size ~ size panel; the guides go in the gap it leaves.
-p_size_fwi <- metric_panel("area_ha", "fwi_z", ylab = lab_size, legend = TRUE) +
+p_size_fwi <- metric_panel("area_ha", "fwi", ylab = lab_size, legend = TRUE) +
   ggtitle("(B)") + theme(plot.title = element_text(size = 10))
-p_comp_fwi <- metric_panel("compactness", "fwi_z", ylab = lab_compact)
+p_comp_fwi <- metric_panel("compactness", "fwi", ylab = lab_compact)
 p_comp_size <- metric_panel("compactness", "area_ha")
-p_dev_fwi <- metric_panel("axis_dev", "fwi_z", ylab = lab_dev, xlab = lab_fwi)
+p_dev_fwi <- metric_panel("axis_dev", "fwi", ylab = lab_dev, xlab = lab_fwi)
 p_dev_size <- metric_panel("axis_dev", "area_ha", xlab = lab_size)
 
 fig_b <- p_size_fwi + guide_area() +

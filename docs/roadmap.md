@@ -74,19 +74,15 @@ Methods, Results, the supplementary and a partial Discussion are written (see
 
 ### Questions for Iván (decide/review)
 
-1. **Fig. 7's FWI axis is on the fit's standardized scale** (`-1.6 … 1.9`) while Figs. 2–4
-   are on the anomaly scale (`-0.60 … 2.38`). One figure disagrees with three. Convert
-   Fig. 7 in `spread/figure_validation_metrics.R`, or leave it and let the caption carry
-   the difference? The caption currently says so explicitly.
-2. **The shape reference set is 241 mapped perimeters**, not the 235 = 57 + 178 the paper
+1. **The shape reference set is 241 mapped perimeters**, not the 235 = 57 + 178 the paper
    says everywhere else — shape needs no weather and no ignition point, so it can use the
    six fires the fit cannot. The Methods now state 241 and say why. Accept, or re-run the
    shape analysis on the 235 for one number throughout?
-3. **The spatial signature is out of the paper**, following the 2026-08-31 decision to drop
+2. **The spatial signature is out of the paper**, following the 2026-08-31 decision to drop
    `vfi`/`tfi` from the figures: no figure carried it, so its Methods paragraph went too.
    That loses a real negative result (the simulated `tfi` edge signature has the wrong sign
    at small sizes). Leave it out, or bring it back as a supplementary figure?
-4. **Fig. 1 still builds both variants.** Only `stacked` is in the paper. Drop `below` from
+3. **Fig. 1 still builds both variants.** Only `stacked` is in the paper. Drop `below` from
    `variants` in `spread/figure_study_area.R` and let the file name lose its suffix?
-5. **The `R` bibliography entry says 2022** while the Methods say R 4.5.3. Same for any
+4. **The `R` bibliography entry says 2022** while the Methods say R 4.5.3. Same for any
    other package whose `note` field has drifted from the installed version.
