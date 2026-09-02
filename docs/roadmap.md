@@ -35,59 +35,70 @@ Full detail in `docs/migration.md`'s TODO register.
   deliberately left as an open decision (physically re-separate vs. restrict the Drive
   subfolder's permissions). Decide **before** sharing the store with anyone.
 
-## Next steps
+---
 
-### 1. The spread manuscript — the active job
+## Target journal
 
-All the computation and every figure are done. What is left is prose.
+*International Journal of Wildland Fire*, Research Article; rules and sources in
+`manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
+`manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). The paper says
+**235 = 57 + 178** fires throughout (`docs/spread.md` → *How many fires?*).
 
-- **Results and Discussion** — write them against `docs/spread.md` → *Results of the validation*
+---
+
+## Next step: writing paper sections
+
+Do all this without asking details to Iván. If in doubt, decide and write
+the question here so he can decide/review tomorrow.
+
+All the computation and every figure are done. What is left is prose writing
+(plus captions). The manuscript-spread/designing.txt describes the results 
+and supplementary sections, by simply describing the figures. 
+Use that to have a layout. Whenever it's intended to 
+be the same as in the thesis, you can inspire from what I did there, adapting
+figures, numbers, but almost the same structure.
+The methods are far too long. Do not make shorter now, but try not to extend so
+much; in the end we will have to cut text. Inspire from the thesis in length
+(considering the length of the spread-only parts, not regime-simulation).
+
+- Edit the validation section of methods, based on what was done (check code and docs/). 
+  It was drafted before the runs finished. Move it to the past tense too.
+  Include the study area figure in methods too, and write its caption.
+  Commit and push.
+
+- Write Results, including all figures, its captions, and tables if required.
+  Consider the notes in `docs/spread.md` → *Results of the validation*
   and *Why the model cannot make an elongated fire*.
-- **The Validation subsection of Methods is still written as designed, not as completed** — it
-  was drafted before the runs finished. Move it to the past tense.
-- **Captions, and the figures into the `.tex`.** Nothing in `spread-paper.tex` includes a figure
-  yet, and it still carries `[Claude, make and add the study area figure]`.
+  Commit and push.
+  
+- Write a small draft of the discussion, not a full draft, just a draft of some 
+  paragraphs including what is mentioned about validation in docs/spread.md 
+  (*Why the model cannot make an elongated fire*).
 
-**Figures are done.** All eleven — Figs. 1-7 and S1-S5 — are built, each by its own script in
-`spread/`, and written to `manuscript-spread/figures/`. Procedure, colours, the traps and the
-numbers are in `docs/spread.md` → *The paper's model figures* and *The paper's validation
-figures*. What is left on them is prose: the captions, and the Results text for Figs. 2-4 and
-6-7.
+- Write the supplementary information, including all its figures and captions. 
+  As this is just like in the thesis, this can be simply a translation of it.
+  Commit and push.
 
-**For Iván — decisions on the figures I could not make for you**
+[Notes on figures]
 
-- **Fig. 1, which legend layout.** Two versions are built, differing only in where the panel A
-  and panel B keys sit: `fig1_study_area_stacked` (all three legends in the fourth column, under
-  the inset — the maps stay full height) and `fig1_study_area_below` (A's key under A and B's
-  under B, as the published QGIS figure has them — costs the maps about a fifth of their height).
-  **Pick one**, then delete the other from `variants` at the foot of
-  `spread/figure_study_area.R` and the file name loses its suffix.
-- **Fig. 1, the fire palette** is three points of one magma ramp, set at the top of the script:
-  the study-area outline at `begin = 0.12` (near-black), a fire with a known ignition point at
-  `0.38` (deep purple-magenta), the rest of the record at `0.60` (rose). Move the `begin` values
-  if the two fire classes are not far enough apart in print. The lakes stay cyan — water should
-  not read as a fourth level of the fire scale.
-- **Fig. 1, three cosmetic departures from the QGIS original.** (i) The QGIS map items carry
-  `mapRotation = -1.5°`; the R panels are north-up, so the tilt is gone. (ii) The fire layer is
-  `patagonian_fires_spread.shp` (241 features) rather than the 238-feature base record, because
-  only `_spread` carries the split ids the 57 focal fires are keyed on. (iii) `annotation_scale`
-  prints only the bar's maximum ("60 km"), not the QGIS bar's 0 / 50 / 100 ticks, and the
-  graticule reads "72°W / 40°S" rather than "-72°0′".
-- **Fig. 1's base layers are outside the store.** The elevation mosaic (240 MB), the lakes and
+- **Fig. 1, which legend layout.** Now we go for the stacked version, but keep both. 
+
+- **Figs. 2 and S2 now label the FWI legend in anomaly units** (-0.60 / 0.86 / 2.38) instead of
+  the fit's standardized values (-1.614 / 0 / 1.672), so Figs. 2, 3 and 4 share one FWI scale.
+  Take this into account when writing the caption or results.
+
+[A tidy-up task]
+
+- **Fig. 1's base layers are outside the store.** We need to copy them to the store, 
+  putting them in the folders you think are appropriate. Do it and adapt the code
+  accordingly (maybe a study_area_figure_layers folder in data/?). In that case, put 
+  there also the vegetation_merged layer, deleting its own folder afterwards.
+  
+  The elevation mosaic (240 MB), the lakes and
   the country/province shapefiles are still in `~/Insync/patagonian_fires paper/study area map/`
   and `~/Insync/Mapa vegetación WWF - Lara et al. 1999/`, reached through two new `R/config.R`
   entries. Decide whether to copy that folder into the store (the figure then rebuilds on any
   machine) or leave it machine-local. The vegetation raster is no longer among them: panel C now
   reads `data/vegetation_merged/vegetation_merged_120m.tif`, which *is* in the store.
-- **Figs. 2 and S2 now label the FWI legend in anomaly units** (-0.60 / 0.86 / 2.38) instead of
-  the fit's standardized values (-1.614 / 0 / 1.672), so Figs. 2, 3 and 4 share one FWI scale.
-  Check that is what you want before writing the captions.
-- **Fig. S3 lost two rendering defects** that the thesis version had: ghost white-on-white strip
-  labels above each row, and colliding "1.0" / "-1.0" tick labels between panels (its x breaks
-  now stop at ±0.5). Nothing else about its design changed.
 
-Target journal *International Journal of Wildland Fire*, Research Article; rules and sources in
-`manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
-`manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). The paper says
-**235 = 57 + 178** fires throughout (`docs/spread.md` → *How many fires?*).
-
+  Commit and push when done.

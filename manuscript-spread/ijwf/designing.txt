@@ -1,8 +1,4 @@
 Fig. 1: Study area map.
-        Made: spread/figure_study_area.R -> fig1_study_area.
-        Panel A now separates the 57 fires with a mapped ignition point
-        from the rest of the record. See docs/roadmap.md for the few
-        decisions left on it.
         
 What we will show in results (mostly figures).
 
@@ -21,7 +17,7 @@ Fig. 5: Burn probability maps for a few focal fires.
 Fig. 6: Focal fires DHARMa: burned by veg and 2 shape metrics.
 
 Fig. 7: Comparing simulations in the whole landscape against the
-        wide (233) fire database.
+        wide (233?) fire database.
 
 ---
 
