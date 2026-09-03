@@ -49,10 +49,68 @@ Full detail in `docs/migration.md`'s TODO register.
 
 ---
 
-## Next step: finishing the paper
+## Next step: Write Introduction and Discussion
 
-Methods, Results, the supplementary and a partial Discussion are written (see
-`docs/spread.md` → *The manuscript*). What is left:
+Below I describe what the Intro and Disc should have. This is probably
+mentioned in the thesis. When writing the draf of this sections, 
+Claude must read the thesis and identify which parts apply to this paper
+vs which ones are purely for the fire-regime simulation paper 
+(not spread-specific). If some aspects are mentioned in the thesis 
+but not here, include them and tell this to Iván.
+It is likely that the widest-scope fundamentation of why fire modelling
+corresponds to both this paper and the fire-regime one. So do not be affraid
+of copying ideas from the thesis chapter 4. 
+When we write the fire-regime paper we can easily paraphrase the text
+if it becomes redundant.
+
+Introduction must have:
+
+- Importance of fire simulation modelling to understand future
+  trajectories of the system and counterfactuals based on 
+  management and climatic scenarios.
+- A very brief survey of kind of fire spread models: 
+  very detailed and data-parameter hungry ones vs. simpler ones
+  aimed at reproducing fire-regime properties.
+- Importance of simulation models for patagonia, the Morales 2015
+  experience, data-limitation.
+- Our proposal of developing a small-parameters, small-data requirement
+  and computationally cheap model. 
+  
+Discussion main messages:
+
+- Our model recovered general properties of fire behaviour, both 
+  recognized everywhere and from our system:
+  spread dominated by wind and slope, with other variables taking smaller
+  effects. negative correlation among wind and slope parameters is very
+  reallistic, point it out, and also mention this in the results. 
+- Bad properties of our model: the spread engine has a bad geometry;
+  We should say elegantly that in the attempt to make a simple, cheap 
+  model we simplified parts of the spread process that had a terrible 
+  effect on the performance. 
+  An alternative should be to use the same spread geometric engine as 
+  the standard models (e.g., MTT flammap, cell2fire), but replace the 
+  parameter-data-hungry fuel-flammability functions with our empirical
+  approach, like ROS = f(VFI, TFI, FWI). That would be a nice merge.
+- Our approach of simplifiying the spread process as one-time may not be 
+  bad, and with better data, that one-time spread could be one day, not
+  15. Now, with more large fires and a database of dayly advance
+  (I saw one sometime ago, one that reconstructs daily fire polygons
+  from virs or modis) a model could be fit. Anyway, that systematic
+  data bases lack small fires, so our strategy of complementing data
+  sources to fit some parameters should still be use. 
+  For example, the main spread functions are fitted from large fires 
+  with data, but with a small number of parameters may be tuned from 
+  a larger set. 
+- The hierarchical structure could still serve to simulate variability,
+  even if a better model explains more variability. For example, 
+  suppression data may be available for a few fires, and we could have it
+  as a latent variable that controls initial spread, explaining
+  the occurrence of small or large fires. Then we could simulate it.
+- We could also treat weather and ignition point of small fires with 
+  uncertain/unavailable data as parameters to estimate, assigning
+  informative priors. Both start day and ignition point could be 
+  estimated, and satellite data could provide bounds for those parameters.
+
 
 - **Introduction.** Still `Bla bla`.
 
