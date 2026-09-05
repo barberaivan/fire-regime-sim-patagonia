@@ -61,8 +61,6 @@ alone and is least sure of. Delete each once settled.
   template text too.
 
 - **Decisions taken without asking, to check:**
-  - *Spelling.* Kept -ize (the existing text's convention); IJWF asks for Australian English.
-    One `sed` pass converts if wanted.
   - *"Low-data" wording.* Rendered as "where fire behaviour is poorly documented" and, in the
     Introduction, spelled out as what the record lacks: no rate of spread, no daily
     progression, ignition point for a minority, spread date uncertain to within weeks, sparse

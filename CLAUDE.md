@@ -123,6 +123,12 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
   the paper. The `[` is sometimes alone on its own line; that means the same thing. Read them,
   write the requested prose in their place, and delete the block once it is honoured (keep it,
   or leave a `%` comment, if the instruction still needs a decision from him).
+- **No em dashes, anywhere.** Not in the manuscripts, not in `docs/`, not in commit messages or
+  replies. Use a comma, a colon, parentheses or a new sentence instead. En dashes stay for
+  ranges (`1998--2022`) and for paired terms (`wind--slope`).
+- **Manuscript spelling is Australian English with -ise** (standardised, summarised,
+  marginalised, Normalised Difference Vegetation Index). LaTeX commands (`\begin{itemize}`)
+  and the titles of cited works in `references.bib` keep their original spelling.
 
 ## GEE Code Editor scripts (separate repo)
 

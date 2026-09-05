@@ -1,10 +1,10 @@
 %==============================================================================
-%  Paper 1 — the fire spread model (fitting + validation)
+%  Paper 1, the fire spread model (fitting + validation)
 %  Target: International Journal of Wildland Fire (CSIRO Publishing)
 %  Type:   RESEARCH ARTICLE
 %
 %  ---------------------------------------------------------------------------
-%  COMPLIANCE SUMMARY — full rules + sources in guidelines/IWJF_guidelines.md
+%  COMPLIANCE SUMMARY, full rules + sources in guidelines/IWJF_guidelines.md
 %  ---------------------------------------------------------------------------
 %   [ ] MAIN TEXT   <= 6000 words, Introduction -> Conclusion ONLY.
 %                   Excluded: title, abstract, references, figure captions, tables.
@@ -27,14 +27,14 @@
 %   [ ] SUBMISSION  ScholarOne, cover letter, >= 3 suggested reviewers (no recent
 %                   collaborators / same institution), preprint link if any.
 %
-%  NOTE: IJWF accepts FORMAT-FREE submission — the production team applies journal
+%  NOTE: IJWF accepts FORMAT-FREE submission, the production team applies journal
 %  style after acceptance. We use the CSIRO class anyway so the layout, the word
 %  budget and the reference style are honest from the start.
 %==============================================================================
 
 \documentclass[ResearchPaper,linenum]{CSIRO_LaTeX_Template}
 
-% --- Harvard punctuation: (Smith 2024; Doe 2025) — no comma before the year ----
+% --- Harvard punctuation: (Smith 2024; Doe 2025), no comma before the year ----
 \bibpunct{(}{)}{;}{a}{}{;}
 
 % The class does not load booktabs; the tables here use \toprule/\midrule/\bottomrule.
@@ -61,7 +61,7 @@
 \journalname{International Journal of Wildland Fire}
 
 %------------------------------------------------------------------------------
-% TITLE — accurate, informative, brief; no abbreviations or formulae;
+% TITLE, accurate, informative, brief; no abbreviations or formulae;
 %         include keywords in it where possible.        [not counted in the 6000]
 %------------------------------------------------------------------------------
 \title{Fitting a hierarchical fire spread model with Approximate Bayesian Computation}
@@ -70,7 +70,7 @@
 \rectorh{International Journal of Wildland Fire}   % recto running head
 
 %------------------------------------------------------------------------------
-% AUTHORS — full first and last names. Corresponding author gets *.
+% AUTHORS, full first and last names. Corresponding author gets *.
 % ORCID: required for the submitting author, recommended for all. Co-authors MUST
 % link their ORCID to their ScholarOne account BEFORE acceptance (cannot be added later).
 %------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ offers a cheap, data-frugal way to build fire regime simulators.
 \end{abstract}
 
 %------------------------------------------------------------------------------
-% KEYWORDS — EIGHT OR MORE. Alphabetical is the usual CSIRO presentation.
+% KEYWORDS, EIGHT OR MORE. Alphabetical is the usual CSIRO presentation.
 %------------------------------------------------------------------------------
 \begin{keywords}
 Approximate Bayesian Computation, burn probability, cellular automaton, fire
@@ -161,7 +161,7 @@ from the fires a region has recorded and whose inputs already exist almost anywh
 vegetation map, indices derived from satellite imagery, a digital elevation model and
 reanalysis weather \citep{morales_stochastic_2015}. Models of this kind trade
 generality for feasibility: they must be refitted for each region, but they can be
-built where the inputs the physical models need do not exist. Since their purpose is to characterize a fire regime rather than to
+built where the inputs the physical models need do not exist. Since their purpose is to characterise a fire regime rather than to
 reproduce particular fires, they are judged on the emergent properties of the regime
 they generate, such as the distribution of fire sizes and the spatial pattern of burn
 probability, rather than on point predictions \citep{parisien2020commentary}.
@@ -283,7 +283,7 @@ forest, shrubland, grassland), reclassified from the regional forest and land-co
 of \citet{mapa_ciefap}; areas burned before that map was produced were patched with the
 map of \citet{lara_vegetacion_1999}.
 
-\item \textbf{NDVI} (Normalized Difference Vegetation Index), averaged over all
+\item \textbf{NDVI} (Normalised Difference Vegetation Index), averaged over all
 available Landsat images from December to March of the summer preceding each fire
 season, as a proxy for productivity and fuel load.
 
@@ -298,10 +298,10 @@ change during a fire, and generated 30\,m direction and speed fields with WindNi
 \citep{hersbach2020era5} and a fixed regional speed (Section~1 of the Supplementary
 material). A fire-level coefficient absorbs between-fire variation in wind forcing.
 
-\item \textbf{Atmospheric conditions}, summarized by the Fire Weather Index (FWI;
+\item \textbf{Atmospheric conditions}, summarised by the Fire Weather Index (FWI;
 \citealt{van_wagner_development_1987}), which integrates relative humidity, temperature,
 precipitation and wind speed into one predictor, from the ERA5-based daily product of
-\citet{vitolo_era5-based_2020}. The index was standardized per pixel, so that it
+\citet{vitolo_era5-based_2020}. The index was standardised per pixel, so that it
 represents climatic variation in time and not in space \citep{barbera_patterns}, and
 accumulated over the focal fortnight and the 10 preceding ones with weights decaying
 into the past (Eqn~\ref{eq:hier1}; Section~1 of the Supplementary material).
@@ -312,7 +312,7 @@ into the past (Eqn~\ref{eq:hier1}; Section~1 of the Supplementary material).
 \subsubsection*{Flammability indices}
 
 To represent the effects of vegetation type, productivity and topography with few
-parameters we summarized them into a \textbf{vegetation flammability index} (VFI) and a
+parameters we summarised them into a \textbf{vegetation flammability index} (VFI) and a
 \textbf{topographic flammability index} (TFI). Both derive from a logistic regression
 of the probability that a cell burned at least once over the study period, fitted at
 the regional scale to 9194 points at least 800\,m apart, whose linear predictor was
@@ -472,7 +472,7 @@ no fitted fire's random effects are reused. Fires below the 10\,ha mapping thres
 were discarded, leaving 64\,836 simulated fires. We compared these with the observed
 record in the distribution of fire size and in shape, measured as compactness and as the
 deviation of a fire's principal axis from the dominant regional wind axis. Both need
-only a rasterized perimeter, so the observed reference is every mapped fire in the
+only a rasterised perimeter, so the observed reference is every mapped fire in the
 record, not only the 57 with a known ignition point. Because shape depends strongly on
 size, and size is itself being tested, the shape comparisons were made conditionally on
 burned area as well as marginally, and repeated conditionally on FWI, which tests the
@@ -671,7 +671,7 @@ positive one). $\kappa$ is the maximum number of simulation steps
 accumulated FWI, computed as the mean absolute deviation among the five types' spread
 probabilities shown in (B). (B) Spread probability by vegetation type. To make the types
 comparable, elevation is fixed at 900\,m\,a.s.l.\ and aspect at 90$^\circ$ (northness
-$= 0$), and the prediction is marginalized over the distribution of NDVI, slope and wind
+$= 0$), and the prediction is marginalised over the distribution of NDVI, slope and wind
 speed in the study area and over the estimated distribution of parameters. Lines and
 bands are the mean and the 95\,\% credible interval of the posterior.}
 \label{fig:vegeffect}
@@ -714,7 +714,7 @@ the random effects. Summary statistics are in Table~\ref{tab:dharma}.}
 plot; the grey line is the 1:1 relation. (B) Burned area, compactness and the deviation
 of the fire's principal axis from the regional wind axis, each conditioned on FWI (left)
 and on burned area (right). Simulated fires are shown as a hexagonal-bin density on a
-logarithmic count scale and observed fires as points, with a generalized additive
+logarithmic count scale and observed fires as points, with a generalised additive
 smoother through each. FWI is on the same anomaly scale as
 Figs.~\ref{fig:curves}--\ref{fig:vegeffect}. The vertical striping of the left-hand
 panels is real: FWI was resampled from the values of the mapped record, so the simulated
@@ -897,7 +897,7 @@ perimeters alone.
 %TC:ignore
 
 %------------------------------------------------------------------------------
-% ONLINE SUMMARY — 50-80 words, exactly three sentences, for non-experts:
+% ONLINE SUMMARY, 50-80 words, exactly three sentences, for non-experts:
 %   1. engage the reader / why this area matters
 %   2. the problem addressed + the main discovery
 %   3. the bigger picture (implications, impact)
@@ -923,7 +923,7 @@ bounds and the priors of the hierarchical model; the parameter-estimation proced
 posterior, the two-stage fit and the samplers used in each stage (Section~2); the two
 validation exercises, with the definition of every statistic they use and the reasons
 for not using classical cross-validation (Section~3); the procedure used to compare
-vegetation types at a common topography while marginalizing over the landscape, on
+vegetation types at a common topography while marginalising over the landscape, on
 which Fig.~\ref{fig:vegeffect} rests (Section~4); and extended results (Section~5):
 spread probability against the raw predictors rather than the indices (Fig.~S2), the
 posterior correlations among the six spread parameters, marginal to and conditional on
@@ -937,17 +937,17 @@ de Manejo del Fuego, Chubut), who located the ignition points of many of the fir
 fit the spread model.
 
 %------------------------------------------------------------------------------
-% REFERENCES — Harvard (CSIRO). BibTeX with the class's own style file.
+% REFERENCES, Harvard (CSIRO). BibTeX with the class's own style file.
 % natbib is loaded by the class in authoryear mode:
 %   \citep{key}     -> (Smith 2024)
 %   \citet{key}     -> Smith (2024)
 %   \citep[p.~6]{k} -> (Smith 2024, p. 6)
 %   several keys in ONE \citep{a,b} -> chronological order, ';' separated
-% Multiple keys in one \citep must be listed in CHRONOLOGICAL order — natbib does
+% Multiple keys in one \citep must be listed in CHRONOLOGICAL order, natbib does
 % not sort them for us, the class loads it without the `sort' option.
 % Reminder: full journal names (never abbreviated), DOIs where available,
 % >= 3 author names then et al., never ellipses.
-% ijwf.bst is our patched copy of the CSIRO samplebib.bst — see README.md here.
+% ijwf.bst is our patched copy of the CSIRO samplebib.bst, see README.md here.
 %------------------------------------------------------------------------------
 \bibliographystyle{ijwf}
 \bibliography{references}

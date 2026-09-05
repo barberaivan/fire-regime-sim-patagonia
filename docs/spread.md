@@ -846,9 +846,9 @@ correction relative to the thesis: Crossref lists **Denham** as first author of 
 checked to be in chronological order, which natbib does not do here (the class loads it
 without `sort`).
 
-**Spelling.** The paper uses -ize (standardized, summarized, marginalized) throughout, which is
-what the existing text had; the journal asks for Australian English, and one `sed` pass would
-convert it if Iván wants -ise. Left as is, deliberately, so the text stays consistent.
+**Spelling.** Australian English with -ise throughout both documents, converted on 2026-09-05 at
+Iván's request (the rule is now in `CLAUDE.md` → *Conventions*, together with the no-em-dash
+rule). `size`, `itemize` and the titles of cited works are the only -ize left, on purpose.
 
 **The software entries in `references.bib` must match the machine the analysis was run on.**
 They had drifted (the `R` entry still said 2022 against the Methods' R 4.5.3), so they are now
