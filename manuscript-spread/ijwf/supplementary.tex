@@ -13,22 +13,25 @@
 %  running heads, two columns, author statements) and none of it belongs here.
 %
 %  CROSS-REFERENCES INTO THE PAPER ARE HAND-MAINTAINED: the two documents share
-%  no .aux, so "Eqn 5 of the main text" is a literal string, not a \ref. As of
-%  2026-09-02 the paper's numbered equations are
-%    1 flammability indices   2 the data model      3 the hierarchical mean
-%    4 the parameter bounds   5 the covariance
-%  and its figures are 1 study area, 2 spread curves, 3 parameters vs FWI,
-%  4 vegetation effect, 5 burn probability, 6 DHARMa, 7 the regional validation.
-%  Re-check these after any edit that adds or removes a numbered equation.
+%  no .aux, so "Eqn 2 of the main text" is a literal string, not a \ref. As of
+%  2026-09-05 the paper's numbered equations are
+%    1 the data model      2 the hierarchical mean
+%  (the flammability indices, the parameter bounds and the covariance moved HERE
+%  on 2026-09-05, as Eqns S2, S3 and S4, together with the VFI coefficients as
+%  Table S1). The paper's figures are 1 study area, 2 spread curves,
+%  3 parameters vs FWI, 4 vegetation effect, 5 burn probability, 6 DHARMa,
+%  7 the regional validation; its tables are 1 DHARMa calibration, 2 shape by
+%  size class. Re-check these after any edit that adds or removes a numbered
+%  equation or table in the paper.
 %
 %  THE PAPER POINTS HERE BY SECTION NUMBER ("Section 2 of the Supplementary
 %  material", in Parameter estimation, in Validation and in the Supplementary
 %  material statement), so the section order is load-bearing:
-%    1 flammability indices  2 parameter estimation  3 validation
+%    1 predictors + flammability indices  2 parameter estimation  3 validation
 %    4 vegetation effect     5 extended results
 %  The paper's fitting method and its validation are summarized there and given
 %  in full in Sections 2 and 3 here; the ABC posterior, the overlap and the
-%  area ~ steps regression are equations of this document only (S2, S3, S5).
+%  area ~ steps regression are equations of this document only.
 %
 %  Contents follow the thesis's chapter 4 appendix (Barberá 2025), translated
 %  and renotated to the manuscript's symbols: a_v/b_v/c_v for the flammability
@@ -69,8 +72,42 @@ Computation}}
 \begin{document}
 \maketitle
 
-\section{The flammability indices}
+\section{Predictors and flammability indices}
 \label{sec:fi}
+
+\subsection{The wind field}
+
+Meteorological data with adequate spatial coverage do not exist for the region, and
+the spread date of many fires is uncertain, so the wind was assumed not to change
+during a fire. This is a coarse approximation, but fires in this region commonly
+spread in a single dominant direction. The regional wind direction of each mapped
+fire was taken from the ERA5 reanalysis \citep{hersbach2020era5} for its fortnight
+and corrected manually where the fire's shape disagreed with it. From that direction
+and a regional speed fixed at 14.4\,km\,h$^{-1}$ (4\,m\,s$^{-1}$) we generated 30\,m
+fields of wind direction and speed with WindNinja \citep{forthofer2007windNinja},
+using the mass-conservation solver and a 90\,m mesh, so that the field carries the
+steering and acceleration of the wind by terrain. The regional speed is the same for
+every fire; the fire-level wind coefficient $\beta_4$ (Eqn~1 of the main text)
+absorbs between-fire variation in wind forcing.
+
+\subsection{The Fire Weather Index}
+
+Atmospheric conditions enter the model through the Fire Weather Index (FWI;
+\citealt{van_wagner_development_1987}), taken from the ERA5-based daily product of
+\citet{vitolo_era5-based_2020} at $\approx$\,24\,km resolution. The index varies
+strongly along the west--east precipitation gradient, but our data cannot inform
+that spatial variation, and the long-term spatial effects of climate are already
+absorbed by the vegetation variables \citep{barbera_patterns}. We therefore
+standardized the index per pixel, using the mean and standard deviation of its
+1998--2023 daily series, so that the predictor represents climatic variation in time
+and not in space. Standardized daily values were averaged by fortnight and
+accumulated as a weighted mean over the focal fortnight and the 10 preceding ones,
+with weights decaying into the past as $w_l = \exp[-(l/\tau)^2]$ (Eqn~2 of the main
+text). The decay $\tau$ was not estimated with the spread model; it was fixed at
+2.82 fortnights, the joint posterior mode of a model of fire size as a function of
+accumulated FWI fitted beforehand to the mapped record.
+
+\subsection{The flammability indices}
 
 To parameterise the two flammability indices we modelled the probability that a
 cell burned at least once over the period and study area of
@@ -99,10 +136,10 @@ constrained to lie at least 800\,m apart. The model was
 
 \noindent where $y_i \in \{0, 1\}$ indicates whether cell $i$ burned over the
 study period, $\theta_i$ is its burn probability, $E$ is elevation, $N$ is
-northness weighted by slope (Eqn~1 of the main text) and $P$ is slope. The three
+northness weighted by slope (Eqn~\ref{eq:FI}) and $P$ is slope. The three
 topographic variables were standardized for fitting and their coefficients
 transformed back to the original scale afterwards. The subscript $v[i]$ is the
-vegetation type of cell $i$, numbered as in Table~1 of the main text. The
+vegetation type of cell $i$, numbered as in Table~\ref{tab:vfi-params}. The
 vegetation parameters $a$, $b$ and $c$ were given hierarchical priors so that
 types with few data (dry forest above all) could be estimated; $b$ was
 forced to be negative so that the effect of NDVI is unimodal, with $c_v$ the
@@ -111,16 +148,51 @@ NDVI at which burn probability peaks.
 The slope coefficient $\delta_3$ is not part of the topographic flammability
 index. It was included only to improve the estimation of the other parameters:
 slope enters the spread model separately, and there it is \textit{directional},
-since spread uphill and downhill differ. In Eqn~1 of the main text the two
-indices are rescaled to mean 0 and standard deviation 1 over the dataset used
-to fit this model. Fig.~\ref{fig:fi} shows the resulting indices as functions of
-the variables that compose them.
+since spread uphill and downhill differ. The linear predictor of
+Eqn~\ref{eq:fimodel}, without the slope term, was split into its vegetation and
+its topographic part, and each part was rescaled to mean 0 and standard
+deviation 1 over the dataset used to fit this model:
+
+\begin{equation}
+\label{eq:FI}
+\begin{aligned}
+    \mathrm{VFI} &= \{[a_v + b_v \, (\mathrm{NDVI} - c_v)] + 3.487888\} \ \frac{1}{1.225364} \\
+    \mathrm{TFI} &= [(-0.002407865 \, E + 0.2937129 \, N) + 2.691936] \ \frac{1}{0.852505} \\
+    N &= \cos \left(\Phi \, \frac{\pi}{180}\right) \frac{1}{1 + \exp(-5 + 35 P)},
+\end{aligned}
+\end{equation}
+
+\noindent where $a_v$, $b_v$ and $c_v$ vary by vegetation type $v$
+(Table~\ref{tab:vfi-params}), $E$ is elevation (m\,a.s.l.), $\Phi$ is aspect
+(degrees), $P$ is slope (degrees) and $N$ is northness weighted by slope, so
+that it approaches zero on flat ground. Higher values mean more flammable
+vegetation and more flammable topography. Fig.~\ref{fig:fi} shows the resulting
+indices as functions of the variables that compose them.
+
+\begin{table}[htbp]
+\centering
+\caption{Coefficients defining the vegetation flammability index (VFI,
+Eqn~\ref{eq:FI}), one set per vegetation type. NDVI, Normalized Difference
+Vegetation Index.}
+\label{tab:vfi-params}
+\begin{tabular}{lrrr}
+\toprule
+Vegetation type & $a_v$ & $b_v$ & $c_v$ \\
+\midrule
+Wet forest       & $-2.550628$ & $-44.552187$ & 0.6624889 \\
+Subalpine forest & $-2.502559$ & $-52.508023$ & 0.6988966 \\
+Dry forest       & $-2.707386$ & $-3.716391$  & 0.6537689 \\
+Shrubland        & $-2.603914$ & $-4.409584$  & 0.6669274 \\
+Grassland        & $-2.625388$ & $-10.730352$ & 0.6233552 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.85\textwidth]{figS1_flammability_indices}
 \caption{The flammability indices as a function of the variables that compose
-them, as defined in Eqn~1 of the main text. The vegetation flammability index
+them, as defined in Eqn~\ref{eq:FI}. The vegetation flammability index
 (VFI) is a unimodal function of NDVI whose position and curvature depend on
 vegetation type; the topographic flammability index (TFI) decreases with
 elevation and increases towards north-facing slopes. Each curve is drawn over
@@ -131,10 +203,57 @@ the range of the predictor observed for that vegetation type.}
 \section{Parameter estimation}
 \label{sec:estimation}
 
+\subsection{Parameter bounds and priors}
+\label{sec:priors}
+
+Each spread parameter is bounded (Eqn~2 of the main text), so that the vector
+$\boldsymbol{\beta}_{ft}$ follows a multivariate logit-normal distribution scaled
+between the lower bounds $\mathbf{L}$ and the upper bounds $\mathbf{U}$,
+
+\begin{equation}
+\label{eq:limits}
+\begin{aligned}
+    \mathbf{L} &= \{-50, 0, 0, 0, 0, 2\} \\
+    \mathbf{U} &= \{50, 30, 30, 158.6232, 30, \psi\}, \qquad
+    \psi \sim \ \text{Uniform}(\psi_{\min}, 2000),
+\end{aligned}
+\end{equation}
+
+\noindent in the order $\{\beta_0, \beta_1, \beta_2, \beta_3, \beta_4, \kappa\}$ of
+Eqn~1 of the main text. The lower bound of zero on $\beta_1$ to $\beta_4$ imposes the
+sign restrictions: flammability, uphill slope and a following wind can only increase
+spread probability. The upper bound on the number of steps, $\psi$, is estimated. Its
+prior upper limit of 2000 steps means a fire can travel at most
+$2000 \times 30\,\mathrm{m} = 60\,\mathrm{km}$, which spans the west--east extent of the
+Andean Patagonian forests in Argentina; larger fires would leave the study area, and we
+have no data to inform spread probability in the steppe. Its lower limit $\psi_{\min}$
+was set to the smallest value compatible with the fire-wise posteriors of stage 1
+(Section~\ref{sec:stage2}). The predictor $x$ (accumulated FWI) was standardized before
+fitting, and we used $\gamma_{0p} \sim \text{Normal}(0, 10)$ for
+$p \in \{1, \ldots, 5\}$, $\gamma_{06} \sim \text{Normal}(-3.80, 10)$ and
+$\boldsymbol{\gamma}_1 \sim \text{Normal}(0, 10)$, where $p$ indexes the six spread
+parameters. The covariance matrix was decomposed into standard deviations and a
+correlation matrix so that each could take its own prior:
+
+\begin{equation}
+\label{eq:hier2}
+\begin{aligned}
+    \boldsymbol{\Sigma} &= \text{diag}(\boldsymbol{\sigma}) \, \boldsymbol{\Omega} \, \text{diag}(\boldsymbol{\sigma}) \\
+    \sigma_p^2 &\sim \ \text{Inverse Gamma}(\alpha = 1, \beta = 0.001) \\
+    \boldsymbol{\Omega} &= \text{diag}(\boldsymbol{V})^{-\frac{1}{2}} \, \boldsymbol{V} \, \text{diag}(\boldsymbol{V})^{-\frac{1}{2}} \\
+    \boldsymbol{V} &\sim \ \text{Inverse Wishart}(\nu = 7, \boldsymbol{\Sigma} = \boldsymbol{I}),
+\end{aligned}
+\end{equation}
+
+\noindent where $\boldsymbol{V}$ is an auxiliary covariance matrix used only to place an
+inverse-Wishart prior on the correlation matrix without its parameters constraining the
+standard deviations; with $\nu = 7$ the implied prior on each correlation is
+approximately uniform on $(-1, 1)$.
+
 \subsection{Approximate Bayesian Computation}
 
 The spread model can simulate fires but its likelihood cannot be evaluated, because the
-cell-to-cell spread events $y_{ijk}$ (Eqn~2 of the main text) are not observed. At best
+cell-to-cell spread events $y_{ijk}$ (Eqn~1 of the main text) are not observed. At best
 the ignition point and the final perimeter of a fire are known; how the fire moved from
 cell to cell is not, and could not be recorded, since fire advances continuously in space
 and time. We therefore used Approximate Bayesian Computation (ABC;
@@ -180,8 +299,8 @@ runs it.
 
 For each of the 57 fires with a known ignition point we sampled $\boldsymbol{\beta}_f$
 with adaptive ABC sequential Monte Carlo \citep{delmoral2012adaptive}. The placeholder
-prior is uniform over the bounded parameter space $[\mathbf{L}, \mathbf{U}]$ (Eqn~4 of the
-main text), which is a standard logistic distribution on the unconstrained scale on which
+prior is uniform over the bounded parameter space $[\mathbf{L}, \mathbf{U}]$
+(Eqn~\ref{eq:limits}), which is a standard logistic distribution on the unconstrained scale on which
 the sampler works. We used $N = 10\,000$ particles, initialized from a Sobol sequence, and
 one simulated fire per particle. The tolerance $\varepsilon$ started at 1, the largest
 possible dissimilarity, so that the first iteration keeps every particle; at each iteration
@@ -212,17 +331,18 @@ cannot change the simulated fire, so the bound restricts the search without excl
 attainable fire size.
 
 \subsection{Stage 2: the hierarchical fit}
+\label{sec:stage2}
 
 Stage 2 estimated the hyperparameters ($\boldsymbol{\gamma}_0$, $\boldsymbol{\gamma}_1$,
-$\boldsymbol{\sigma}$ and $\boldsymbol{\Omega}$; Eqns~3 and 5 of the main text), the
-random effects of the 57 fires with a known ignition point, the number of steps of the
-178 fires without one, the upper bound $\psi$ on the number of steps (Eqn~4 of the main
-text) and the coefficients of an auxiliary regression, all jointly.
+$\boldsymbol{\sigma}$ and $\boldsymbol{\Omega}$; Eqn~2 of the main text and
+Eqn~\ref{eq:hier2}), the random effects of the 57 fires with a known ignition point, the
+number of steps of the 178 fires without one, the upper bound $\psi$ on the number of
+steps (Eqn~\ref{eq:limits}) and the coefficients of an auxiliary regression, all jointly.
 
-Every parameter is bounded, so the sampler works on transformed scales (Eqn~4 of the main
-text). The five spread coefficients are sampled on the logit scale on which they are
-modelled, scaled to their fixed bounds, which is also the scale of the multivariate normal
-in Eqn~3 of the main text. The number of steps is different, because its upper bound $\psi$
+Every parameter is bounded, so the sampler works on transformed scales
+(Eqn~\ref{eq:limits}). The five spread coefficients are sampled on the logit scale on
+which they are modelled, scaled to their fixed bounds, which is also the scale of the
+multivariate normal in Eqn~2 of the main text. The number of steps is different, because its upper bound $\psi$
 is estimated rather than fixed: $\kappa_f$ is sampled on the simulator's own scale and
 transformed to the scaled logit whenever the hierarchical density is evaluated, which
 brings the Jacobian of that transform into every update that touches it. Stage 1 adds one
@@ -268,23 +388,23 @@ conditional distribution given the current value of the others.
 \begin{itemize}
 \item \textbf{Hyperparameters of each spread parameter} ($\gamma_{0p}$, $\gamma_{1p}$ and
 $\sigma_p^2$, for $p \in \{1, \ldots, 6\}$). Given the random effects, the hierarchical
-mean (Eqn~3 of the main text) is an ordinary linear regression with normal errors on the
-unconstrained scale, and its normal and inverse-gamma priors are conjugate. The regression
-coefficients and the variance were therefore drawn from their exact conditional
-distributions, which is a Gibbs step: conjugacy is what makes the exact draw available,
-and drawing from the exact conditional is what makes it Gibbs rather than
-Metropolis--Hastings.
+mean (Eqn~2 of the main text) is an ordinary linear regression with normal errors on the
+unconstrained scale, and its normal and inverse-gamma priors are conjugate
+(Section~\ref{sec:priors}). The regression coefficients and the variance were therefore
+drawn from their exact conditional distributions, which is a Gibbs step: conjugacy is
+what makes the exact draw available, and drawing from the exact conditional is what
+makes it Gibbs rather than Metropolis--Hastings.
 
 \item \textbf{Correlation matrix} $\boldsymbol{\Omega}$. Drawn from its inverse-Wishart
 conditional given the random-effect errors and then rescaled to a correlation matrix. Only
 the correlation of that draw is used, which is what keeps the inverse-Wishart prior from
-constraining the standard deviations (Eqn~5 of the main text).
+constraining the standard deviations (Eqn~\ref{eq:hier2}).
 
-\item \textbf{Random effects of the 57 fires with a known ignition point} --- the step
+\item \textbf{Random effects of the 57 fires with a known ignition point}: the step
 that makes the two-stage fit work \citep{lunn2013fully}. A candidate
 $\boldsymbol{\beta}_f$ is drawn uniformly from that fire's 10\,000 stage-1 particles: an
 independence proposal whose density is the fire-wise ABC posterior itself. That density cancels between
-target and proposal, so the acceptance ratio reduces to the hierarchical density (Eqn~3 of
+target and proposal, so the acceptance ratio reduces to the hierarchical density (Eqn~2 of
 the main text) divided by the stage-1 placeholder prior, times the area likelihood
 (Eqn~\ref{eq:areasteps}). Because $\kappa$ is sampled on the simulator's own scale but
 modelled on a scaled logit whose upper bound is estimated, both densities carry the
@@ -296,7 +416,7 @@ stage-1 sample, so they were updated by random-walk Metropolis on the scaled-log
 with the hierarchical density as prior and Eqn~\ref{eq:areasteps} as likelihood.
 
 \item \textbf{Upper bound on the number of steps} $\psi$. Random-walk Metropolis on its
-own scaled-logit scale, with the flat prior of Eqn~4 of the main text. Changing $\psi$
+own scaled-logit scale, with the flat prior of Eqn~\ref{eq:limits}. Changing $\psi$
 rescales the steps of every fire, so this update includes the area likelihood of the 178
 fires and the Jacobian of the steps transform for the 57.
 
@@ -345,7 +465,7 @@ burn-probability models are usually judged \citep{parisien2020commentary}.
 For each of the 57 fires with a known ignition point we simulated 2000 fires from that
 fire's ignition cell on that fire's landscape, twice: once under the fire's own fitted
 random effects and once under random effects drawn afresh from the population distribution
-at that fire's FWI (Eqn~3 of the main text). Each simulated fire was reduced to its spatial
+at that fire's FWI (Eqn~2 of the main text). Each simulated fire was reduced to its spatial
 overlap with the observed one (Eqn~\ref{eq:overlap}), its burned area overall and within
 each of the five vegetation classes, its compactness ($4\pi \times$ area / perimeter$^2$)
 and the deviation of its principal axis from the fire's wind axis.
@@ -432,7 +552,7 @@ fire weather}
 
 One question the spread model is meant to answer is how the effect of
 vegetation type on spread probability changes with fire weather. The
-coefficient on VFI ($\beta_1$, Eqn~2 of the main text) did not vary with FWI
+coefficient on VFI ($\beta_1$, Eqn~1 of the main text) did not vary with FWI
 (Fig.~3 of the main text), but the nonlinearity of the logistic function means
 that the effect of one variable on the probability depends on the values and
 effects of the others, even with no interaction terms in the linear predictor.
@@ -451,7 +571,7 @@ study area, from the same raster used for simulation, which carries wind speed
 and slope among other layers. To weigh uphill and downhill spread equally we
 duplicated the set of cells and set slope to $0^\circ$ in the second half: the
 spread model assumes that downhill spread is like spread on flat ground
-(Eqn~2 of the main text).
+(Eqn~1 of the main text).
 
 Comparing vegetation types also requires a VFI for each, and therefore an NDVI.
 Because NDVI varies with topography, we predicted its expected value for the
@@ -506,8 +626,8 @@ pair of parameters, computed on the scale the simulator uses rather than on the
 unconstrained scale the multivariate normal is defined on, by simulating a full
 set of fires from each posterior draw and back-transforming. Two distributions
 are shown per pair. The one conditional on FWI fixes FWI at the mean of the
-spread data and so represents the posterior of $\boldsymbol{\Omega}$ (Eqn~5 of
-the main text); the marginal one lets each fire take its own FWI, and therefore
+spread data and so represents the posterior of $\boldsymbol{\Omega}$
+(Eqn~\ref{eq:hier2}); the marginal one lets each fire take its own FWI, and therefore
 also carries any association induced by two parameters responding to fire
 weather in the same, or in the opposite, direction. Where the two coincide, FWI
 explains none of the association between that pair.
@@ -519,8 +639,8 @@ explains none of the association between that pair.
 each pair of spread parameters, marginal to or conditional on FWI. Coefficients
 were computed by simulating parameter vectors from the fitted multivariate
 distribution. The distributions conditional on FWI fix it at the mean of the
-spread data and represent the posterior of $\boldsymbol{\Omega}$ (Eqn~5 of the
-main text); the marginal ones include the effect of FWI, so that parameters
+spread data and represent the posterior of $\boldsymbol{\Omega}$
+(Eqn~\ref{eq:hier2}); the marginal ones include the effect of FWI, so that parameters
 affected by it in a similar (or opposite) way show a marginal correlation of
 larger (or smaller) magnitude than the conditional one.}
 \label{fig:corr}
@@ -536,7 +656,7 @@ fire: a fire put out quickly by crews or by rain may have a smaller number of
 steps ($\kappa$) than average, and a fire that spread under a strong wind may
 have a large wind coefficient ($\beta_4$). From the variation in
 $\boldsymbol{\beta}$ among fires, and from how that variation relates to each
-fire's FWI, we estimated a distribution of parameters (Eqn~3 of the main text),
+fire's FWI, we estimated a distribution of parameters (Eqn~2 of the main text),
 which is what lets new $\boldsymbol{\beta}$ be simulated for hypothetical fires.
 
 Model fit can therefore be assessed in two ways: with the random effects

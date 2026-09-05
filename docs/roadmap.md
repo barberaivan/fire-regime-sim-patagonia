@@ -6,7 +6,7 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-05
+**Last updated:** 2026-09-05 (evening: writing pass done)
 
 Where finished work is written up:
 
@@ -49,128 +49,50 @@ Full detail in `docs/migration.md`'s TODO register.
 
 ---
 
-## Next steps 2026-09-05
+## Spread paper: Iván's review pass
 
-### General comments
+The writing pass of 2026-09-05 is done (Introduction, Discussion, Conclusion, abstract, keywords,
+online summary written; Methods and Results cut; write-up in `docs/spread.md` → *The
+manuscript*). What is left is Iván's reading, and the points below are the ones Claude resolved
+alone and is least sure of. Delete each once settled.
 
-We can use 6000 words (not including table and fig captions). Methods and results must be
-cut significantly. Dedicate ~1500 words for each big section: 
-intro, methods, results, and discussion.
-The idea to cut methods:
-  tell the main ideal with little formal details; these go to supp.
-To cut resutls: 
-  choose the main results. Second ones may be mentioned very briefly and developed in
-  supp. Follow the thesis here. For example, the corr between parameters may be 
-  only mentioned briefly in the main, and developed in supp.
+- **Author block.** Affiliations, ORCIDs, co-authors and the author-contributions statement are
+  all still template text. Iván fills this. The Data availability and AI-use statements are
+  template text too.
 
-In these notes my english is quite poor, with expressions like "low-data" that 
-refer to data not very good to inform spread: we don't have ROS recorded,
-nor daily advance, nor exact date. Find a way to express it correctly. 
+- **Decisions taken without asking, to check:**
+  - *Spelling.* Kept -ize (the existing text's convention); IJWF asks for Australian English.
+    One `sed` pass converts if wanted.
+  - *"Low-data" wording.* Rendered as "where fire behaviour is poorly documented" and, in the
+    Introduction, spelled out as what the record lacks: no rate of spread, no daily
+    progression, ignition point for a minority, spread date uncertain to within weeks, sparse
+    weather stations. Check that "uncertain to within weeks" is not overstated.
+  - *Laneri et al. 2020 is cited as Denham et al. (2020)* because Crossref lists Denham as
+    first author; the thesis `.bib` had Laneri first. Confirm against the paper itself.
+  - *Bazin, Dawson and Beaumont (2010, Genetics)* was chosen as the precedent for hierarchical
+    ABC in *What this study contributes*. Not in the thesis; verified against Crossref only.
+  - *The engine admission* is worded as: the contagion automaton was "adopted from Morales et
+    al. (2015) because it was cheap and required no rate of spread". Check the tone.
+  - *The vegetation paragraph* of the Discussion attributes the persisting vegetation effect
+    to fuel moisture, continuity and coarse fuel as heat sink (the thesis's argument, citing
+    Zylstra et al. 2016) and adds Barberá et al. 2023 for the microclimate. Check the causal
+    claim "spread through them appears to remain slower".
+  - *Progression datasets* are said to "resolve only fires of tens of hectares or more" at
+    375–500 m; that is from the notes' rough ~50 ha figure for FEDS, not from a source.
+  - *τ = 2.82* is described in the supplementary as fixed "beforehand" from a fire-size model
+    fitted "to the mapped record". Confirm which data that model used.
+  - *Abstract* rounds the study area to 29 000 km². Keywords: ten, alphabetical.
 
-Resolve all alone and write in this document what made you doubt so Iván 
-reviews with more attention.
+- **Thesis material deliberately left for the regime paper** (Iván asked to be told):
+  the previous simulator's 60 m / annual-step design and its ignition model; the argument
+  that Morales et al. (2015) confounded vegetation with physical factors (patterns paper);
+  the general fuel- vs. moisture-limitation framing (Krawchuk, Pausas); the sigmoid vs.
+  exponential extrapolation lesson; management and lightning-trend implications. Two
+  thesis-discussion items were transformed rather than dropped: "ICE del PNNH now maps daily
+  advance" became the global-datasets paragraph (the local product could still be named), and
+  "distance to roads as a predictor of κ" became "suppression as a latent variable"; say if
+  the explicit road-distance suggestion should come back.
 
-### Write Introduction and Discussion
-
-Below I describe what the Intro and Disc should have. This is probably
-mentioned in the thesis. When writing the draf of this sections, 
-Claude must read the thesis and identify which parts apply to this paper
-vs which ones are purely for the fire-regime simulation paper 
-(not spread-specific). If some aspects are mentioned in the thesis 
-but not here, include them and tell this to Iván.
-It is likely that the widest-scope fundamentation of why fire modelling
-corresponds to both this paper and the fire-regime one. So do not be affraid
-of copying ideas from the thesis chapter 4. 
-When we write the fire-regime paper we can easily paraphrase the text
-if it becomes redundant.
-
-read the md files at 
-manuscript-spread/notes (except journal_choose, not useful now) to 
-take references and nurture the intro and disc.
-
-Introduction must have:
-
-- Importance of fire simulation modelling to understand future
-  trajectories of the system and counterfactuals based on 
-  management and climatic scenarios.
-- A very brief survey of kind of fire spread models: 
-  very detailed and data-parameter hungry ones vs. simpler ones
-  aimed at reproducing fire-regime properties.
-- Importance of simulation models for patagonia, the Morales 2015
-  experience, data-limitation.
-- Our proposal of developing a small-parameters, small-data requirement
-  and computationally cheap model. We say in intro that our simpler
-  approach is an easy way to get a low-parameter, limited-data model
-  running. However, in the discussion we will admit that better
-  spread engines are compatible with cheap, low-parameter, low-data 
-  settings. But we cannot say bluntly in a paper "well, we did this
-  because we did not know so much about the good fire models nor about
-  how to program them (I know now), so we went with what we knew". 
-  So the introduction is honest with what we thought at the beggining,
-  and the discussion is honest with what we know now.
-  
-Discussion main messages:
-
-- Our model recovered general properties of fire behaviour, both 
-  recognized everywhere and from our system:
-  spread dominated by wind and slope, with other variables taking smaller
-  effects. negative correlation among wind and slope parameters is very
-  reallistic, point it out, and also mention this in the results. 
-- Bad properties of our model: the spread engine has a bad geometry;
-  We should say elegantly that in the attempt to make a simple, cheap 
-  model we simplified parts of the spread process that had a terrible 
-  effect on the performance. 
-  An alternative should be to use the same spread geometric engine as 
-  the standard models (e.g., MTT flammap, cell2fire), but replace the 
-  parameter-data-hungry fuel-flammability functions with our empirical
-  approach, like ROS = f(VFI, TFI, FWI). That would be a nice merge.
-- Our approach of simplifiying the spread process as one-time may not be 
-  bad, and with better data, that one-time spread could be one day, not
-  15. Now, with more large fires and a database of dayly advance
-  (I saw one sometime ago, one that reconstructs daily fire polygons
-  from virs or modis) a model could be fit. Anyway, that systematic
-  data bases lack small fires, so our strategy of complementing data
-  sources to fit some parameters should still be use. 
-  For example, the main spread functions are fitted from large fires 
-  with data, but with a small number of parameters may be tuned from 
-  a larger set. 
-- The hierarchical structure could still serve to simulate variability,
-  even if a better model explains more variability. For example, 
-  suppression data may be available for a few fires, and we could have it
-  as a latent variable that controls initial spread, explaining
-  the occurrence of small or large fires. Then we could simulate it.
-- We could also treat weather and ignition point of small fires with 
-  uncertain/unavailable data as parameters to estimate, assigning
-  informative priors. Both start day and ignition point could be 
-  estimated, and satellite data could provide bounds for those parameters.
-
-The discussion (and conclusion) must be very explicit about what we aportamos
-here:
-  - simplifications on the model that are useful when data is limited,
-  - parameters fitted from different data types (size-matching, and ignition
-    point known),
-  - hierarchical structure,
-  - ABC for likelihood-free setting, and its adaptation for the hierarchical 
-    structure.
-
-All these are very valuable aportes for fire-spread simulators aimed at simulating
-fire regimes in low-data settings, and they are not made invalid for having 
-used an inferior spread engine.
-
-In both sections, you must write citing papers. Not terribly extensively,
-we have little space, but do not forget the most relevant ones.
-Follow the thesis style and citation density, and take the refs from the 
-md files above, and also from the thesis.
-
-
-### Write: 
-
-- Conclusion,
-- Abstract, with its subsections.
-
-### Reduce
-
-Materials and Methods and Results. (moving parts or large details to the supp.)
-
-- **Author block.** Affiliations, ORCIDs, co-authors and the author-contributions
-  statement are all still template text. Iván fills this.
+- **Cut candidates if anything must be added:** the Results paragraph on parameter
+  correlations is already minimal (developed in Fig. S3); the next cuts would be the third
+  Discussion paragraph's synthetic-landscape numbers, or the Data bullets' provenance details.

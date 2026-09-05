@@ -775,7 +775,8 @@ separately (Fig. S1, Eqn S1) and wants them submitted as separate file(s), so
 `supplementary.tex` is its own `article`-class document sharing `references.bib` and `ijwf.bst`
 with the paper. The two share no `.aux`, so every cross-reference into the paper is written by
 hand ("Eqn 2 of the main text") — a `\ref` cannot reach across. Its content is the thesis's
-chapter 4 appendix translated and renotated to the manuscript's symbols.
+chapter 4 appendix translated and renotated to the manuscript's symbols, plus what the
+2026-09-05 cut moved out of the paper (see *What moved to the supplementary* below).
 
 **Everything compiles in place, next to the `.tex`** — there is no `build/` any more
 (removed 2026-09-02). The point is that `make` and LaTeX Workshop's build-on-save inside
@@ -804,13 +805,50 @@ message, this is the first thing to check.
    and nothing warns. The body inside `\tbl` is a `tabular*` at `\textwidth` with
    `@{\extracolsep{\fill}}`; booktabs rules work fine inside it.
 
-**What is written, as of 2026-09-01.** Methods complete (its validation subsection rewritten
-against what was actually run); Results complete, with Figs. 1-7, their captions and two tables
-(Table 2, the DHARMa calibration; Table 3, shape by size class); Discussion is a deliberate
-partial draft — the validation paragraphs only, with a comment block naming what is missing;
-supplementary complete. **Introduction, Conclusion, abstract, keywords and online summary are
-still stubs.** `make words` is at ~5690 of 6000 with those stubs in place, so the Methods cut
-Iván flagged is now unavoidable rather than optional.
+**What is written, as of 2026-09-05: everything.** Introduction, Methods, Results, Discussion,
+Conclusion, the structured abstract (199 words), ten keywords and the online summary are all
+drafted; `make words` is at **5970 of 6000**, so any addition has to be paid for with a cut.
+The rough budget Iván set for the writing pass (≈1500 words per big section) landed at
+Introduction ≈900, Methods ≈2050, Results ≈1100, Discussion ≈1650, Conclusion ≈150. The
+Discussion carries the messages of his 2026-09-05 brief in this order: what the model
+recovered (wind and slope dominate, the realistic wind–slope and wind–steps correlations, the
+vegetation effect persisting under high FWI); fitted vs simulated random effects; the shape
+ceiling of the automaton; the honest paragraph that a better geometry (MTT, Cell2Fire,
+elliptical growth) is compatible with a cheap empirical rate of spread; the fire-progression
+datasets that now exist; what the hierarchical structure can still absorb (suppression as a
+latent variable, uncertain dates and ignition points as parameters); and an explicit
+*What this study contributes* (the four elements: the simplification, the mixed data sources,
+the hierarchy, the two-stage ABC). The Introduction is honest about what was thought at the
+start, the Discussion about what is known now, as he asked. The paper has two tables now
+(Table 1, the DHARMa calibration; Table 2, shape by size class): the VFI-coefficient table
+moved to the supplementary as Table S1.
+
+**What moved to the supplementary on 2026-09-05, to make the cut.** The flammability-index
+equation and its coefficient table (Eqn S2, Table S1), the parameter bounds and every prior
+of the hierarchical model (Eqns S3, S4, a new subsection *Parameter bounds and priors* opening
+Section 2), the WindNinja settings and the FWI standardization/accumulation details (two new
+subsections opening Section 1, which is now *Predictors and flammability indices*), and the
+eight-neighbour distance/bearing matrices (replaced by one clause in the paper). **The
+paper's numbered equations are now 1 (the data model) and 2 (the hierarchical mean)**, and
+every "Eqn N of the main text" string in the supplementary was renumbered accordingly; the
+header comment of `supplementary.tex` keeps the current map. The section numbers the paper
+points to (1 indices, 2 estimation, 3 validation, 4 vegetation effect, 5 extended results) are
+unchanged.
+
+**Bibliography.** `references.bib` grew from 37 to 74 entries on 2026-09-05. The entries
+copied from the thesis `.bib` were cleaned (publisher/note fields dropped, journal names in
+full); the ten entries new to both (Finney 2002, Pais 2021, Van Wagner 1969, Richards 1990,
+Artés 2019, Balch 2020, Chen 2022, Benali 2023, Bazin 2010, Turner and Gardner 2015) were
+verified against Crossref that day, and Anderson 1983 is a USDA report without a DOI. One
+correction relative to the thesis: Crossref lists **Denham** as first author of the 2020
+"First steps towards a dynamical model" paper, not Laneri, so the entry was reordered (key
+`laneri_first_2020` kept) and it cites as Denham et al. (2020). Multi-key `\citep` calls were
+checked to be in chronological order, which natbib does not do here (the class loads it
+without `sort`).
+
+**Spelling.** The paper uses -ize (standardized, summarized, marginalized) throughout, which is
+what the existing text had; the journal asks for Australian English, and one `sed` pass would
+convert it if Iván wants -ise. Left as is, deliberately, so the text stays consistent.
 
 **The software entries in `references.bib` must match the machine the analysis was run on.**
 They had drifted (the `R` entry still said 2022 against the Methods' R 4.5.3), so they are now
