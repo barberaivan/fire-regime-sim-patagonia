@@ -144,50 +144,68 @@ allow counterfactual trajectories to be compared under alternative climate scena
 and alternative management of fuels, ignitions or suppression
 \citep{keane2004classification, parisien2019applications}.
 
-Fire spread models range widely in the detail with which they represent the process
-\citep{sullivan2009wildland, papadopoulos2011comparative}. At one end are the
-operational simulators, such as FARSITE \citep{finney1998farsite}, FlamMap
-\citep{finney2006overview}, Phoenix \citep{tolhurst2008phoenix} and Prometheus
-\citep{tymstra2010development}, which propagate a fire front at sub-daily resolution
-from semi-physical rate-of-spread equations \citep{rothermel_mathematical_1972}
-driven by fuel models and hourly weather. They can predict the advance of an actual
-fire with considerable accuracy, and some are efficient enough for large ensembles
-\citep{finney2011method}, but they require inputs that are costly to obtain over large
-areas: fuel load and moisture by size class, canopy characteristics, hourly weather
-\citep{finney2005challenge, papadopoulos2011comparative}. At the other end are models that do not represent spread
-at all and simply assign each cell a burn probability. In between lie simple
-empirical spread models, typically cellular automata, whose parameters are estimated
-from the fires a region has recorded and whose inputs already exist almost anywhere: a
-vegetation map, indices derived from satellite imagery, a digital elevation model and
-reanalysis weather \citep{morales_stochastic_2015}. Models of this kind trade
-generality for feasibility: they must be refitted for each region, but they can be
-built where the inputs the physical models need do not exist. Since their purpose is to characterise a fire regime rather than to
-reproduce particular fires, they are judged on the emergent properties of the regime
-they generate, such as the distribution of fire sizes and the spatial pattern of burn
-probability, rather than on point predictions \citep{parisien2020commentary}.
+Fire spread models are a core component of for fire simulation,
+and usually set the hardest challenge, varying considerably in 
+the detail with which they represent the process
+\citep{sullivan2009wildland, papadopoulos2011comparative}. 
+The most detailed simulators, such as FARSITE \citep{finney1998farsite}, 
+Phoenix \citep{tolhurst2008phoenix} and Prometheus \citep{tymstra2010development}, 
+propagate a fire front at sub-daily resolution from semi-physical 
+rate-of-spread equations \citep{rothermel_mathematical_1972,van_wagner_development_1987}
+driven by fuel models and hourly weather. They can predict the advance of an actual 
+fire with considerable accuracy, but they require inputs that are costly to obtain over 
+large areas: fuel load and moisture by size class, canopy characteristics, hourly weather
+\citep{finney2005challenge, papadopoulos2011comparative}. 
+Despite fuel model maps can be assembled at large scales by matching 
+vegetation maps to the native fuel models of each model, 
+these adaptation of simulators to new systems still requires 
+detailed fire behaviour data to tune parameters in the best case, 
+or at least to validate them.
+Hence, a reasonable solution is to develop simpler models that can
+be run, fitted and validated using the available data, which may be 
+limited to simply fire polygons (e.g., \citealt{morales_stochastic_2015}). 
+Models of this kind trade generality for feasibility: they must be refitted 
+for each region of application, but they can be built where the inputs 
+the physical models need do not exist. Lacking detailed fire, weather and 
+fuels data, these models are not precise enough to predict the advance of 
+a fire event to inform combat, but they may be useful to simulate fire regimes 
+\citep{parisien2020commentary}.
+% [Claude, is this Parisien commentary good here?]
 
-North-western Patagonia is among the regions where fire activity is projected to
-increase most under climate change \citep{kitzberger_projections_2022}. Its temperate
-forests are dominated by non-resprouting trees that regenerate poorly after fire and
-are replaced by more flammable shrublands when fires recur or the post-fire climate is
+North-western Patagonia is among the regions where fire activity is 
+increasing under climate change 
+\citep{kitzberger_projections_2022,barbera_patterns}. 
+Its temperate forests are dominated by non-resprouting trees that 
+regenerate poorly after fire and are replaced by more flammable 
+shrublands when fires recur or the post-fire climate is
 dry, a positive feedback that makes the landscape sensitive to changes in its forcing
 \citep{kitzberger_firevegetation_2016, tiribelli_non-additive_2019}. Previous work
-produced a stochastic spread model for the region \citep{morales_stochastic_2015,
-laneri_first_2020}: a cellular automaton in which the probability of spread between
+produced a stochastic spread model for the region \citep{morales_stochastic_2015}: 
+a cellular automaton in which the probability of spread between
 neighbouring cells depends on vegetation (forest or shrubland), slope, aspect and wind
 direction, fitted with Approximate Bayesian Computation (ABC) to the perimeters of nine
 fires. With so few fires the effect of weather on spread could not be estimated, so
 climatic variability entered the regime simulator only through the number of
 ignitions.
 
-The fundamental difficulty is the nature of the fire record. What a regional fire
-history contains is final perimeters, mapped from satellite imagery after the fact.
-Rate of spread is never measured, daily progression is not mapped, the ignition point
-is known for a minority of fires, and the date on which a fire actually spread is often
-uncertain to within weeks. Weather stations are sparse, so the wind and fuel moisture a
-given fire burned under are known only from coarse reanalysis products. A spread model
+The fundamental difficulty to model fire spread in this region is the nature of the 
+fire record, where only final fire polygons are available \citep{barbera_patterns}. 
+Rate of spread is never measured, daily progression is not mapped, 
+the ignition point is known for a minority of fires, 
+and the date(s) on which a fire actually spread is often
+uncertain to within weeks. Weather stations are sparse, so the wind and fuel moisture of
+a fire event are known only from coarse reanalysis products. A spread model
 for such a region has to be fitted to what the record does contain, and be simple
 enough that its parameters can be estimated from it.
+
+% Acá falta resaltar la estructura jerárquica, que permite simular variabilidad 
+% que el modelo ignora por ser tan simple. Esa variabilidad se estima de los datos
+% y luego puede simularse. 
+% A su vez, este enfoque require el punto de ignición; las bases de datos tienen
+% un sesgo hacia fuegos grandes, entonces usamos distintos sets de datos para 
+% informar distintos sets de parámetros. Esto permite que el modelo también sea capaz
+% de simular fuegos pequeños, lo cual es requerido para simular el régimen de 
+% incendios de forma correcta. 
 
 Here we develop and evaluate a fire spread model designed for those conditions. It is a
 cellular automaton with six parameters, built on inputs available for the whole region,
