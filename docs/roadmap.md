@@ -6,7 +6,7 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-05
 
 Where finished work is written up:
 
@@ -49,7 +49,28 @@ Full detail in `docs/migration.md`'s TODO register.
 
 ---
 
-## Next step: Write Introduction and Discussion
+## Next steps 2026-09-05
+
+### General comments
+
+We can use 6000 words (not including table and fig captions). Methods and results must be
+cut significantly. Dedicate ~1500 words for each big section: 
+intro, methods, results, and discussion.
+The idea to cut methods:
+  tell the main ideal with little formal details; these go to supp.
+To cut resutls: 
+  choose the main results. Second ones may be mentioned very briefly and developed in
+  supp. Follow the thesis here. For example, the corr between parameters may be 
+  only mentioned briefly in the main, and developed in supp.
+
+In these notes my english is quite poor, with expressions like "low-data" that 
+refer to data not very good to inform spread: we don't have ROS recorded,
+nor daily advance, nor exact date. Find a way to express it correctly. 
+
+Resolve all alone and write in this document what made you doubt so Iván 
+reviews with more attention.
+
+### Write Introduction and Discussion
 
 Below I describe what the Intro and Disc should have. This is probably
 mentioned in the thesis. When writing the draf of this sections, 
@@ -63,6 +84,10 @@ of copying ideas from the thesis chapter 4.
 When we write the fire-regime paper we can easily paraphrase the text
 if it becomes redundant.
 
+read the md files at 
+manuscript-spread/notes (except journal_choose, not useful now) to 
+take references and nurture the intro and disc.
+
 Introduction must have:
 
 - Importance of fire simulation modelling to understand future
@@ -74,7 +99,15 @@ Introduction must have:
 - Importance of simulation models for patagonia, the Morales 2015
   experience, data-limitation.
 - Our proposal of developing a small-parameters, small-data requirement
-  and computationally cheap model. 
+  and computationally cheap model. We say in intro that our simpler
+  approach is an easy way to get a low-parameter, limited-data model
+  running. However, in the discussion we will admit that better
+  spread engines are compatible with cheap, low-parameter, low-data 
+  settings. But we cannot say bluntly in a paper "well, we did this
+  because we did not know so much about the good fire models nor about
+  how to program them (I know now), so we went with what we knew". 
+  So the introduction is honest with what we thought at the beggining,
+  and the discussion is honest with what we know now.
   
 Discussion main messages:
 
@@ -111,22 +144,33 @@ Discussion main messages:
   informative priors. Both start day and ignition point could be 
   estimated, and satellite data could provide bounds for those parameters.
 
+The discussion (and conclusion) must be very explicit about what we aportamos
+here:
+  - simplifications on the model that are useful when data is limited,
+  - parameters fitted from different data types (size-matching, and ignition
+    point known),
+  - hierarchical structure,
+  - ABC for likelihood-free setting, and its adaptation for the hierarchical 
+    structure.
 
-- **Introduction.** Still `Bla bla`.
+All these are very valuable aportes for fire-spread simulators aimed at simulating
+fire regimes in low-data settings, and they are not made invalid for having 
+used an inferior spread engine.
 
-- **Conclusion**, then the **abstract** (200 words, the six structured labels), the
-  **keywords** (eight or more) and the **online summary** (50–80 words, three sentences).
+In both sections, you must write citing papers. Not terribly extensively,
+we have little space, but do not forget the most relevant ones.
+Follow the thesis style and citation density, and take the refs from the 
+md files above, and also from the thesis.
 
-- **Finish the Discussion.** The comment block at the top of the section names the three
-  missing pieces: what the fitted model says about spread in this region; the two-stage
-  ABC fit as a method, against the thesis-era estimation; and what it all means for the
-  regime simulator of paper 2.
 
-- **The cutting pass.** `make words` is at **~5690 of 6000** with the Introduction and the
-  Conclusion still stubs, so the Methods have to lose several hundred words. The obvious
-  candidates are the neighbourhood matrices $G$ and $A$, the long justification of the
-  hierarchical structure, and the tile-margin argument in the validation subsection —
-  all of which could move to the supplementary, which has no budget.
+### Write: 
+
+- Conclusion,
+- Abstract, with its subsections.
+
+### Reduce
+
+Materials and Methods and Results. (moving parts or large details to the supp.)
 
 - **Author block.** Affiliations, ORCIDs, co-authors and the author-contributions
-  statement are all still template text.
+  statement are all still template text. Iván fills this.
