@@ -530,11 +530,20 @@ this table's values displaced by one vegetation class. Recomputed, and confirmed
 
 Every panel rejects uniformity at *p* < 0.05 in both modes. Read in words:
 
-- **Size** behaves as the thesis version did. Under **fitted** random effects the observed areas
-  sit low in their own predictive distributions (0.373 overall, 65 % of fires below the simulated
-  median) — the model burns too much — while **simulated** ones overshoot the other way (0.686,
-  only 19 % below). **Grassland** is the worst class under fitted parameters (0.231, *D* = 0.523)
-  and **subalpine forest** the best (0.534, *D* = 0.221).
+- **Size.** Under **fitted** random effects the observed areas sit low in their own predictive
+  distributions (0.373 overall, 65 % of fires below the simulated median), so the model burns too
+  much. Under **simulated** random effects the residuals go the other way (0.686, only 19 %
+  below), and **this file used to read that as a worse overshoot, which is backwards**: a residual
+  above 0.5 means the observation sits high among its simulations, i.e. the model simulates too
+  *little* (the convention is stated in `spread/figure_dharma_metrics.R` line 11). It does not
+  contradict the size quotient of 1.51, because the two statistics ask different questions. The
+  quotient is a posterior **mean** of simulated/observed per fire (`spread/figure_focal_fit.R`:
+  "The quotient is formed per simulation and then summarised"), which the long upper tail
+  inflates; the residual is a **median**-based rank. Under simulated random effects the per-fire
+  predictive distribution is wide enough that its median falls short of the observed fire while
+  its mean exceeds it, so both numbers hold at once. Corrected here and in the paper on
+  2026-09-07; the numbers themselves were not recomputed. **Grassland** is the worst class under
+  fitted parameters (0.231, *D* = 0.523) and **subalpine forest** the best (0.534, *D* = 0.221).
 - **Shape** puts the headline result in the calibration frame. Compactness: under simulated
   random effects the mean residual is **0.163** and **96 %** of observed fires are less compact
   than the model's median simulation — the same "simulated fires are too round" finding as Fig. 7,
