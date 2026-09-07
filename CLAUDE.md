@@ -119,10 +119,25 @@ the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
 - Prefer functions over top-level scripts; keep MCMC/algorithm cores in `R/`, and keep the
   regime **simulator as a standalone function** so the production side can extract it.
 - **Notes to Claude inside the manuscripts.** In the `.tex` sources, a bracketed block that
-  starts with `[Claude, …]` is an instruction from Iván about what to write there — not text of
-  the paper. The `[` is sometimes alone on its own line; that means the same thing. Read them,
-  write the requested prose in their place, and delete the block once it is honoured (keep it,
-  or leave a `%` comment, if the instruction still needs a decision from him).
+  starts with `[Claude, …]` is an instruction from Iván about what to write there, not text of
+  the paper. The `[` is sometimes alone on its own line; that means the same thing. The block
+  may also be a **multi-line LaTeX comment**, one `%` per line:
+
+  ```latex
+  % [Claude, do this...
+  % and this]
+  ```
+
+  Read them, write the requested prose in their place, and delete the block once it is honoured
+  (keep it, or leave a `%` comment, if the instruction still needs a decision from him).
+- **`[citation]` placeholders.** In the text, `[citation]` marks a spot that needs a reference,
+  and a note just below it usually says what should be cited there. Find the reference, add it to
+  `references.bib`, and **explain it to Iván in the chat**: why it belongs there and how it
+  supports the clause. The ideal citation is another author stating that clause or a closely
+  related concept; an example that makes the clause true also works. **Find them by searching
+  the web for peer-reviewed articles**, not by mining Iván's existing bibliographies (the
+  thesis `.bib`, the manuscript `.bib`): those are for reusing an entry once the right paper is
+  known, never for choosing the paper.
 - **No em dashes, anywhere.** Not in the manuscripts, not in `docs/`, not in commit messages or
   replies. Use a comma, a colon, parentheses or a new sentence instead. En dashes stay for
   ranges (`1998--2022`) and for paired terms (`wind--slope`).

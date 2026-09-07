@@ -64,7 +64,7 @@
 % TITLE, accurate, informative, brief; no abbreviations or formulae;
 %         include keywords in it where possible.        [not counted in the 6000]
 %------------------------------------------------------------------------------
-\title{Fitting a hierarchical fire spread model with Approximate Bayesian Computation}
+\title{Fitting a hierarchical fire spread model based on fire polygons}
 
 \versorh{Barbera}                                  % verso running head (author)
 \rectorh{International Journal of Wildland Fire}   % recto running head
@@ -89,26 +89,28 @@
 %------------------------------------------------------------------------------
 %TC:ignore
 \begin{abstract}
-\textbf{Background.} Simulating fire regimes under climate and management
-scenarios needs spread models that can be fitted where fire behaviour is poorly
-documented and run thousands of times.
+\textbf{Background.} Assessing fire regime trajectories under climatic and 
+management scenarios needs spatially explicit fire spread models that 
+can be fitted and validated where fire behaviour is poorly documented.
 \textbf{Aims.} To develop and evaluate a fire spread model for north-western
-Patagonia with few parameters, regionally available inputs, and a fitting method
-that needs only final perimeters.
-\textbf{Methods.} A stochastic cellular automaton with six parameters that vary
-among fires around a mean set by fire weather. It was fitted with two-stage
-Approximate Bayesian Computation to 57 fires with a known ignition point, with 178
-further fires informing fire size, and validated by simulating a fire regime over
-29\,000\,km$^2$ and comparing simulated and mapped fire sizes and shapes.
-\textbf{Key results.} Wind and slope dominated spread probability, vegetation and
-topography were secondary, and fire weather acted through fire size and wind.
+Patagonia using the regionally available inputs, and a fitting method
+that needs only final fire perimeters and ignition location.
+\textbf{Methods.} We developed a stochastic cellular automaton where parameters
+vary among fires in a hierarchical formulation. It was fitted with the Lunn 
+method and Approximate Bayesian Computation, based on 57 fires with known 
+ignition location, with 178 further fires informing fire size. 
+The model was validated by comparing fire size and shape 
+between simulated and observed fires.
+\textbf{Key results.} Wind and slope dominated spread probability, with 
+vegetation and topography showing smaller effects. Fire weather strongly 
+controlled fire size.
 Simulated fires reproduced the response of size to fire weather but were
-larger and rounder than observed ones, a limit of the contagion geometry.
+larger and rounder than observed ones, a limitation of the contagion geometry.
 \textbf{Conclusions.} The hierarchical, likelihood-free fitting approach recovers
-realistic fire behaviour from perimeters alone; the spread geometry needs
-replacing.
-\textbf{Implications.} Combined with an elliptical spread engine, the approach
-offers a cheap, data-frugal way to build fire regime simulators.
+realistic fire behaviour from perimeters alone, but the spread geometry should 
+be replaced.
+\textbf{Implications.} Combined with an elliptical spread geometry, the approach
+offers a cheap, data-frugal way to build fire spread models to simulate fire regimes.
 \end{abstract}
 
 %------------------------------------------------------------------------------
@@ -144,7 +146,7 @@ allow counterfactual trajectories to be compared under alternative climate scena
 and alternative management of fuels, ignitions or suppression
 \citep{keane2004classification, parisien2019applications}.
 
-Fire spread models are a core component of for fire simulation,
+Fire spread models are a core component of fire simulation,
 and usually set the hardest challenge, varying considerably in 
 the detail with which they represent the process
 \citep{sullivan2009wildland, papadopoulos2011comparative}. 
@@ -152,25 +154,27 @@ The most detailed simulators, such as FARSITE \citep{finney1998farsite},
 Phoenix \citep{tolhurst2008phoenix} and Prometheus \citep{tymstra2010development}, 
 propagate a fire front at sub-daily resolution from semi-physical 
 rate-of-spread equations \citep{rothermel_mathematical_1972,van_wagner_development_1987}
-driven by fuel models and hourly weather. They can predict the advance of an actual 
+driven by fuel models and hourly weather. They can predict the advance of an active 
 fire with considerable accuracy, but they require inputs that are costly to obtain over 
 large areas: fuel load and moisture by size class, canopy characteristics, hourly weather
 \citep{finney2005challenge, papadopoulos2011comparative}. 
-Despite fuel model maps can be assembled at large scales by matching 
-vegetation maps to the native fuel models of each model, 
-these adaptation of simulators to new systems still requires 
-detailed fire behaviour data to tune parameters in the best case, 
-or at least to validate them.
+Fuel model maps, one of the most data-demanding aspects that these models
+require \citep{keane_describing_2013, parresol_developing_2012}, can be assembled at
+large scales by matching vegetation maps to the native fuel models of each fire model
+\citep{salis_predicting_2016, price_modeling_2022}. However, adapting the simulators to
+new systems for which they were not developed requires detailed fire spread data to
+tune parameters in the best case, or at least to validate them
+\citep{arca_evaluation_2007, cruz_uncertainty_2013}.
 Hence, a reasonable solution is to develop simpler models that can
-be run, fitted and validated using the available data, which may be 
-limited to simply fire polygons (e.g., \citealt{morales_stochastic_2015}). 
+be executed, fitted and validated using the available data, which may be 
+limited to simply fire polygons and ignition points 
+(e.g., \citealt{morales_stochastic_2015}). 
 Models of this kind trade generality for feasibility: they must be refitted 
 for each region of application, but they can be built where the inputs 
 the physical models need do not exist. Lacking detailed fire, weather and 
 fuels data, these models are not precise enough to predict the advance of 
-a fire event to inform combat, but they may be useful to simulate fire regimes 
+a fire event to inform combat, but they are useful to simulate fire regimes 
 \citep{parisien2020commentary}.
-% [Claude, is this Parisien commentary good here?]
 
 North-western Patagonia is among the regions where fire activity is 
 increasing under climate change 
@@ -178,19 +182,22 @@ increasing under climate change
 Its temperate forests are dominated by non-resprouting trees that 
 regenerate poorly after fire and are replaced by more flammable 
 shrublands when fires recur or the post-fire climate is
-dry, a positive feedback that makes the landscape sensitive to changes in its forcing
-\citep{kitzberger_firevegetation_2016, tiribelli_non-additive_2019}. Previous work
-produced a stochastic spread model for the region \citep{morales_stochastic_2015}: 
-a cellular automaton in which the probability of spread between
-neighbouring cells depends on vegetation (forest or shrubland), slope, aspect and wind
-direction, fitted with Approximate Bayesian Computation (ABC) to the perimeters of nine
-fires. With so few fires the effect of weather on spread could not be estimated, so
-climatic variability entered the regime simulator only through the number of
-ignitions.
+dry \citep{kitzberger_firevegetation_2016}. 
+This positive feedback that makes the landscape sensitive to changes in its forcing
+\citep{kitzberger_firevegetation_2016, tiribelli_non-additive_2019}. 
+A fire regime simulator was built to assess changes in vegetation patterns and 
+fire regime in relation to climate change 
+\citep{tiribelli_non-additive_2019, kitzberger_projections_2022}.
+Its fire spread model was a cellular automaton in which the probability of spread between
+neighbouring cells depends on vegetation, slope, aspect and wind
+direction \citep{morales_stochastic_2015}. The model was fitted 
+to the perimeters of only nine fires occurred under extreme fire weather.
+Climatic variability entered the regime simulator only through the number of
+ignitions \citep{kitzberger_projections_2022}.
 
 The fundamental difficulty to model fire spread in this region is the nature of the 
-fire record, where only final fire polygons are available \citep{barbera_patterns}. 
-Rate of spread is never measured, daily progression is not mapped, 
+fire record, where only final fire polygons are available \citep{morales_stochastic_2015}. 
+Rate of spread is never measured, daily progression is rarely mapped, 
 the ignition point is known for a minority of fires, 
 and the date(s) on which a fire actually spread is often
 uncertain to within weeks. Weather stations are sparse, so the wind and fuel moisture of
@@ -198,38 +205,28 @@ a fire event are known only from coarse reanalysis products. A spread model
 for such a region has to be fitted to what the record does contain, and be simple
 enough that its parameters can be estimated from it.
 
-% Acá falta resaltar la estructura jerárquica, que permite simular variabilidad 
-% que el modelo ignora por ser tan simple. Esa variabilidad se estima de los datos
-% y luego puede simularse. 
-% A su vez, este enfoque require el punto de ignición; las bases de datos tienen
-% un sesgo hacia fuegos grandes, entonces usamos distintos sets de datos para 
-% informar distintos sets de parámetros. Esto permite que el modelo también sea capaz
-% de simular fuegos pequeños, lo cual es requerido para simular el régimen de 
-% incendios de forma correcta. 
-
-Here we develop and evaluate a fire spread model designed for those conditions. It is a
-cellular automaton with six parameters, built on inputs available for the whole region,
-and cheap enough to be simulated millions of times, which fitting it by simulation and
-running it inside a regime simulator both require. Relative to the model of
-\citet{morales_stochastic_2015}, it represents vegetation and topography through two
-flammability indices derived from a regional analysis of burn probability
-\citep{barbera_patterns}, and it makes the spread parameters depend on fire weather, so
-that the regime simulator it feeds can respond to climate. Four choices let it be fitted
-from the record described above. First, the process is simplified to what the data can
-inform: a fire is assumed to burn within one fortnight, under one wind direction and
-one value of fire weather, so that no progression data are needed. Second, the
-parameters are given a hierarchical structure, varying among fires around a mean set by
-fire weather, which absorbs the effects of unobserved wind speed, suppression and fuel
-moisture instead of forcing them onto the fixed effects. Third, different parts of the
-model are informed by different data: the 57 fires with a known ignition point inform
-the whole model through simulation, whereas the 178 fires without one, which cannot be
-simulated, inform the parameters that govern fire size through an auxiliary regression
-of burned area on simulation steps. Fourth, because the likelihood of a spread model
-cannot be evaluated, the model is fitted with ABC, in a two-stage scheme that makes the
-hierarchical structure tractable. We then validate the model in the pattern-oriented
-sense \citep{grimm2005pattern}, by asking whether fires simulated over the whole study
-area reproduce the size and shape of the mapped record, and the way both respond to fire
-weather, which is the use the model is built for.
+Here we develop and evaluate a fire spread model designed for those conditions. 
+The model is similar to the one developed by \citet{morales_stochastic_2015},
+with a few changes on how vegetation and topographic effects enter the model
+and including the effect of the weather through the Fire Weather Index 
+(FWI; \citealt{van_wagner_development_1987}). Fires are assumed to spread 
+atemporally within 14-days periods (fortnights), so the detailed advance 
+of fire is not needed to fit or validate the model, only the fortnight at which they
+occurred, and detailed weather data at high temporal resolution is not
+required either. These simplifications, required by the lack of detailed data,
+could make the model unrealistic. Hence, we define a hierarchical model structure 
+to represent process variation that the model does not account for explicitly 
+(e.g., suppression efforts and fine-scale weather and fuel moisture variations 
+in space and time).
+Each fire event has its own parameter vector, sampled from a multivariate 
+probability distribution whose mean depends on the FWI. 
+In the absence of cell-to-cell spread data, which precludes the use of a likelihood
+function, we fit the model through Approximate Bayesian Computation
+\citep{beaumont2010approximate, morales_stochastic_2015}, 
+applying the Lunn method to deal with the hierarchical structure 
+\citep{lunn2013fully}. As the model is not aimed to represent the exact spread 
+individual fires, we validate it comparing the size and shape of many simulated
+fires in the study area with the fire record.
 
 \section{Materials and methods}
 
