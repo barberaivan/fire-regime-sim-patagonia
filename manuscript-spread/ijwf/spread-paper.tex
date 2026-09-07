@@ -578,38 +578,24 @@ Given each fire's own fitted random effects, the simulator reproduced the mapped
 reasonably well: the median spatial overlap over the 57 fires was 0.53 (range
 0.15--0.83; Fig.~S4) and the median over fires of the mean simulated-to-observed size
 ratio was 1.09, with
-55 of 57 fires within a factor of two (Fig.~S5). Under simulated random effects both
-collapsed: median overlap 0.11 (range 0.03--0.24) and median size ratio 1.51, with only
-28 of 57 fires within a factor of two. The per-cell picture is the same
-(Fig.~\ref{fig:bp}): with fitted random effects the high-probability region follows the
-observed perimeter closely, whereas with simulated random effects probability spreads
+55 of 57 fires within a factor of two (Fig.~S5). Under simulated random effects 
+the median overlap shrank to 0.11 (range 0.03--0.24), and median size ratio was 1.51, 
+with only 28 of 57 fires within a factor of two. The per-cell picture is the same
+(Fig.~\ref{fig:bp}): with fitted random effects the high-probability region is close
+to the fire perimeter, whereas with simulated random effects probability spreads
 out around the ignition point and the perimeter is no longer traced.
-
-% [2026-09-07, Claude] This paragraph used to end: "under simulated random effects it
-% overshot much further (0.686, only 19 % below)". That reading was backwards. In
-% DHARMa a residual ABOVE 0.5 means the observation sits high in its predictive
-% distribution, i.e. the model simulates too LITTLE; the convention is stated in
-% spread/figure_dharma_metrics.R line 11 ("below it = the model simulates too much,
-% above it = too little"). The numbers were right, the words were not.
-% The apparent clash with the size quotient of 1.51 in the previous paragraph is real
-% but explainable, and the paragraph now says so: that quotient is a posterior MEAN of
-% simulated/observed per fire (spread/figure_focal_fit.R: "The quotient is formed per
-% simulation and then summarised"), inflated by the long upper tail, whereas the
-% residual is a MEDIAN-based rank. Under simulated random effects the per-fire
-% predictive distribution is so wide that its median falls short of the observed fire
-% while its mean exceeds it, so both statistics are correct at once.
-% The same misreading was in docs/spread.md and was corrected there too. Neither figure
-% was re-run to check the numbers: data/ and files/ are not symlinked on that machine.
-The quantile residuals sharpen this into a statement about calibration
+The quantile residuals also quantify a mismatch in size distribution. 
 (Fig.~\ref{fig:dharma}, Table~\ref{tab:dharma}). Each residual is the quantile at which
-a fire's observed value falls among its own simulations: 0.5 is calibration, lower means
+a fire's observed value falls among its own simulations. These residuals have a uniform
+distribution in (0, 1) if the model is calibrated, and their average across fires should be near 0.5. Lower means
 the model burns too much, higher too little. For burned area under fitted random
-effects the observed fires sat low (mean residual 0.373, 65\,\% of them below their
-simulated median), so the model burns too much. Under simulated random
-effects the residuals moved the other way (0.686, 19\,\% below), because that
+effects the observed fires show a mean residual of 0.373, so the model burns too much. 
+Under simulated random
+effects the residuals moved the other way (mean 0.686), because that
 distribution widens so much that most simulations fall short of the observed fire even
 though their mean exceeds it: the quotient above averages simulations, this residual
-ranks them.
+ranks them. This mean above 0.5 under simulated random effects is probably the 178 
+smaller fires (with ignition point) pulling the steps distribution to the small side.
 
 The two shape statistics behaved differently.
 Under simulated random effects the mean compactness residual was 0.163, with
@@ -642,7 +628,7 @@ principal axis from the regional wind axis was 31, 32 and 20$^\circ$ for observe
 in the three size classes, against 45$^\circ$ under random orientation, but 54, 58 and
 60$^\circ$ for simulated ones: the observed record is wind-aligned, most strongly among
 the largest fires, whereas the simulated set is if anything oriented slightly across the
-wind. Conditioning on FWI does not change the picture (Fig.~\ref{fig:validation}B):
+wind. Conditioning on FWI does not change these patterns (Fig.~\ref{fig:validation}B):
 observed compactness falls with FWI and simulated compactness falls in parallel,
 roughly 0.15 higher throughout, and the deviation from the wind axis is flat in both,
 near 35$^\circ$ observed and 50$^\circ$ simulated.
@@ -715,7 +701,7 @@ means.}
 
 \begin{figure*}[tp]
 \centering
-\includegraphics[width=1.0\textwidth]{fig3_params_fwi}
+\includegraphics[width=1.0\textwidth]{fig3_params_fwi_v2}
 \caption{The six spread parameters as a function of accumulated FWI. Lines and bands are
 the mean and the 95\,\% credible interval of the population mean; points and vertical
 lines are the parameter estimated for each of the 57 fires with a known ignition point,
@@ -726,10 +712,6 @@ positive one). $\kappa$ is the maximum number of simulation steps
 (Eqn~\ref{eq:datamodel}).}
 \label{fig:params}
 \end{figure*}
-
-% [Claude, this figure above should include the fitted steps for the fires with unknown
-% ignition point. Change it and update the caption to mention that.
-% They should have another color, in the same scale ideally.]
 
 \begin{figure*}[tp]
 \centering
@@ -799,7 +781,9 @@ Rothermel equations \citep{rothermel_mathematical_1972} and of the previous mode
 the region \citep{morales_stochastic_2015}. Two features of the between-fire variation
 are also realistic. The wind and slope coefficients were negatively correlated: fires
 tend to be driven by one factor or the other, as \citet{laneri_first_2020} found in the
-same landscapes. And the wind coefficient was positively correlated with the number of
+same landscapes. 
+% [Claude, get that Laneri paper, read it and check if that comparison is true.]
+And the wind coefficient was positively correlated with the number of
 steps, so that windier fires ran further; the correlation also keeps the simulator from
 producing fires that spread in every direction for many steps, which would be enormous.
 That fire weather acted on reach and on the wind effect, and not on the vegetation and
@@ -814,10 +798,9 @@ secondary, persisted at the highest FWI in the record: severe weather lifted spr
 probability in every type without closing the gap between closed forests and shrublands
 (Fig.~\ref{fig:vegeffect}). Tall closed forests carry moister fuel, less vertical
 continuity and more coarse fuel acting as a heat sink \citep{zylstra_biophysical_2016,
-barbera_microclimate_2023}, and although every type can burn when the atmosphere
-allows it, spread through them appears to remain slower. For management, maintaining
-tall closed canopies could slow spread across the landscape even in severe seasons
-\citep{tiribelli_non-additive_2019}.
+barbera_microclimate_2023, tiribelli_changes_2018}, and although every type can burn when the atmosphere
+allows it, spread through them appears to remain slower. This suggests that maintaining
+tall closed canopies could slow spread across the landscape even in severe seasons.
 
 \subsection*{Fitted and simulated random effects mean different things}
 
@@ -832,7 +815,7 @@ simulating a different fire under the same weather index and on the same landsca
 the drop in overlap from 0.53 to 0.11 measures the width of that distribution rather
 than an error. A regime simulator needs the second mode, generating plausible fires
 rather than retrodicting particular ones, which is why the record-wide experiment is
-the test that matters for the model's intended use. Note too that a simulated fire
+the test that matters the most for the model's intended use. Note too that a simulated fire
 stops either because propagation failed at every edge cell or because the step budget
 $\kappa$ ran out; $\kappa$ is a lumped stand-in for everything that ends a fire in
 time, a weather change, rain or successful suppression.
@@ -844,10 +827,14 @@ rather than a matter of tuning. In the automaton the spread \emph{rate} is isotr
 the front advances at most one cell per step in every direction, and the wind term
 changes only \emph{whether} a neighbour ignites, never how fast the front reaches it,
 so the downwind front cannot outrun the flanks. Once the wind term is strong enough to
-matter it drives spread probability towards 1 downwind and 0 upwind, downwind and
-lateral cells both ignite at nearly every step, and the burned set converges on the
-downwind half of the square reachable in $\kappa$ steps, whose elongation is fixed by
-geometry at about 1.9. Simulations on a flat synthetic landscape confirm the ceiling:
+matter it drives spread probability towards 1 downwind and 0 upwind, with lateral
+cells at probability
+%[Claude, compute this prob from the equation, if wind speed is very large, what value
+%takes hte lateral cells?]
+Under this condition, simulated fires in flat and homogeneous fuel make a funnel shape
+widening downwind, but can never make highly estirada shape,
+%[Claude, what word here for estirada?]
+and its elongation is fixed by geometry at about 1.9. Simulations on a flat synthetic landscape confirm the ceiling:
 sweeping the base spread probability against the wind coefficient, elongation never
 exceeded 1.92 wherever the wind term was active, and the fitted fires sit firmly in
 that saturated regime, with a median wind coefficient of 4.9. Against that ceiling,

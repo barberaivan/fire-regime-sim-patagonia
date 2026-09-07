@@ -6,7 +6,7 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-05 (evening: writing pass done)
+**Last updated:** 2026-09-07 (κ-truncation diagnosis; re-run planned)
 
 Where finished work is written up:
 
@@ -46,6 +46,15 @@ Full detail in `docs/migration.md`'s TODO register.
 `manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
 `manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). The paper says
 **235 = 57 + 178** fires throughout (`docs/spread.md` → *How many fires?*).
+
+---
+
+## Spread paper: the κ-truncation re-run
+
+Diagnosed 2026-09-07: the regional validation's shape mismatch (simulated fires rounder and
+oriented across the wind) is carried by the fires the step budget κ cuts short, not by the
+spread process. Plan, evidence and the full list of numbers to update:
+**`manuscript-spread/notes/plan_kappa_truncation_rerun.md`**. Not started.
 
 ---
 

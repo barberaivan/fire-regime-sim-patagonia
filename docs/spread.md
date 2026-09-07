@@ -583,7 +583,7 @@ evaluate — so a caption change meant a refit.
 |---|---|---|---|
 | Fig. 1 | `figure_study_area.R` | `fig1_study_area` | shapefiles + external base layers |
 | Fig. 2 | `figure_spread_curves.R` | `fig2_spread_curves` | `curves_df_prediction.rds` |
-| Fig. 3 | `figure_params_fwi.R` | `fig3_params_fwi` | `mu_samples_prediction.rds`, `spread_model_samples.rds` |
+| Fig. 3 | `figure_params_fwi.R` | `fig3_params_fwi`, `fig3_params_fwi_v2` | `mu_samples_prediction.rds`, `spread_model_samples.rds` |
 | Fig. 4 | `figure_vegetation_effect.R` | `fig4_vegetation_effect` | `spreadprob_veg_comparison_array.rds` |
 | Fig. 5 | `figure_burn_probability.R` | `fig5_burn_probability` | `burn_probability_maps.rds` |
 | Fig. 6 | `figure_dharma_metrics.R` | `fig6_dharma_metrics` | `focal_metrics.rds` |
@@ -592,6 +592,15 @@ evaluate — so a caption change meant a refit.
 | Fig. S2 | `figure_spread_curves.R` | `figS2_spread_curves_raw` | `curves_df_prediction_raw_x.rds` |
 | Fig. S3 | `figure_parameter_correlations.R` | `figS3_parameter_correlations` | `spread_model_samples.rds` |
 | Figs. S4, S5 | `figure_focal_fit.R` | `figS4_overlap`, `figS5_size_quotient` | `focal_metrics.rds` |
+
+`figure_params_fwi.R` writes **two versions of Fig. 3** and the paper has still to choose between
+them: `fig3_params_fwi` carries only the 57 fires with a known ignition point, `fig3_params_fwi_v2`
+adds, in the kappa panel alone, the 178 fires without one (orange triangles against the pink
+circles, legend at the bottom). Those 178 have no beta estimated: they enter the fit only through
+the area ~ steps regression, so kappa is the one parameter they have. Their kappa is also stored
+differently, on the scaled-logit scale between `stepsL = 2` and the estimated `draws$stepsU`,
+which changes from draw to draw, so it has to be back-transformed draw by draw before it is
+summarised.
 
 All of them write `.png` and `.pdf` into `manuscript-spread/figures/`, and all but Fig. 1 and
 Fig. S3 run in seconds. Fig. S3 re-simulates 235 fires per posterior draw for each of the 15
