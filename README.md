@@ -138,6 +138,10 @@ safe to hand out as a single Drive link:
 | `fire-regime-sim-patagonia-store` | `data/`, `files/` | landscape rasters, FWI grids and projections, fire perimeters, flammability indices, every fitted model and posterior sample, simulation outputs | **yes** — this is the link that goes in the papers' data availability statements |
 | `fire-regime-sim-patagonia-store-private` | `data_private/` | `ignition/` — the PNNH fire-report record (Marcelo Bari, APN), the lightning-ignition database (Thomas Kitzberger), and everything derived from them: the merged point set, its Earth Engine covariate export, the population-point sample, `ignition_size_data.csv` | **no, never** |
 
+The shareable store is published read-only at
+<https://drive.google.com/drive/folders/1oqhWG3qKghszEEHhP24v30GrbHm2jwme>,
+which is the link in the spread paper's data availability statement.
+
 Both sources were provided for this research only and are not ours to redistribute, which is why
 they sit in a folder a share link cannot reach rather than in a restricted subfolder of the main
 store. **Do not move them back into the main store**, and do not add derived files that contain

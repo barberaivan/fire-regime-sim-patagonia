@@ -143,6 +143,12 @@ paths and both linked in by `./setup.sh`:
 | `fire-regime-sim-patagonia-store` | `data/`, `files/` | everything else | **yes** |
 | `fire-regime-sim-patagonia-store-private` | `data_private/` | `ignition/` — the non-public ignition record | **no, never** |
 
+The shareable store is published as a read-only Drive link, and it is the link the spread
+paper's data availability statement points at:
+<https://drive.google.com/drive/folders/1oqhWG3qKghszEEHhP24v30GrbHm2jwme>
+(verified 2026-09-08: folder `fire-regime-sim-patagonia-store`, "anyone with the link" as
+**reader**, owner-only write). The private store has no link and must never get one.
+
 ### Why the split exists
 
 The PNNH fire-report record (Marcelo Bari, APN) and the lightning-ignition database (Thomas

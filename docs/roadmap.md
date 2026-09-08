@@ -6,8 +6,8 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-08 (private ignition data split into its own store; written up in
-`docs/architecture.md` → *The two stores*)
+**Last updated:** 2026-09-08 (private ignition data split into its own store, and the store's
+Drive link pasted into the spread paper; written up in `docs/architecture.md` → *The two stores*)
 
 Where finished work is written up:
 
@@ -54,14 +54,6 @@ The writing pass of 2026-09-05 is done (Introduction, Discussion, Conclusion, ab
 online summary written; Methods and Results cut; write-up in `docs/spread.md` → *The
 manuscript*). What is left is Iván's reading, and the points below are the ones Claude resolved
 alone and is least sure of. Delete each once settled.
-
-- **Paste the Drive link into the paper.** The ignition database has been moved out of the
-  shareable store (write-up: `docs/architecture.md` → *The two stores*), so the store can now
-  be shared. What is left is the Drive UI step, which only Iván can do: share
-  `fire-regime-sim-patagonia-store`, then replace `\url{DRIVE-LINK-PENDING}` in
-  `manuscript-spread/ijwf/spread-paper.tex` (Data availability) with the link and delete the
-  `%` note above it. Check first that Insync has finished syncing, and never share
-  `fire-regime-sim-patagonia-store-private`.
 
 - **Decisions taken without asking, to check:**
   - *"Low-data" wording.* Rendered as "where fire behaviour is poorly documented" and, in the
