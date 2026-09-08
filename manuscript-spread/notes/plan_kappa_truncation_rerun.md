@@ -213,12 +213,11 @@ the quoted text, not by line number.
 study area":**
 
 - "After running 148\,649 fires and discarding those below 10\,ha ... we obtained 64\,836
-  simulated fires to compare against the 235 observed ones." Both counts change. **Also check
-  the 235**: the observed reference for both the size and the shape comparison is the full
-  **241** mapped fires (`docs/spread.md` → *How many fires? The four counts, reconciled*, which
-  says the Methods should state 241 here with a one-clause reason). This looks like a leftover
-  and is worth fixing in the same edit, but it is Iván's call, so raise it rather than silently
-  changing it.
+  simulated fires to compare against the 235 observed ones." The two simulation counts change.
+  **Leave the 235 alone.** The code's observed reference here is the full 241 mapped fires, and
+  saying 235 is a deliberate simplification of the narrative, so that one fire count runs
+  through the whole paper (`docs/spread.md` → *How many fires? The four counts, reconciled*).
+  Do not change it to 241 and do not raise it as a question.
 
 **Results, *Validation: the regional simulation*:**
 

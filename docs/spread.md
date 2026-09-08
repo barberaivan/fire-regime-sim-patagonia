@@ -1052,13 +1052,16 @@ Of the 241, **six have no FWI record** (`1999_1319185782`, `1999_1689435445`,
 `1999_1780556035`, `2003_1215845321`, `2005_17`, `2012_23`), leaving 235 fires the model can
 use; collapsing the two splits gives the csv's 233 distinct fires.
 
-**For the paper, always say 235 = 57 + 178.** The one place that does not match is the shape
-comparison, whose observed reference is the full **241** (57 focal + 184 reduced landscapes,
-`validation_observed.R`): shape needs neither weather nor an ignition point, so it can use the
-six fires the fit cannot. **Decided 2026-09-02: leave the two numbers as they are** — the
-Methods state 241 there and say in one clause why, and the shape analysis is *not* re-run on
-the 235 to make one number hold throughout. The discrepancy is not worth the rerun, and it is
-not to be raised again as an open question.
+**For the paper, always say 235 = 57 + 178.** The one place the code does not match is the
+regional validation, whose observed reference is the full **241** (57 focal + 184 reduced
+landscapes, `validation_observed.R`): size and shape need neither weather nor an ignition
+point, so they can use the six fires the fit cannot.
+
+**Decided 2026-09-02, reaffirmed 2026-09-07: the paper says 235 there anyway.** Carrying a
+second count through the Methods costs the reader more than the 6 fires are worth, so 235 is a
+deliberate simplification of the narrative, not an oversight. The shape analysis is *not* re-run
+on the 235 either. Do not "fix" the manuscript to 241, and do not raise it again as an open
+question.
 
 ### Cost and parallelization
 
