@@ -56,9 +56,13 @@ online summary written; Methods and Results cut; write-up in `docs/spread.md` �
 manuscript*). What is left is Iván's reading, and the points below are the ones Claude resolved
 alone and is least sure of. Delete each once settled.
 
-- **Author block.** Affiliations, ORCIDs, co-authors and the author-contributions statement are
-  all still template text. Iván fills this. The Data availability and AI-use statements are
-  template text too.
+- **Move the ignition database out of the store, then paste the Drive link into the paper.**
+  The Data availability statement of `manuscript-spread/ijwf/spread-paper.tex` currently reads
+  `\url{DRIVE-LINK-PENDING}`; the link cannot be handed out while
+  `data/ignition_data/` (the non-public Bari-Kitzberger ignition and population data) sits
+  inside the same store folder. So: move that folder to a separate Drive location, re-point
+  whatever reads it, then replace the placeholder with the link to the shareable store. This is
+  the concrete first half of migration TODO #9 above, now with a deadline: it blocks submission.
 
 - **Decisions taken without asking, to check:**
   - *"Low-data" wording.* Rendered as "where fire behaviour is poorly documented" and, in the

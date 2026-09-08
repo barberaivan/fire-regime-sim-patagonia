@@ -100,7 +100,7 @@
 \author[A\orc{0000-0002-9754-4121}]{Thomas Kitzberger}
 \author[D\orc{0000-0001-7269-7490}]{Juan Manuel Morales}
 
-\affil[A]{Instituto de Investigaciones en Biodiversidad y Medioambiente, CONICET -- Universidad Nacional del Comahue, San Carlos de Bariloche, Río Negro, Argentina}{\auorc{0000-0002-7572-4471}{} \auorc{0000-0002-9754-4121}{}}
+\affil[A]{Instituto de Investigaciones en Biodiversidad y Medioambiente, CONICET and Universidad Nacional del Comahue, San Carlos de Bariloche, Río Negro, Argentina}{\auorc{0000-0002-7572-4471}{} \auorc{0000-0002-9754-4121}{}}
 \affil[B]{Facultad de Matemática, Astronomía, Física y Computación, Universidad Nacional de Córdoba, Córdoba, Argentina}{\auorc{0009-0006-6216-3763}{}}
 \affil[C]{Departamento de Incendios, Comunicaciones y Emergencias, Parque Nacional Nahuel Huapi, Administración de Parques Nacionales, San Carlos de Bariloche, Río Negro, Argentina}{}
 \affil[D]{School of Biodiversity, One Health and Veterinary Medicine, University of Glasgow, Glasgow, United Kingdom}{\auorc{0000-0001-7269-7490}{}}
@@ -115,16 +115,16 @@
 %------------------------------------------------------------------------------
 \begin{abstract}
 \textbf{Background.} Assessing fire regime trajectories under climatic and 
-management scenarios needs spatially explicit fire spread models that 
+management scenarios needs fire spread models that 
 can be fitted and validated where fire behaviour is poorly documented.
 \textbf{Aims.} To develop and evaluate a fire spread model for north-western
-Patagonia using the regionally available inputs, and a fitting method
-that needs only final fire perimeters and ignition location.
+Patagonia using regionally available inputs, and a fitting method
+that needs only fire perimeters and ignition location.
 \textbf{Methods.} We developed a stochastic cellular automaton where parameters
-vary among fires in a hierarchical formulation. It was fitted with the Lunn 
-method and Approximate Bayesian Computation, based on 57 fires with known 
+vary among fires in a hierarchical formulation. It was fitted by Approximate 
+Bayesian Computation in two stages, based on 57 fires with known 
 ignition location, with 178 further fires informing fire size. 
-The model was validated by comparing fire size and shape 
+The model was validated by comparing size and shape 
 between simulated and observed fires.
 \textbf{Key results.} Wind and slope dominated spread probability, with 
 vegetation and topography showing smaller effects. Fire weather strongly 
@@ -988,14 +988,12 @@ simulate fire regimes in regions where fire behaviour is poorly documented.
 
 \section{Supplementary material}
 
-Supplementary material is available online. It gives the technical detail of the
-methods: the wind field and the accumulated Fire Weather Index, and the model behind the
-two flammability indices with its coefficients (Table~S1, Fig.~S1, Section~1); the priors
-and the two-stage estimation procedure, with the samplers used in each stage (Section~2);
-the definition of every validation statistic (Section~3); and the vegetation comparison
-on which Fig.~\ref{fig:vegeffect} rests (Section~4). Section~5 holds the extended
-results, and a further analysis of the validation: the shape of the simulated fires split
-by what brought each of them to a stop (Table~S2, Fig.~S6).
+Supplementary material is available online. Section~1 details the wind field, the
+accumulated Fire Weather Index and the flammability indices (Table~S1, Fig.~S1);
+Section~2 the priors and the two-stage estimation procedure; Section~3 the validation
+statistics; Section~4 the vegetation comparison behind Fig.~\ref{fig:vegeffect}; and
+Section~5 the extended results, with a further analysis of fire shape by what brought
+each simulated fire to a stop (Table~S2, Fig.~S6).
 
 \section{Acknowledgements}
 
@@ -1028,18 +1026,27 @@ fit the spread model.
 % on the first pass of a clean build, when the unresolved \ref/\cite placeholders
 % shift the page breaks. nobreak keeps the box whole -- it moves to the next page
 % instead of splitting -- which is how CSIRO means it to be set anyway.
+% \clearpage: the box is a FULL-WIDTH strip, so it cannot be set in what is left of the
+% last reference column. Without it the strip overflows the page and its right-hand side
+% is cut off. A page of its own is also where CSIRO prints these statements.
 \mdfsetup{nobreak=true}
+\clearpage
 \begin{framedbox}
 
-\boxsection{Data availability (compulsory)}
-Code: \url{https://github.com/barberaivan/fire-regime-sim-patagonia} and the spread engine
-\url{https://github.com/barberaivan/FireSpread}. State where the data are, or why they are not
-available. Examples: \url{https://www.publish.csiro.au/journals/publishingpolicies\#6}
+\boxsection{Data availability}
+The code that prepares the data, fits the model and produces every result and figure is
+available at \url{https://github.com/barberaivan/fire-regime-sim-patagonia}, and the spread
+engine, an R package, at \url{https://github.com/barberaivan/FireSpread}. The landscape,
+weather and fire-perimeter data that support this study are available at
+% [Iván: replace DRIVE-LINK-PENDING with the Drive link once the ignition database has been
+%  moved out of the shared store, see docs/roadmap.md. It is the only placeholder left in
+%  this box.]
+\url{DRIVE-LINK-PENDING}.
 
-\boxsection{Conflicts of interest (compulsory)}
+\boxsection{Conflicts of interest}
 The authors declare that they have no conflicts of interest.
 
-\boxsection{Declaration of funding (compulsory)}
+\boxsection{Declaration of funding}
 This work was funded by the Ministerio de Ciencia, Tecnología e Innovación Productiva and
 the Agencia Nacional de Promoción de la Investigación, el Desarrollo Tecnológico y la
 Innovación (Argentina) through grant PICT-2017-2142 to T. Kitzberger, and by a doctoral
@@ -1073,8 +1080,12 @@ T. Kitzberger acquired the funding.
 % T. Kitzberger, I. Renison, M. Bari. Supervision: J. M. Morales, T. Kitzberger.
 % Funding acquisition: T. Kitzberger.
 
-\boxsection{Declaration of use of AI (if applicable)}
-See \url{https://www.publish.csiro.au/journals/publishingpolicies\#2}
+\boxsection{Declaration of use of AI}
+Claude (mostly Opus 5), a family of large language models developed by Anthropic, was used
+through the Claude Code interface to assist with the data analysis, the preparation of the
+figures and the writing of this manuscript. Every analysis, figure and passage it contributed
+to was checked, run and edited by the authors, who take full responsibility for the content of
+the paper.
 
 \end{framedbox}
 %TC:endignore
