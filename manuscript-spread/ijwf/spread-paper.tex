@@ -942,8 +942,9 @@ The third is the hierarchical structure, which turns
 the unobserved into a distribution that can be simulated and linked to variables that
 we can measure (e.g., coarse weather, fire suppression resources).
 The fourth is the estimation method. Hierarchical models have been fitted by ABC before
-\citep{bazin2010likelihood}, and the two-stage scheme of \citet{lunn2013fully} makes that
-practical when each unit's posterior is expensive: with fire-wise ABC posteriors as
+\citep{bazin2010likelihood, turner2014hierarchical}, and the two-stage scheme of
+\citet{lunn2013fully}, used in ecology to fit hierarchical movement models
+\citep{hooten2016hierarchical}, makes that practical when each unit's posterior is expensive: with fire-wise ABC posteriors as
 proposal pools, the hierarchical model is fitted without running the simulator again,
 so the costly step is done once per fire, and new fires can be added without refitting
 the old ones. All of them could be adopted with a better spread engine.

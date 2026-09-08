@@ -293,7 +293,16 @@ for each fire under a placeholder prior, and stage 2 combines those samples to e
 the hyperparameters, discounting the placeholder prior in the process. Splitting the model
 this way lets the difficult step, sampling $\boldsymbol{\beta}_f$, be handled with
 whatever algorithm suits it, and it confines the fire simulator to stage 1: stage 2 never
-runs it.
+runs it. The scheme is known more generally as proposal-recursive Bayes
+\citep{hooten2021making}, and has been used in ecology to fit hierarchical animal movement
+models one individual at a time \citep{hooten2016hierarchical}. What is unusual here is the
+first stage: the fire-wise posteriors are approximate, obtained by ABC because the model has
+no likelihood. Hierarchical models have been fitted by ABC before, by embedding the ABC step
+in a Gibbs sampler \citep{turner2014hierarchical} or by splitting the fit into a
+hyperparameter and a locus-specific stage \citep{bazin2010likelihood}, but in those schemes
+the simulator is run again at every iteration. Using stage-1 ABC posteriors as the proposal
+pools of a Lunn step avoids that, at the cost of fixing the fire-wise posteriors at whatever
+stage 1 produced.
 
 \subsection{Stage 1: fire-wise posteriors}
 
