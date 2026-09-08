@@ -293,16 +293,37 @@ for each fire under a placeholder prior, and stage 2 combines those samples to e
 the hyperparameters, discounting the placeholder prior in the process. Splitting the model
 this way lets the difficult step, sampling $\boldsymbol{\beta}_f$, be handled with
 whatever algorithm suits it, and it confines the fire simulator to stage 1: stage 2 never
-runs it. The scheme is known more generally as proposal-recursive Bayes
-\citep{hooten2021making}, and has been used in ecology to fit hierarchical animal movement
-models one individual at a time \citep{hooten2016hierarchical}. What is unusual here is the
-first stage: the fire-wise posteriors are approximate, obtained by ABC because the model has
-no likelihood. Hierarchical models have been fitted by ABC before, by embedding the ABC step
-in a Gibbs sampler \citep{turner2014hierarchical} or by splitting the fit into a
-hyperparameter and a locus-specific stage \citep{bazin2010likelihood}, but in those schemes
-the simulator is run again at every iteration. Using stage-1 ABC posteriors as the proposal
-pools of a Lunn step avoids that, at the cost of fixing the fire-wise posteriors at whatever
-stage 1 produced.
+runs it.
+
+\subsection{Where this fit sits in the literature}
+
+The two-stage scheme is known more generally as proposal-recursive Bayes
+\citep{hooten2021making}, and it is established in ecology: \citet{hooten2016hierarchical}
+fit hierarchical animal movement models one individual at a time this way, the first stage in
+parallel and the second unsupervised. In all of these the first stage is likelihood-based,
+because the second stage needs a density for the unit-level parameters that it can evaluate.
+
+Hierarchical models have also been fitted by ABC. \citet{bazin2010likelihood} split the fit
+into a hyperparameter stage and a locus-specific stage, in that order;
+\citet{turner2014hierarchical} embed the ABC step in a Gibbs sampler, and review the earlier
+attempts; \citet{clarte2021componentwise} give the componentwise version and its convergence
+theory. What these share is that the simulator is called inside the sampler, once per unit per
+iteration, so the cost is the product of the two. That is what makes them impractical here:
+one simulation of one fire is not cheap, and there are 57 fires.
+
+Our fit joins the two lines. The first stage is approximate, obtained by ABC because the model
+has no likelihood, and its particles then serve as the proposal pool of a Lunn step, so the
+simulator is called once per fire in total rather than once per fire per iteration. We have not
+found this combination in the literature. The closest is \citet{blomstedt2026meta}, who
+combine independently computed ABC posteriors across studies and motivate it as we do, that
+hierarchical likelihood-free inference is costly enough to be worth avoiding; but their target
+is a meta-analytic rule that treats each posterior as an observation, not the hierarchical
+posterior itself, which is what the Lunn step samples.
+
+The price is that the fire-wise posteriors are frozen at whatever stage 1 produced. Stage 2
+can reweight those particles but cannot propose outside them, so a region of a fire's
+parameter space that stage 1 missed is unreachable, and the stage-1 placeholder prior must be
+known well enough to be discounted in the acceptance ratio.
 
 \subsection{Stage 1: fire-wise posteriors}
 

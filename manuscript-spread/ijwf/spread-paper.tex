@@ -941,13 +941,15 @@ and the parameters that govern size from the whole record, by matching size.
 The third is the hierarchical structure, which turns
 the unobserved into a distribution that can be simulated and linked to variables that
 we can measure (e.g., coarse weather, fire suppression resources).
-The fourth is the estimation method. Hierarchical models have been fitted by ABC before
-\citep{bazin2010likelihood, turner2014hierarchical}, and the two-stage scheme of
-\citet{lunn2013fully}, used in ecology to fit hierarchical movement models
-\citep{hooten2016hierarchical}, makes that practical when each unit's posterior is expensive: with fire-wise ABC posteriors as
-proposal pools, the hierarchical model is fitted without running the simulator again,
-so the costly step is done once per fire, and new fires can be added without refitting
-the old ones. All of them could be adopted with a better spread engine.
+The fourth is the estimation method, which we believe is new. Hierarchical models have been
+fitted by ABC before, but in the published schemes the simulator runs inside the sampler
+\citep{bazin2010likelihood, turner2014hierarchical, clarte2021componentwise}, and the
+two-stage scheme of \citet{lunn2013fully}, used in ecology to fit hierarchical movement
+models \citep{hooten2016hierarchical}, assumes a likelihood in its first stage. Using
+fire-wise ABC posteriors as its proposal pools joins the two: the hierarchical model is
+fitted without running the simulator again, so the costly step is done once per fire, and
+new fires can be added without refitting the old ones. All of them could be adopted with a
+better spread engine.
 
 \section{Conclusion}
 
