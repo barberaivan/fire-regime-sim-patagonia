@@ -468,7 +468,8 @@ from the distribution given its FWI; we call these \textit{fitted} and
 The cell-to-cell spread events $y_{ijk}$ are not observed: at best the ignition point
 and the final perimeter are known, and how the fire moved between them could not be
 recorded. The likelihood therefore cannot be evaluated, and we used Approximate
-Bayesian Computation (ABC; \citealt{beaumont2010approximate, sisson2018handbook}). 
+Bayesian Computation (ABC; \citealt{beaumont2010approximate, sisson2018handbook}), as
+\citet{morales_stochastic_2015} did for a similar model in this region. 
 ABC replaces the likelihood with similarity, favouring parameter values that make the fires they
 simulate more similar to the observed one. Similarity was measured by spatial overlap, the
 number of cells burned by both fires divided by the number burned by either 
@@ -478,8 +479,9 @@ point.
 
 The full hierarchical model could not be sampled directly: the parameters are many,
 and the ABC kernel is stochastic and varies abruptly with $\boldsymbol{\beta}$, which
-makes conventional MCMC prohibitively expensive. We therefore fitted it in two stages,
-following \citet{lunn2013fully}. Stage 1 sampled the posterior of $\boldsymbol{\beta}_f$
+makes conventional MCMC prohibitively expensive. We therefore applied what we believe is a new
+strategy: the two-stage method of \citet{lunn2013fully}, driven by fire-wise ABC
+posteriors. Stage 1 sampled the posterior of $\boldsymbol{\beta}_f$
 separately for each of the 57 fires with a known ignition point, under a placeholder
 prior uniform over $[\mathbf{L}, \mathbf{U}]$, with adaptive ABC sequential Monte Carlo
 \citep{delmoral2012adaptive} whose particles move by Metropolis steps with a
@@ -488,8 +490,7 @@ samples into the hierarchical model with a Metropolis-within-Gibbs sampler: each
 stage-1 sample served as the proposal for its own random effects, with the placeholder
 prior discounted in the acceptance ratio, while most hyperparameters were drawn from
 their conditional distributions in conjugate Gibbs steps. Splitting the model this way
-lets the difficult step, sampling $\boldsymbol{\beta}_f$, be handled with whatever
-algorithm suits it, and confines the fire simulator to stage 1.
+confines the fire simulator to stage 1.
 
 The 57 fires with a known ignition point are larger, on average, than the mapped
 record as a whole, which would bias the parameters that govern simulated fire size,
