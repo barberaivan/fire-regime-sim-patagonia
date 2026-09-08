@@ -107,11 +107,11 @@ leaves on disk:
 |---|------|--------|-------|--------|------|
 | 0 | landscapes | `data_prep/landscapes_simulation.R` (tiles) and `data_prep/landscapes_preparation.R` (`do_signature` stage → the 184 reduced landscapes) | the GEE exports downloaded into `data/simulation_landscapes/raw_gee/` and `data/signature_landscapes/raw_gee/` | the tile and reduced-landscape `.rds` | WindNinja hours for the tiles; seconds for the 184 |
 | 1 | eligible ignition cells | `spread/validation_ignition_cells.R` | the four tiles | `files/spread_validation/ignition_cells.rds` | run once |
-| 2 | simulated side | `spread/validation_simulate.R` | 1 + `spread_model_samples.rds` + the FWI csv | `simulated_fires.rds` (12.8 MB, 64,836 fires) | **15 min on 14 cores** |
+| 2 | simulated side | `spread/validation_simulate.R` | 1 + `spread_model_samples.rds` + the FWI csv | `simulated_fires.rds` (17.3 MB, 87,309 fires) | **18 min on 14 cores** |
 | 3 | observed side | `spread/validation_observed.R` | the 57 focal + 184 reduced landscapes | `observed_signature.rds`, `observed_shape.rds` (241 rows each) | 1.4 min |
 | 4 | comparison | `spread/validation_analysis.R` | 2 + 3 | four figures in `files/spread_validation/figures/`, every number in `validation_summary.rds` | < 1 min |
 | 5 | focal re-simulation | `spread/simulate_focal_metrics.R` | the hierarchical fit + the 57 focal landscapes | `files/hierarchical_model/focal_metrics.rds` | ~30 min on 14 cores |
-| 6 | paper figures | `spread/figure_burn_probability.R` (Fig. 5), `spread/figure_dharma_metrics.R` (Fig. 6, needs 5), `spread/figure_validation_metrics.R` (Fig. 7, needs 4) | as noted | `manuscript-spread/figures/` | 4 min / seconds / seconds |
+| 6 | paper figures | `spread/figure_burn_probability.R` (Fig. 5), `spread/figure_dharma_metrics.R` (Fig. 6, needs 5), `spread/figure_validation_metrics.R` (Fig. 7, needs 4), `spread/figure_truncation.R` (Fig. S6, needs 2 and 3) | as noted | `manuscript-spread/figures/` | 4 min / seconds / seconds / seconds |
 
 Shared metrics live in `R/spread_validation_functions.R`; steps 2–4 read nothing from each other
 except through those `.rds` files, so any one of them can be re-run alone.
@@ -123,11 +123,25 @@ tmux new-session -d -s spread_sim -c ~/dev/fire-regime-sim-patagonia \
   "stdbuf -oL -eL Rscript spread/validation_simulate.R 2>&1 | tee files/spread_validation/run.log; exec bash"
 ```
 
-It accepted 64,836 fires ≥ 10 ha out of 148,649 proposals (43.6 %), so the single pass overshot
-`n_target = 50 000` and no second pass was needed; the 83,813 rejected proposals keep their sizes
-in `small_sizes`. Only 14 of the accepted fires (0.02 %) have an NA signature, where
-`donor_strata()` found nothing to fit; fires split 13,987 / 18,348 / 19,941 / 12,560 across
-tiles 1–4.
+**Re-run 2026-09-07 with a fixed budget** of `n_proposals = 200 000` (the earlier version
+chased `n_target = 50 000` accepted fires in as many passes as it took, and stopped on the odd
+pair 148,649 / 64,836). One pass now accepts 87,309 fires ≥ 10 ha out of 200,000 proposals
+(43.7 %); the 112,691 rejected proposals keep their sizes in `small_sizes`, which is what makes
+the acceptance rate reportable. 29 of the accepted fires (0.03 %) have an NA signature, where
+`donor_strata()` found nothing to fit; fires split 18,582 / 24,404 / 27,541 / 16,782 across
+tiles 1–4, and the four tiles take 4.5 / 4.0 / 5.4 / 4.3 min.
+
+Two things were fixed in the same pass. **`steps_used` is now saved per fire**: the engine
+returns the number of steps a fire used, and `steps_used == steps_int` says the step budget κ
+was what stopped it, against propagation failing at every edge cell. The criterion is exact,
+with no threshold to choose, and it is what the truncation analysis below conditions on.
+**And the integer budget is now saved under its own name.** `draw_proposals()` used to put its
+integer `steps` next to the `coefs` matrix, which already has a column of that name, so
+`data.frame()` renamed the integer to `steps.1` and `simulate_one()`'s `p$steps` silently picked
+up κ on its *continuous* scale. The consequences were small (the `pmin(…, steps_max = 2000)` cap
+never bound, and no fire's window ran off a tile) but real: the non-integer half-width shifted
+every fire's ignition one cell up and left of the eligible cell drawn for it. The integer is
+called `steps_int` now, and the saved table carries both it and the continuous `steps`.
 
 Step 4's figures and `validation_summary.rds` are analysis output and stay in `files/`; the
 paper's validation figures are Figs. 6 and 7 (step 6), decided with Iván on 2026-08-31 —
@@ -244,7 +258,7 @@ mean direction to mean anything. `fire_shape()` also returns the burned cells' c
 reference axis after the fact — including the fixed 293° needed to treat the simulated fires
 exactly as the observed ones must be treated — without re-running the simulation.
 
-Terrain steering is real and worth knowing when reading either elongation: over the 64,836
+Terrain steering is real and worth knowing when reading either elongation: over the 87,309
 simulated fires, `wdir` averaged over a fire's burned cells has a 5–95 % range of **277–311°**
 around the 293° the tiles were driven with, though the per-fire fields are highly coherent
 (median `rbar` 0.99). Measuring against each fire's own mean wind rather than the fixed 293°
@@ -390,20 +404,20 @@ dataset with FWI drawn uniformly across the modeled range (for coverage where ob
 sparse) is **deferred**, not part of the current run; revisit if the stratified test turns out
 to be starved at high FWI.
 
-### Results of the validation (2026-08-28)
+### Results of the validation (2026-08-28, numbers re-run 2026-09-07)
 
 Both sides are on disk and compared by `spread/validation_analysis.R`, which writes four
 figures into `files/spread_validation/figures/` and the numbers below into
-`validation_summary.rds`. 64,836 simulated fires against 241 observed ones.
+`validation_summary.rds`. 87,309 simulated fires against 241 observed ones.
 
-**1. Size distribution — the simulator runs large, uniformly.** KS *D* = 0.187
-(*p* = 1.1e-7), and the Q-Q sits below the 1:1 line over the whole range rather than
+**1. Size distribution — the simulator runs large, uniformly.** KS *D* = 0.192
+(*p* = 3.7e-8), and the Q-Q sits below the 1:1 line over the whole range rather than
 departing in one tail:
 
 | quantile | 5 % | 25 % | 50 % | 75 % | 95 % | max |
 |---|---|---|---|---|---|---|
 | observed (ha) | 15.8 | 27 | 58 | 321 | 3,249 | 28,616 |
-| simulated (ha) | 12.8 | 36 | 151 | 904 | 10,143 | 454,278 |
+| simulated (ha) | 13.0 | 37 | 155 | 902 | 9,959 | 475,189 |
 
 Read it with the caveat the design already flags: the simulated set is conditioned on ≥ 10 ha
 and the observed record is what the mapping caught over 1999–2022, not a draw from the same
@@ -415,14 +429,14 @@ generative process. It is the weakest test of the set, and the offset is roughly
 | | < 100 ha | 100–1000 ha | > 1000 ha |
 |---|---|---|---|
 | `elongation` observed | **2.07** | **1.96** | **2.57** |
-| `elongation` simulated | 1.56 | 1.47 | 1.47 |
+| `elongation` simulated | 1.55 | 1.47 | 1.46 |
 | `elong_293` observed | 1.23 | 1.13 | 1.58 |
-| `elong_293` simulated | 1.00 | 0.97 | 0.93 |
-| `elong_wind` simulated | 0.99 | 0.98 | 0.94 |
-| compactness observed / simulated | 0.24 / 0.33 | 0.10 / 0.26 | 0.03 / 0.09 |
+| `elong_293` simulated | 0.99 | 0.96 | 0.93 |
+| `elong_wind` simulated | 0.99 | 0.97 | 0.95 |
+| compactness observed / simulated | 0.24 / 0.34 | 0.10 / 0.27 | 0.03 / 0.08 |
 | hull fill observed / simulated | 0.73 / 0.85 | 0.68 / 0.88 | 0.60 / 0.85 |
 | frac. within 30° of 113/293 observed | 0.48 | 0.46 | **0.72** |
-| frac. within 30° of 113/293 simulated | 0.30 | 0.27 | 0.26 |
+| frac. within 30° of 113/293 simulated | 0.29 | 0.27 | 0.26 |
 
 Conditioning on size does not rescue it: simulated fires are rounder, fuller-hulled and more
 compact than observed ones in every class, and their orientation is *below* the 0.333 a uniform
@@ -435,10 +449,10 @@ an elongated fire*.
 
 | | < 100 ha | 100–1000 ha | > 1000 ha |
 |---|---|---|---|
-| `b_vfi` observed / simulated | 2.09 / 1.39 | 0.44 / 1.42 | 0.84 / 1.74 |
+| `b_vfi` observed / simulated | 2.09 / 1.41 | 0.44 / 1.38 | 0.84 / 1.79 |
 | frac > 0 observed / simulated | 0.72 / 0.79 | 0.66 / 0.83 | 0.94 / 0.92 |
-| `b_tfi` observed / simulated | 0.66 / **−2.45** | 0.47 / −0.57 | 1.21 / −0.18 |
-| frac > 0 observed / simulated | 0.56 / 0.38 | 0.54 / 0.46 | 0.64 / 0.48 |
+| `b_tfi` observed / simulated | 0.66 / **−2.57** | 0.47 / −0.48 | 1.21 / −0.21 |
+| frac > 0 observed / simulated | 0.56 / 0.37 | 0.54 / 0.47 | 0.64 / 0.48 |
 
 The `vfi` distributions overlap heavily — the simulated median is inside the observed IQR in all
 three classes, and the fraction positive matches within a few points. The *trend* with size does
@@ -451,12 +465,38 @@ positive is below a half in every class against 0.54–0.64 observed. This is a 
 mismatch and not the size-conditioning artefact the pilot's unconditioned comparison suggested.
 
 **4. FWI.** Both sides get bigger with FWI, and by a similar factor — observed median area
-39.6 → 277.7 ha across quartiles of the observed FWI, simulated 53.9 → 397.9 ha (the offset from
-test 1 carried along). Simulated `elongation` rises weakly with FWI (1.43 → 1.53) where observed
-is flat (1.93 → 2.12, no trend), and simulated `b_vfi` *falls* with FWI (1.78 → 1.30) where
+39.6 → 277.7 ha across quartiles of the observed FWI, simulated 55.9 → 408.4 ha (the offset from
+test 1 carried along). Simulated `elongation` rises weakly with FWI (1.43 → 1.54) where observed
+is flat (1.93 → 2.12, no trend), and simulated `b_vfi` *falls* with FWI (1.74 → 1.30) where
 observed is noisy. Every simulated fire falls inside the observed FWI range, because FWI is
 resampled from the 233 mapped fires — which is also why the FWI panels are visibly striped:
 `fwi_z` takes only 233 distinct values.
+
+**5. How a fire stops carries the whole shape mismatch (2026-09-07).** A simulated fire ends
+either because propagation failed at every edge cell or because the step budget κ ran out;
+`steps_used == steps_int` separates the two exactly. The automaton reaches 8 neighbours per
+step, so a κ-capped fire cannot have left the square of half-width κ around its ignition cell,
+and since a fire runs furthest downwind that square clips its long axis first: what is left is
+rounder, and its leading principal axis turns *across* the wind. **83.9 %** of the 87,309 fires
+are κ-capped (70.7 / 90.8 / 97.8 % by size class), and splitting on the flag splits the result:
+
+| median | observed | free-running | κ-capped | all simulated |
+|---|---|---|---|---|
+| compactness | 0.24 / 0.10 / 0.03 | 0.19 / 0.10 / 0.04 | 0.44 / 0.30 / 0.09 | 0.34 / 0.27 / 0.08 |
+| deviation from wind axis (°) | 31 / 32 / 20 | 40 / 36 / 27 | 62 / 61 / 61 | 55 / 59 / 60 |
+| frac. within 30° | 0.48 / 0.46 / 0.72 | 0.39 / 0.43 / 0.55 | 0.25 / 0.25 / 0.25 | 0.29 / 0.27 / 0.26 |
+| elongation | 2.07 / 1.96 / 2.57 | 1.82 / 1.90 / 2.00 | 1.46 / 1.44 / 1.46 | 1.55 / 1.47 / 1.46 |
+| *n* | 146 / 59 / 36 | 10,945 / 2,685 / 457 | 26,391 / 26,560 / 20,271 | |
+
+(three values per cell: < 100 ha, 100-1000 ha, > 1000 ha.) Conditional on stopping by failed
+propagation, the simulator's shapes are close to the observed ones; the headline mismatch is
+carried by the fires the budget cut short. Two cautions, both written into the paper: this
+conditions on an *outcome* of the simulation and the observed record cannot be split the same
+way, and the model does produce those capped fires, which is why the main comparison keeps
+them. It does not overturn the elongation ceiling of ≈ 1.9 (the synthetic sweep): free-running
+fires reach 1.8-2.0 against the observed 2.0-2.6. Numbers are in
+`validation_summary.rds$truncation`; the figure is Fig. S6 (`spread/figure_truncation.R`), and
+the write-up is the supplementary's *How simulated fires stop, and what it does to their shape*.
 
 ### The paper's validation figures — Figs. 6 and 7
 
@@ -570,7 +610,7 @@ since every column shares an x scale and every row a y scale.
 The vertical striping in the FWI panels is deliberate: `fwi_z` is resampled from only 233 distinct
 observed values, and jittering would hide a real property of the simulated set.
 
-### The paper's model figures — Figs. 1-4 and S1-S5
+### The paper's model figures — Figs. 1-4 and S1-S6
 
 Written 2026-09-01. Every figure the spread paper carries now has **its own script in
 `spread/`**, each of which reads what the fit already wrote to `files/hierarchical_model/` and
@@ -592,6 +632,7 @@ evaluate — so a caption change meant a refit.
 | Fig. S2 | `figure_spread_curves.R` | `figS2_spread_curves_raw` | `curves_df_prediction_raw_x.rds` |
 | Fig. S3 | `figure_parameter_correlations.R` | `figS3_parameter_correlations` | `spread_model_samples.rds` |
 | Figs. S4, S5 | `figure_focal_fit.R` | `figS4_overlap`, `figS5_size_quotient` | `focal_metrics.rds` |
+| Fig. S6 | `figure_truncation.R` | `figS6_truncation` | `files/spread_validation/` |
 
 `figure_params_fwi.R` writes **two versions of Fig. 3** and the paper has still to choose between
 them: `fig3_params_fwi` carries only the 57 fires with a known ignition point, `fig3_params_fwi_v2`

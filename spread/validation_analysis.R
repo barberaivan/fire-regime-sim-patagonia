@@ -1,7 +1,7 @@
 # Spread model validation — the analysis and its figures.
 #
-# Brings the two sides together: 64,836 simulated fires from
-# spread/validation_simulate.R and 241 observed ones from
+# Brings the two sides together: the fires simulated by
+# spread/validation_simulate.R and the 241 observed ones from
 # spread/validation_observed.R. Everything here is pattern comparison, never
 # point prediction (docs/spread.md -> "Stage 3 — validation").
 #
@@ -11,9 +11,12 @@
 #      hull fill, and orientation relative to the fixed 293-degree wind;
 #   3. the per-fire spatial signature (`b_vfi`, `b_tfi`) conditioned on size;
 #   4. the same metrics conditioned on FWI, plus an FWI-quartile table.
+# and, alongside 2, the same shape metrics with the simulated side split by
+# whether the step budget kappa was what stopped the fire (`capped` below),
+# which is what the supplementary's truncation section reports.
 #
 # Plot style, as designed: simulated fires as a 2-D density (hex bins — raw
-# points do not work at 6e4, let alone the 1e6 the design anticipated),
+# points do not work at 9e4, let alone the 1e6 the design anticipated),
 # observed fires as points, and a GAM smoother on each. Conditioning on size or
 # FWI is what defends the comparison against any residual mismatch in the
 # marginals.
@@ -61,6 +64,19 @@ sim$elong_fixed <- mapply(elongation_along, sim$cov_ee, sim$cov_nn, sim$cov_en,
 axis_dev <- function(ori) pmin(abs(ori - 113), 180 - abs(ori - 113))
 sim$axis_dev <- axis_dev(sim$orientation)
 obs_shp$axis_dev <- axis_dev(obs_shp$orientation)
+
+# How each simulated fire stopped. `steps_used < steps_int` means propagation
+# failed at every edge cell and the fire died on its own; `steps_used ==
+# steps_int` means it was still burning when the step budget kappa ran out
+# (`steps_int` is the integer budget the simulation ran with; the `steps`
+# column is kappa on its continuous scale, before flooring). The criterion
+# is exact, with no threshold to choose. A capped fire is confined to the
+# square of half-width kappa around its ignition cell, and because a fire runs
+# furthest downwind that square clips its long axis first, which turns the
+# leading principal axis of what is left across the wind. The main comparison
+# below stays over ALL simulated fires (the model does produce the capped
+# ones); the split is reported alongside and goes into the supplementary.
+sim$capped <- sim$steps_used == sim$steps_int
 
 both <- function(metric, sim_v, obs_v) {
   rbind(
@@ -221,6 +237,39 @@ print(shape_tab)
 cat("(frac_aligned: within 30 deg of the 113/293 axis; 0.333 under a uniform",
     "orientation)\n")
 
+cat("\n== 2b. shape, by size class and by how the fire stopped ==\n")
+# Same rows again, with the simulated side split by `capped`. This is the
+# supplementary's table: it says how much of the shape mismatch above is
+# carried by the fires the step budget cut short.
+shape_rows <- function(x, g) rbind(
+  compactness = by_class(x$compactness, g),
+  axis_dev = by_class(x$axis_dev, g),
+  frac_aligned = by_class(x$axis_dev <= 30, g, mean),
+  elongation = by_class(x$elongation, g)
+)
+free <- sim[!sim$capped, ]
+capp <- sim[sim$capped, ]
+# rbind() prefixes a name onto a vector argument but not onto a matrix's own
+# rownames, so the group label is pasted on by hand.
+tag <- function(m, group) {
+  rownames(m) <- paste(group, rownames(m), sep = "_")
+  m
+}
+trunc_tab <- rbind(
+  tag(shape_rows(obs_shp, obs_shp$size_class), "obs"),
+  tag(shape_rows(free, free$size_class), "sim_free"),
+  tag(shape_rows(capp, capp$size_class), "sim_capped"),
+  tag(shape_rows(sim, sim$size_class), "sim_all")
+)
+print(trunc_tab)
+
+capped_share <- c(overall = mean(sim$capped),
+                  by_class(sim$capped, sim$size_class, mean))
+cat("\ncapped share (steps_used == kappa), overall and by size class:\n")
+print(round(capped_share, 3))
+cat("n free-running =", nrow(free), "| n capped =", nrow(capp), "\n")
+cat("median kappa over the simulated fires:", median(sim$steps_int), "\n")
+
 cat("\n== 3. signature, by size class ==\n")
 sig_tab <- rbind(
   obs_b_vfi = by_class(obs_sig$b_vfi, obs_sig$size_class),
@@ -257,6 +306,9 @@ cat("Simulated fires outside the observed FWI range:",
     sum(is.na(sim_q)), "of", nrow(sim), "\n")
 
 saveRDS(list(ks = ks, shape = shape_tab, signature = sig_tab, fwi = fwi_tab,
+             truncation = list(shape = trunc_tab, capped_share = capped_share,
+                               n_free = nrow(free), n_capped = nrow(capp),
+                               median_kappa = median(sim$steps_int)),
              size_quantiles = list(
                observed = quantile(obs_shp$area_ha, c(.05, .25, .5, .75, .95, 1)),
                simulated = quantile(sim$area_ha, c(.05, .25, .5, .75, .95, 1)))),

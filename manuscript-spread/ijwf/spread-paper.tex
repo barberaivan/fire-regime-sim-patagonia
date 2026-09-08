@@ -509,9 +509,9 @@ Every simulated fire took an FWI value
 resampled from the mapped record, a draw from the joint posterior of the
 hyperparameters, random effects drawn afresh for a \emph{new} fire, and an ignition cell
 at random from the burnable landscape.
-After running 148\,649 fires and discarding those below 10\,ha 
+After running 200\,000 fires and discarding those below 10\,ha 
 (same threshold as in the mapped record)
-we obtained 64\,836 simulated fires to compare against the 235 observed ones. 
+we obtained 87\,309 simulated fires to compare against the 235 observed ones. 
 We compared these with the observed
 record in the distribution of fire size and in shape, measured as compactness and as the
 deviation of a fire's principal axis from the dominant regional wind axis. Both need
@@ -609,23 +609,23 @@ in both modes.
 
 \subsection{Validation: the regional simulation}
 
-Over the whole study area, the 64\,836 simulated fires were larger than the mapped
+Over the whole study area, the 87\,309 simulated fires were larger than the mapped
 record, and uniformly so rather than in one tail: the quantile--quantile relation sits
 below the 1:1 line over the entire range (Fig.~\ref{fig:validation}A), the
-Kolmogorov--Smirnov statistic is $D = 0.187$ ($P = 1.1 \times 10^{-7}$), and the offset
-is a factor of about two to three through the middle of the distribution: median 151
-against 58\,ha, 75th percentile 904 against 321\,ha, 95th percentile 10\,143 against
+Kolmogorov--Smirnov statistic is $D = 0.192$ ($P = 3.7 \times 10^{-8}$), and the offset
+is a factor of about two to three through the middle of the distribution: median 155
+against 58\,ha, 75th percentile 902 against 321\,ha, 95th percentile 9959 against
 3249\,ha. The response of size to fire weather, in contrast, matched: across quartiles
 of FWI the observed median area rose from 40 to 278\,ha and the simulated median from
-54 to 398\,ha (Fig.~\ref{fig:validation}B), the same relative increase carrying the
+56 to 408\,ha (Fig.~\ref{fig:validation}B), the same relative increase carrying the
 same offset.
 
 Shape did not match at any size (Table~\ref{tab:shape}). Simulated fires were rounder
-than observed ones in every size class: median compactness 0.33 against 0.24 below
-100\,ha, 0.26 against 0.10 between 100 and 1000\,ha, and 0.09 against 0.03 above
+than observed ones in every size class: median compactness 0.34 against 0.24 below
+100\,ha, 0.27 against 0.10 between 100 and 1000\,ha, and 0.08 against 0.03 above
 1000\,ha. The median deviation of a fire's
 principal axis from the regional wind axis was 31, 32 and 20$^\circ$ for observed fires
-in the three size classes, against 45$^\circ$ under random orientation, but 54, 58 and
+in the three size classes, against 45$^\circ$ under random orientation, but 55, 59 and
 60$^\circ$ for simulated ones: the observed record is wind-aligned, most strongly among
 the largest fires, whereas the simulated set is if anything oriented slightly across the
 wind. Conditioning on FWI does not change these patterns (Fig.~\ref{fig:validation}B):
@@ -663,7 +663,7 @@ Deviation from wind axis  & 57 & 0.325 & 0.70 & 0.43 & 0.245 & 0.90 & 0.47 \\
 
 \begin{table*}[tp]
 \tbl{Median shape of observed and simulated fires by size class, over the whole study
-area: the mapped fire perimeters against the 64\,836 simulated fires. Compactness is
+area: the mapped fire perimeters against the 87\,309 simulated fires. Compactness is
 $4\pi \times$ area / perimeter$^2$, larger for rounder fires. Deviation from the wind axis
 is the angle between a fire's principal axis and the regional wind direction, folded into
 0--90$^\circ$; a set of randomly oriented fires would have a median of 45$^\circ$ and a
@@ -674,11 +674,11 @@ fraction within 30$^\circ$ of the axis of 0.33.\label{tab:shape}}{%
 \midrule
 Number of fires & observed   & 146 & 59 & 36 \\
 Compactness & observed       & 0.24 & 0.10 & 0.03 \\
-            & simulated      & 0.33 & 0.26 & 0.09 \\
+            & simulated      & 0.34 & 0.27 & 0.08 \\
 Deviation from wind axis ($^\circ$) & observed  & 31 & 32 & 20 \\
-                                    & simulated & 54 & 58 & 60 \\
+                                    & simulated & 55 & 59 & 60 \\
 Fraction within 30$^\circ$ of the axis & observed  & 0.48 & 0.46 & 0.72 \\
-                                       & simulated & 0.30 & 0.27 & 0.26 \\
+                                       & simulated & 0.29 & 0.27 & 0.26 \\
 \bottomrule
 \end{tabular*}}{}
 \end{table*}
@@ -758,7 +758,7 @@ the random effects. Summary statistics are in Table~\ref{tab:dharma}.}
 \begin{figure*}[tp]
 \centering
 \includegraphics[width=0.68\textwidth]{fig7_validation}
-\caption{The 64\,836 fires simulated over the whole study area against the mapped record.
+\caption{The 87\,309 fires simulated over the whole study area against the mapped record.
 (A) The distribution of burned area, as overlaid densities and as a quantile--quantile
 plot; the grey line is the 1:1 relation. (B) Burned area, compactness and the deviation
 of the fire's principal axis from the regional wind axis, each conditioned on FWI (left)
@@ -853,6 +853,14 @@ so the roundness and the inflated size distribution are one finding, pointing fr
 shape to size. A second, more prosaic contributor is the wind field, spatially uniform
 in direction and near-constant in magnitude in fitting as in simulation, which leaves
 the fitted coefficient no way to express the gustiness that drives real head-fire runs.
+
+Further analysis (Section~5 of the Supplementary material) shows that the shape mismatch is
+carried by the fires the step budget cut short: confined to a square around their ignition
+cell, they are clipped along the downwind axis first, so what survives is rounder and turned
+across the wind. Fires that ended instead because propagation failed at every edge cell are
+close to the mapped record in compactness and in wind alignment. The automaton's geometry may
+therefore be less poor than the headline comparison makes it look. What it needs is a regime
+of lower spread probability, which is also the regime in which size becomes hard to control.
 
 \subsection*{A better geometry is compatible with a cheap model}
 
@@ -981,8 +989,9 @@ vegetation types at a common topography while marginalising over the landscape, 
 which Fig.~\ref{fig:vegeffect} rests (Section~4); and extended results (Section~5):
 spread probability against the raw predictors rather than the indices (Fig.~S2), the
 posterior correlations among the six spread parameters, marginal to and conditional on
-FWI (Fig.~S3), and the fit to the 57 fires with a known ignition point, as spatial
-overlap (Fig.~S4) and as the ratio of simulated to observed size (Fig.~S5).
+FWI (Fig.~S3), the fit to the 57 fires with a known ignition point, as spatial
+overlap (Fig.~S4) and as the ratio of simulated to observed size (Fig.~S5), and the shape
+of the simulated fires split by what brought each of them to a stop (Table~S2, Fig.~S6).
 
 \section{Acknowledgements}
 

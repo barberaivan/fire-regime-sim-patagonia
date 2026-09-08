@@ -6,7 +6,7 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-07 (κ-truncation diagnosis; re-run planned)
+**Last updated:** 2026-09-07 (κ-truncation re-run done; written up in `docs/spread.md`)
 
 Where finished work is written up:
 
@@ -14,7 +14,7 @@ Where finished work is written up:
 |---|---|
 | Repo migration (T0–T12) | `docs/migration.md`, `docs/architecture.md` |
 | Landscape preparation, study-area tiles, reduced landscapes, `wind_sd` / WindNinja drift | `docs/data-prep.md` |
-| Spread validation — design, run order, results, Figs. 5–7 | `docs/spread.md` |
+| Spread validation — design, run order, results, Figs. 5–7 and S6 (the κ-truncation re-run of 2026-09-07) | `docs/spread.md` |
 | Every paper figure's script, and Fig. 1's base layers moving into the store | `docs/spread.md` |
 | The manuscript build (two documents, the two-column traps) and what prose is written | `docs/spread.md` → *The manuscript* |
 | The four answered questions of 2026-09-02 (shape's 241, the dropped spatial signature, Fig. 1's legend placement, the software citations) | `docs/spread.md` |
@@ -46,15 +46,6 @@ Full detail in `docs/migration.md`'s TODO register.
 `manuscript-spread/ijwf/guidelines/IWJF_guidelines.md`; build with `make` in
 `manuscript-spread/ijwf/` (`make words` checks the 6000/200-word budgets). The paper says
 **235 = 57 + 178** fires throughout (`docs/spread.md` → *How many fires?*).
-
----
-
-## Spread paper: the κ-truncation re-run
-
-Diagnosed 2026-09-07: the regional validation's shape mismatch (simulated fires rounder and
-oriented across the wind) is carried by the fires the step budget κ cuts short, not by the
-spread process. Plan, evidence and the full list of numbers to update:
-**`manuscript-spread/notes/plan_kappa_truncation_rerun.md`**. Not started.
 
 ---
 

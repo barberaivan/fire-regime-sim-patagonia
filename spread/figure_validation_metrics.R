@@ -1,6 +1,6 @@
 # Figure 7 — the pattern validation, in two parts.
 #
-# Both parts compare the 64,836 simulated fires from spread/validation_simulate.R
+# Both parts compare the 87,309 simulated fires from spread/validation_simulate.R
 # against the 241 observed ones from spread/validation_observed.R. This is the
 # validation that does NOT need a mapped ignition point, so it uses the whole
 # record (57 focal + 184 reduced landscapes), unlike the burned-area-by-
@@ -32,7 +32,7 @@
 #           mismatch in the marginals of Part A.
 #
 # Style, as designed and as in spread/validation_analysis.R: simulated fires as
-# a log-scaled hex-bin density (raw points do not work at 6e4), observed fires
+# a log-scaled hex-bin density (raw points do not work at 9e4), observed fires
 # as points, a GAM smoother on each side.
 #
 # Axis sizes are drawn on a log10 scale but labelled in hectares, never in

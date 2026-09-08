@@ -4,7 +4,7 @@
 %
 %  IJWF wants supplementary items NUMBERED SEPARATELY from the main text and
 %  SUBMITTED AS SEPARATE FILE(S), hence a document of its own rather than an
-%  appendix inside spread-paper.tex. Figures are S1..S5, equations S1..
+%  appendix inside spread-paper.tex. Figures are S1..S6, equations S1..
 %
 %  Build with:  make supp     ->  build/supplementary.pdf
 %
@@ -522,8 +522,8 @@ fit, leaves the marginal distribution of $\kappa$ untouched and so does not shri
 simulated size distribution.
 
 Simulated fires below 10\,ha were discarded, because the mapping records nothing smaller
-and they have no observed counterpart. One pass of 148\,649 proposals left 64\,836 fires of
-at least 10\,ha (43.6\,\%), and those are the simulated fires the paper analyses.
+and they have no observed counterpart. A single run of 200\,000 proposals left 87\,309 fires
+of at least 10\,ha (43.7\,\%), and those are the simulated fires the paper analyses.
 
 \subsection{Comparing simulated with observed fires}
 
@@ -545,6 +545,9 @@ Both shape statistics depend strongly on fire size, and size is itself one of th
 being tested, so the comparisons are made conditionally on burned area as well as
 marginally. We repeated them conditionally on FWI, which tests the model's most distinctive
 structural claim: that the parameters of spread shift with fire weather.
+
+How each simulated fire came to stop matters for its shape, and the comparison conditional on
+that is in Section~\ref{sec:truncation}.
 
 \section{The effect of vegetation type on spread probability as a function of
 fire weather}
@@ -703,6 +706,83 @@ atmospheric conditions and fire suppression, the model produces fires whose
 sizes are of the same order as the observed ones (Fig.~\ref{fig:quotient}B).
 Where it does fail, in fire shape, the failure is structural, and is discussed
 in the main text.
+
+\subsection{How simulated fires stop, and what it does to their shape}
+\label{sec:truncation}
+
+A simulated fire ends in one of two ways: propagation failed at every cell on its edge, or
+the step budget $\kappa$ ran out while the fire was still burning. The engine reports the
+number of steps used, so the two are separated exactly, with no threshold to choose. The
+distinction matters geometrically. The automaton reaches the eight neighbours of a burning
+cell per step, so after $\kappa$ steps the burned set of a fire in the second group cannot
+have left the square of half-width $\kappa$ centred on its ignition cell. A fire runs
+furthest downwind, so that square clips its long axis first, while its flanks keep growing
+until the budget is spent, and the leading principal axis of what is left turns across the
+wind.
+
+The budget was what stopped 83.9\,\% of the 87\,309 simulated fires: 70.7\,\% of those below
+100\,ha, 90.8\,\% between 100 and 1000\,ha and 97.8\,\% of those above 1000\,ha. Splitting
+the simulated set on that criterion splits the shape comparison with it
+(Table~\ref{tab:truncation}, Fig.~\ref{fig:truncation}). Fires that stopped on their own are
+close to the mapped record at every size: median compactness 0.19, 0.10 and 0.04 against the
+observed 0.24, 0.10 and 0.03, median deviation from the wind axis 40, 36 and 27$^\circ$
+against the observed 31, 32 and 20$^\circ$, and a median elongation of 1.8--2.0 against the
+observed 2.0--2.6. Fires cut short by the budget are rounder (0.44, 0.30 and 0.09) and
+oriented across the wind at every size (62, 61 and 61$^\circ$, with only a quarter of them
+within 30$^\circ$ of the axis, below the 0.33 of a randomly oriented set). The mismatch
+reported in the main text is carried by the second group.
+
+Two cautions. This conditions on an outcome of the simulation, not on anything measured in
+the field, and the observed record cannot be split the same way, so the comparison is a
+diagnostic of where the mismatch comes from and not a claim that the model reproduces shape:
+the model does produce those truncated fires, and they are the majority of what it produces,
+which is why the main text keeps them. And the free-running fires still fall short of the
+observed elongation of the largest fires, consistent with the structural ceiling of about 1.9
+described in the Discussion of the main text.
+
+\begin{table}[htbp]
+\centering
+\caption{Median shape of the simulated fires by size class, split by what stopped them,
+against the mapped record. A fire is \emph{stopped by $\kappa$} if it was still burning when
+the step budget ran out, and \emph{free-running} if propagation failed at every edge cell
+first. Deviation from the wind axis is the angle between a fire's principal axis and the
+regional wind direction, folded into 0--90$^\circ$; a randomly oriented set would have a
+median of 45$^\circ$ and a fraction within 30$^\circ$ of 0.33.\label{tab:truncation}}
+\begin{tabular}{llrrr}
+\toprule
+& & $<$ 100 ha & 100--1000 ha & $>$ 1000 ha \\
+\midrule
+Number of fires & observed              & 146 & 59 & 36 \\
+                & free-running          & 10\,945 & 2685 & 457 \\
+                & stopped by $\kappa$   & 26\,391 & 26\,560 & 20\,271 \\
+Compactness & observed                  & 0.24 & 0.10 & 0.03 \\
+            & free-running              & 0.19 & 0.10 & 0.04 \\
+            & stopped by $\kappa$       & 0.44 & 0.30 & 0.09 \\
+Deviation from wind axis ($^\circ$) & observed        & 31 & 32 & 20 \\
+                                    & free-running    & 40 & 36 & 27 \\
+                                    & stopped by $\kappa$ & 62 & 61 & 61 \\
+Fraction within 30$^\circ$ of the axis & observed     & 0.48 & 0.46 & 0.72 \\
+                                       & free-running & 0.39 & 0.43 & 0.55 \\
+                                       & stopped by $\kappa$ & 0.25 & 0.25 & 0.25 \\
+Elongation & observed                   & 2.07 & 1.96 & 2.57 \\
+           & free-running               & 1.82 & 1.90 & 2.00 \\
+           & stopped by $\kappa$        & 1.46 & 1.44 & 1.46 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figS6_truncation}
+\caption{Shape of the simulated fires by what stopped them, against the mapped record. (A)
+Distribution of the deviation of a fire's principal axis from the regional wind axis; the
+dashed line marks the 45$^\circ$ expected of randomly oriented fires. Fires cut short by the
+step budget $\kappa$ pile up above it, that is, across the wind, while fires that stopped
+because propagation failed sit where the observed fires do. (B) Compactness against burned
+area, as a generalised additive smoother per group, with the mapped fires as points.}
+\label{fig:truncation}
+\end{figure}
+
 
 \bibliographystyle{ijwf}
 \bibliography{references}
