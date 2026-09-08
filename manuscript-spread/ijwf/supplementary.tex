@@ -330,14 +330,19 @@ steps consumed before no burnable cell remained within reach. Beyond that value 
 cannot change the simulated fire, so the bound restricts the search without excluding any
 attainable fire size.
 
+Stage 1 is where the cost of the fit lies. The 57 fires were sampled one after another, with
+the 10\,000 simulations of each iteration spread over 15 cores, and the whole stage took about
+48 hours.
+
 \subsection{Stage 2: the hierarchical fit}
 \label{sec:stage2}
 
 Stage 2 estimated the hyperparameters ($\boldsymbol{\gamma}_0$, $\boldsymbol{\gamma}_1$,
 $\boldsymbol{\sigma}$ and $\boldsymbol{\Omega}$; Eqn~2 of the main text and
 Eqn~\ref{eq:hier2}), the random effects of the 57 fires with a known ignition point, the
-number of steps of the 178 fires without one, the upper bound $\psi$ on the number of
-steps (Eqn~\ref{eq:limits}) and the coefficients of an auxiliary regression, all jointly.
+number of steps of the 178 fires whose ignition point is unknown, the upper bound $\psi$ on the number of
+steps (Eqn~\ref{eq:limits}) and the coefficients of an auxiliary regression of burned area on the
+number of steps, all jointly.
 
 Every parameter is bounded, so the sampler works on transformed scales
 (Eqn~\ref{eq:limits}). The five spread coefficients are sampled on the logit scale on
@@ -359,8 +364,8 @@ of its final SMC iteration, equally weighted after the last resampling step. Tho
 are the proposal pools of the Lunn step below, and they are the reason stage 2 never runs
 the fire simulator.
 
-The auxiliary regression is what brings the 178 fires without an ignition point into the
-fit. The 57 fires that have one are larger, on average, than the mapped record as a whole,
+The auxiliary regression is what brings the 178 fires with an unknown ignition point into
+the fit. The 57 fires whose ignition point is known are larger, on average, than the mapped record as a whole,
 which would bias the parameters that govern simulated fire size: the number of steps
 $\kappa_f$ and its hyperparameters $\gamma_{06}$, $\gamma_{16}$ and $\sigma_6$. To correct
 that bias we related the estimated number of steps to fire size,
@@ -377,7 +382,7 @@ that bias we related the estimated number of steps to fire size,
 
 \noindent with $a_f$ the area of fire $f$ (ha), truncated below at the 10\,ha mapping
 threshold. The prior on $\alpha_0$ was centred on the mean of $\log(a)$ over all mapped
-fires so as not to bias its estimation. A fire without an ignition point cannot be
+fires so as not to bias its estimation. A fire whose ignition point is unknown cannot be
 simulated, so it has no stage-1 posterior; its $\kappa_f$ is inferred from its area
 through this regression, and it informs the hyperparameters of $\kappa$ like any other
 fire.
@@ -411,7 +416,7 @@ modelled on a scaled logit whose upper bound is estimated, both densities carry 
 Jacobian of that transform, and the placeholder prior is evaluated on the fire-wise scale
 on which stage 1 defined it.
 
-\item \textbf{Number of steps of the 178 fires without an ignition point.} These have no
+\item \textbf{Number of steps of the 178 fires with an unknown ignition point.} These have no
 stage-1 sample, so they were updated by random-walk Metropolis on the scaled-logit scale,
 with the hierarchical density as prior and Eqn~\ref{eq:areasteps} as likelihood.
 
@@ -446,19 +451,18 @@ parameter.
 
 Holding out a fifth of the fires would have degraded the model without testing
 what matters about it. Fifty-seven fires is already few for a six-parameter
-hierarchical model with sign-constrained bounds, a multivariate logit-normal on
-the transformed parameters and an auxiliary regression of area on the number of
-steps that depends on the fitted $\kappa_f$; the observed size distribution is
-heavy-tailed and sharply peaked, which makes it an unstable target to estimate
-from a few dozen fires; and the hierarchical structure is itself a regulariser,
+hierarchical model. In addition, the hierarchical structure is itself a regulariser,
 so a held-out fire's random effects would mostly reproduce the population mean
 plus noise. The model is also deliberately underparameterised for the process
 (fixed functional forms, sign restrictions, a fixed decay $\tau$, bounded
 parameter ranges), so overfitting is not the failure mode cross-validation is
-designed to catch. What we want to know is whether the simulator generates fires
+designed to expose. What we want to know is whether the simulator generates fires
 with the statistical properties of the ones that actually occur, which is the
 question pattern-oriented validation asks, and it is the standard by which
-burn-probability models are usually judged \citep{parisien2020commentary}.
+burn-probability models are usually judged \citep{parisien2020commentary}. 
+We do not aim at reproducing individual fires with precision; that aim was 
+never targetted, since the poorly documented spread process and the lack of 
+weather data makes that impossible.
 
 \subsection{Re-simulating the mapped fires}
 
@@ -537,7 +541,7 @@ perimeter, compactness and orientation, the last reported as its deviation from 
 dominant wind axis: $0^\circ$ for a fire running along the wind, $90^\circ$ across it, and
 $45^\circ$ the expectation if fires were oriented at random. Here the axis is the fixed
 regional direction the tiles were driven with (113/293$^\circ$), because the observed fires
-without a mapped ignition point carry no wind field of their own. These metrics need only a
+with an unknown ignition point carry no wind field of their own. These metrics need only a
 rasterised perimeter, so the observed reference is every mapped fire in the record, across
 every size class, and not only the 57 with a known ignition point.
 
