@@ -52,6 +52,16 @@
   {12pt \@plus 1pt \@minus 1pt}{.1pt}{\subsubsectionfont}}
 \makeatother
 
+% --- Class fix: the ORCID icon beside an author name links nowhere -------------
+% CSIRO_LaTeX_Template.cls line 726 defines \orc with the host and path swapped,
+% "https://orcid/org/#1", so every icon in the byline points at a domain that does
+% not exist. \auorc (line 773), used in the affiliations, has the URL right. Same
+% definition, correct address.
+\makeatletter
+\def\orc#1{\href{https://orcid.org/#1}{\kern1pt\raisebox{-1.3pt}{%
+  \includegraphics[height=7pt]{Logos/orcid_logo_Web}}}}
+\makeatother
+
 \graphicspath{{figures/}{../figures/}}
 
 \begin{document}
@@ -60,13 +70,18 @@
 \jwebadd{https://doi.org/10.1071/WFxxxxx}
 \journalname{International Journal of Wildland Fire}
 
+%TC:ignore
 %------------------------------------------------------------------------------
 % TITLE, accurate, informative, brief; no abbreviations or formulae;
 %         include keywords in it where possible.        [not counted in the 6000]
+% NOTE: the %TC:ignore above opens here, not at the abstract, because the title, the
+% author names and the affiliations are outside the 6000-word budget too. With it at
+% the abstract, `make words' was counting them (~60 words once the real affiliations
+% went in).
 %------------------------------------------------------------------------------
 \title{Fitting a hierarchical fire spread model based on fire polygons}
 
-\versorh{Barbera}                                  % verso running head (author)
+\versorh{Barberá}                                  % verso running head (author)
 \rectorh{International Journal of Wildland Fire}   % recto running head
 
 %------------------------------------------------------------------------------
@@ -74,11 +89,22 @@
 % ORCID: required for the submitting author, recommended for all. Co-authors MUST
 % link their ORCID to their ScholarOne account BEFORE acceptance (cannot be added later).
 %------------------------------------------------------------------------------
-\author[A,*\orc{0000-0000-0000-0000}]{Iv\'an Barbera}
-% \author[B\orc{0000-0000-0000-0000}]{Co Author}
 
-\affil[A]{Department, university/workplace, city, state, country}{\auorc{0000-0000-0000-0000}{}}
-% \affil[B]{Department, university/workplace, city, state, country}{\auorc{0000-0000-0000-0000}{}}
+% Affiliation letters follow the AUTHOR ORDER, not the author count: Kitzberger shares
+% affiliation A with Barbera, so there are five authors and four affiliations.
+% Institution names are kept in their own language (they are proper nouns), with city,
+% province and country in English -- the same form as Barbera et al. (2025) in Fire Ecology.
+\author[A,*\orc{0000-0002-7572-4471}]{Iv\'an Barber\'a}
+\author[B\orc{0009-0006-6216-3763}]{Iv\'an Renison}
+\author[C]{Marcelo Bari}
+\author[A\orc{0000-0002-9754-4121}]{Thomas Kitzberger}
+\author[D\orc{0000-0001-7269-7490}]{Juan Manuel Morales}
+
+\affil[A]{Instituto de Investigaciones en Biodiversidad y Medioambiente, CONICET -- Universidad Nacional del Comahue, San Carlos de Bariloche, Río Negro, Argentina}{\auorc{0000-0002-7572-4471}{} \auorc{0000-0002-9754-4121}{}}
+\affil[B]{Facultad de Matemática, Astronomía, Física y Computación, Universidad Nacional de Córdoba, Córdoba, Argentina}{\auorc{0009-0006-6216-3763}{}}
+\affil[C]{Departamento de Incendios, Comunicaciones y Emergencias, Parque Nacional Nahuel Huapi, Administración de Parques Nacionales, San Carlos de Bariloche, Río Negro, Argentina}{}
+\affil[D]{School of Biodiversity, One Health and Veterinary Medicine, University of Glasgow, Glasgow, United Kingdom}{\auorc{0000-0001-7269-7490}{}}
+
 
 \corau{*Correspondence to: Email: ivanbarbera93@gmail.com}
 
@@ -87,7 +113,6 @@
 % No citations, no equations, no lists. Include the keywords. Define any
 % abbreviation here AND again at first use in the body.
 %------------------------------------------------------------------------------
-%TC:ignore
 \begin{abstract}
 \textbf{Background.} Assessing fire regime trajectories under climatic and 
 management scenarios needs spatially explicit fire spread models that 
@@ -287,8 +312,7 @@ We used the 235 fires $\ge$\,10\,ha mapped by \citet{barbera_patterns} from Land
 imagery at 30\,m resolution over the 24 fire seasons from July 1998 to June 2022.
 Fitting the spread model requires the ignition point as well as the final perimeter,
 and the ignition point could be established for 57 fires, supplied by fire management
-personnel and by a lightning-ignition database (\citealt{kitzbergerLightning};
-Fig.~\ref{fig:study-area}A). The remaining 178 fires informed the parameters that
+personnel (Fig.~\ref{fig:study-area}A). The remaining 178 fires informed the parameters that
 control simulated fire size. The model uses five groups of predictors, all resolved
 to the 30\,m grid:
 
@@ -822,96 +846,70 @@ stops either because propagation failed at every edge cell or because the step b
 $\kappa$ ran out; $\kappa$ is a lumped stand-in for everything that ends a fire in
 time, a weather change, rain or successful suppression.
 
-% [Claude, let's cut words by merging these 2 sections about elongation and geometry,
-% renamed as "Problems with the spread geometry". Try to keep all most relevant ideas,
-% but reduce length.]
-\subsection*{The elongation ceiling}
+\subsection*{Problems with the spread geometry}
 
-The clearest mismatch in both validation exercises is shape, and it shows a structural
-problem. In the automaton the spread \emph{rate} is isotropic:
-the front advances at most one cell per step in every direction, and the wind term
-changes only \emph{whether} a neighbour ignites, never how fast the front reaches it,
-so the downwind front cannot easily outrun the flanks. When the wind term is strong 
-it drives spread probability towards 1 downwind and 0 upwind, but leaves the two
-neighbours perpendicular to the wind exactly where they would be with no wind at all. The diagonal neighbours 45$^\circ$ off the wind axis still take
-71\,\% of the wind term, so their spread probability stays high and the flanks
-advance one cell per step as well. 
-Simulated fires in flat, homogeneous fuel then make a funnel widening downwind,
-never the narrow, cigar-shaped run of a wind-driven fire.
-The one regime in which the automaton does produce
-elongated fires is marginal propagation, where spread probability is low enough that
-the effective front speed itself differs between downwind and lateral directions.
-But that requires low spread probabilities, which rarely produce large fires. The model
-can therefore make fires that are elongated or large, but not both.
-This may also explain the size mismatch: given the same step budget ($\kappa$),
-a fire that spreads compactly burns far more area than one that spreads as an ellipse.
+The clearest mismatch in both validation exercises is shape, and it reveals a structural problem. 
+In the automaton the spread \emph{rate} is isotropic: the front advances at most one cell per step
+in every direction, and the wind term changes only \emph{whether} a neighbour ignites, never
+how fast the front reaches it. Under a strong wind the downwind cell and the two diagonals
+45$^\circ$ off the wind axis, which still take 71\,\% of the wind term, all saturate at a
+spread probability near 1, so the flanks advance as fast as the head: simulated fires in
+flat, homogeneous fuel make a funnel widening downwind, never the narrow, cigar-shaped run
+of a wind-driven fire. This also explains the size mismatch, since for the same step budget
+($\kappa$) a compact fire burns far more area than an elongated one.
 
-Further analysis shows that the shape mismatch is mostly carried by the fires that
-stopped because they used up their step budget, which confines them to a square around
-their ignition cell (Section~5 of the Supplementary material). These fires are clipped
-along the downwind axis first, so what survives is rounder and turned across the wind,
-giving a larger deviation from the wind direction. Fires that ended because propagation
-failed at every edge cell are closer to the mapped record in compactness and in wind
-alignment. This suggests that the automaton's geometry may do better in a regime of
-lower spread probability (as in \citealt{morales_stochastic_2015}), but such a regime
-makes fire size harder to control and leaves many unburned islands within a fire, which
-would distort the simulation of post-fire vegetation transitions: unrealistic unburned
-patches would overestimate the regeneration capacity of seeder species.
+The automaton can only produce elongated fires when spread probability is low enough 
+that the effective front speed itself differs between
+downwind and lateral directions (as in \citealt{morales_stochastic_2015}). Consistent with
+this, the shape mismatch is carried mostly by the fires that used up their step budget.
+This hard limit confines them to a square around 
+their ignition cell and clips the downwind axis first,
+leaving them rounder and turned across the wind. Fires that ended because propagation failed
+at every edge cell are closer to the mapped record (Section~5 of the Supplementary material).
+But spread under low probability leaves many unburned islands within
+them, which would overestimate the regeneration capacity of seeder species in simulations of
+post-fire vegetation transitions. The model can make fires elongated or large, but not both.
 
-\subsection*{Towards a better geometry}
-
-In trying to keep the model simple we simplified the part of the process that turned
-out to matter most for shape. The eight-neighbour contagion automaton, adopted from
-\citet{morales_stochastic_2015} because it was cheap and required no rate of spread,
-has no notion of travel time: wind enters as a weighting of the contagion probability
-rather than as the determinant of an anisotropic front, and the shape of a simulated
-fire is set by the grid rather than by the wind. 
-Elliptical growth models treat every point on the front as the source of an
+The remedy is a different geometry. The eight-neighbour contagion automaton, adopted from
+\citet{morales_stochastic_2015} because it was cheap and required no rate of spread, has no
+notion of travel time, so the shape of a simulated fire is set by the grid rather than by the
+wind. Elliptical growth models instead treat every point on the front as the source of an
 ellipse whose elongation is a function of wind speed \citep{van_wagner_simple_1969,
-anderson_predicting_1983, richards_elliptical_1990}, and two efficient implementations
-exist: minimum travel time \citep{finney_fire_2002}, which solves fire arrival times as
-a shortest-path problem on the grid, and cell-based elliptical automata such as
-Cell2Fire \citep{pais_cell2fire_2021}. Both assume weather constant during a run, which
-is what our fortnightly formulation assumes anyway, and both are cheap enough for the
-thousands of simulations a regime simulator requires. What makes them
-data-hungry is not the geometry but the rate-of-spread equations that feed it, which
-need fuel models. Nothing prevents replacing those with an empirical rate of spread of
-the structure used here, a base rate as a function of VFI, TFI and FWI multiplied by a
-wind response, with the length-to-breadth ratio taken from the empirical relation of
-\citet{anderson_predicting_1983}. The parameters of such a model would be no more
-numerous than ours, and the fitting approach developed here applies to it unchanged.
+anderson_predicting_1983, richards_elliptical_1990}, and two efficient implementations exist:
+minimum travel time \citep{finney_fire_2002}, which solves fire arrival times as a
+shortest-path problem on the grid, and cell-based elliptical automata such as Cell2Fire
+\citep{pais_cell2fire_2021}. Both assume weather constant during a run, which our fortnightly
+formulation assumes anyway, and both are cheap enough for the thousands of simulations a
+regime simulator requires. What makes them data-hungry is not the geometry but the
+rate-of-spread equations that feed it, which need fuel models; those could be replaced by an
+empirical rate of spread: a base rate defined as a function of VFI, TFI
+and FWI multiplied by a wind response, with the length-to-breadth ratio taken from
+\citet{anderson_predicting_1983}. Such a model would have no more parameters than ours, and
+the fitting approach developed here applies to it unchanged.
 
 \subsection*{Further improvement using fire progression data}
 
 The assumption that fires burn under constant weather within a temporal unit (here a
 fortnight) is coarse, but it is what allows the model to be fitted with the data
-available. With better data the unit could be shrunk to a day, half a day or six hours,
+available. With better data the unit could be shrunk to a day, half a day or a quarter of a day,
 and datasets of fire progression that did not exist when this record was compiled now
-make that possible. One is global and coarse: GlobFire delimits individual fire events
-and their daily burned area worldwide from the 500\,m MODIS product
-\citep{artes_global_2019}, and the same approach has been applied across the United
-States \citep{balch_fired_2020}. The others are regional and deliberate efforts:
-half-daily perimeters and active fronts tracked from VIIRS detections across California
-\citep{chen_california_2022}, or PT-FireSprd, which reconstructed the progression of 80
-Portuguese fires larger than 100\,ha from satellite, airborne and ground observations
-together with the records of the fire crews, and reports a rate of spread for each
-burning period \citep{benali_portuguese_2023}.
-%[Claude, make this shorter. Cite the global one separately and mention that regional
-% efforts get more detail, but they take more effort (and cite all examples). The important
-% is mentioning that small fires are left alone.]
+make that possible. GlobFire delimits fire events and their daily burned area worldwide
+from the 500\,m MODIS product \citep{artes_global_2019}, and the same approach has been
+applied across the United States \citep{balch_fired_2020}. Regional efforts reach finer
+detail at a much higher cost: half-daily perimeters and active fronts tracked from VIIRS
+across California \citep{chen_california_2022}, and a rate of spread per burning period
+reconstructed for 80 Portuguese fires from satellite, airborne and ground records
+\citep{benali_portuguese_2023}.
 
 All of them miss small fires: at 375--500\,m resolution they resolve only fires of tens
 of hectares or more, whereas most of the record here is below 100\,ha
-(Table~\ref{tab:shape}), so a model fitted to progression data alone would describe
-large fires and inherit their size distribution. Informing different parameters with
-different datasets, as we did through the area regression, is what avoids that: the
-spread functions from the large fires with progression data, and the few parameters that
-govern fire size and extinction, like our $\kappa$, from the final perimeters of the
-whole record, which Landsat and Sentinel make increasingly available. Ideally the daily
-advance of small fires would be mapped as well, with imagery of high spatial and
-temporal resolution: PlanetScope delivers near-daily 3\,m images and resolves burns too
-small and too fragmented for coarser sensors \citep{martins_deep_2022}.
-% [Claude, This second paragraph can also be shorter, but keep that key citation and planet example]
+(Table~\ref{tab:shape}). Hence, a model fitted to progression data alone would inherit the
+size distribution of large fires. Informing different parameters with different datasets,
+as we did through the area regression, avoids that. The spread functions are fitted from the fires
+with progression data, and the parameters that govern fire size, like our $\kappa$, from
+the final perimeters of the whole record. Mapping the daily advance of small fires is currently
+within reach too: PlanetScope delivers near-daily 3\,m images and resolves burns too
+small and fragmented for coarser sensors \citep{martins_deep_2022}.
 
 \subsection*{Scope of the hierarchical structure}
 
@@ -978,32 +976,26 @@ perimeters alone.
 % Optional image alongside it (needs permission + photographer credit).
 %------------------------------------------------------------------------------
 \begin{onlinesummarytext}[Online Summary Text:]
-Fires in the forests of Patagonia are expected to become more frequent, and
+Fire activity is increasing in the Patagonian forests, and
 simulation models are the only way to explore what the landscape may look like in
 decades to come. We built and tested a simple fire spread model that can be fitted
-from mapped fire perimeters alone, and found that it captures how wind, slope,
-vegetation and weather drive fire but not the elongated shape of wind-driven fires.
+from mapped fire perimeters and ignition points alone. The model 
+captures the main characteristics of fire spread in this region,
+but not the elongated shape of wind-driven fires.
 The fitting approach carries over to better spread models, offering a cheap way to
 simulate fire regimes in regions where fire behaviour is poorly documented.
 \end{onlinesummarytext}
 
 \section{Supplementary material}
 
-Supplementary material is available online. It contains the preparation of the wind
-field and of the accumulated Fire Weather Index, the model behind the two
-flammability indices, their coefficients (Table~S1) and the indices themselves as
-functions of the variables that compose them (Fig.~S1, Section~1); the parameter
-bounds and the priors of the hierarchical model; the parameter-estimation procedure in full, the ABC
-posterior, the two-stage fit and the samplers used in each stage (Section~2); the two
-validation exercises, with the definition of every statistic they use and the reasons
-for not using classical cross-validation (Section~3); the procedure used to compare
-vegetation types at a common topography while marginalising over the landscape, on
-which Fig.~\ref{fig:vegeffect} rests (Section~4); and extended results (Section~5):
-spread probability against the raw predictors rather than the indices (Fig.~S2), the
-posterior correlations among the six spread parameters, marginal to and conditional on
-FWI (Fig.~S3), the fit to the 57 fires with a known ignition point, as spatial
-overlap (Fig.~S4) and as the ratio of simulated to observed size (Fig.~S5), and the shape
-of the simulated fires split by what brought each of them to a stop (Table~S2, Fig.~S6).
+Supplementary material is available online. It gives the technical detail of the
+methods: the wind field and the accumulated Fire Weather Index, and the model behind the
+two flammability indices with its coefficients (Table~S1, Fig.~S1, Section~1); the priors
+and the two-stage estimation procedure, with the samplers used in each stage (Section~2);
+the definition of every validation statistic (Section~3); and the vegetation comparison
+on which Fig.~\ref{fig:vegeffect} rests (Section~4). Section~5 holds the extended
+results, and a further analysis of the validation: the shape of the simulated fires split
+by what brought each of them to a stop (Table~S2, Fig.~S6).
 
 \section{Acknowledgements}
 
@@ -1054,7 +1046,32 @@ Innovación (Argentina) through grant PICT-2017-2142 to T. Kitzberger, and by a 
 fellowship from the Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET,
 Argentina) to I. Barberá.
 
-\boxsection{Author contributions (optional)}
+\boxsection{Author contributions}
+% Two standard ways of writing this in ecology. ACTIVE below is the narrative form with
+% author initials, still common in ecology journals and the only one that can say
+% "identified the ignition points" in plain words: CRediT has no "data collection" role,
+% its nearest term is "Investigation" (defined as "performing the experiments, or
+% data/evidence collection"), which is too broad to distinguish anyone here.
+% COMMENTED OUT under it is the CRediT taxonomy (ANSI/NISO Z39.104-2022,
+% https://credit.niso.org), the format most journals now ask for, which allows
+% "lead" / "equal" / "supporting" and lists only the roles that apply -- it is a
+% vocabulary to choose from, not a checklist to fill. There, providing data falls under
+% "Resources" and preparing it under "Data curation". Pick one and delete the other.
+I. Barberá, J. M. Morales and T. Kitzberger conceived the study, and I. Barberá and
+J. M. Morales designed the model. I. Barberá collected and curated the data, wrote the
+code, carried out the analyses and made the figures; I. Renison optimised and packaged
+the spread engine, and M. Bari identified the ignition points of almost all the fires.
+I. Barberá wrote the first draft; J. M. Morales, T. Kitzberger, I. Renison and M. Bari
+reviewed and edited it. J. M. Morales and T. Kitzberger supervised the work, and
+T. Kitzberger acquired the funding.
+
+% ALTERNATIVE, CRediT taxonomy:
+% Conceptualization: I. Barberá, J. M. Morales, T. Kitzberger. Methodology: I. Barberá,
+% J. M. Morales. Software: I. Barberá (lead), I. Renison (supporting). Formal analysis:
+% I. Barberá. Data curation: I. Barberá. Resources: M. Bari. Visualization: I. Barberá.
+% Writing -- original draft: I. Barberá. Writing -- review and editing: J. M. Morales,
+% T. Kitzberger, I. Renison, M. Bari. Supervision: J. M. Morales, T. Kitzberger.
+% Funding acquisition: T. Kitzberger.
 
 \boxsection{Declaration of use of AI (if applicable)}
 See \url{https://www.publish.csiro.au/journals/publishingpolicies\#2}
