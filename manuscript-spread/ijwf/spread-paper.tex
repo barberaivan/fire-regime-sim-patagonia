@@ -124,6 +124,8 @@ that needs only fire perimeters and ignition location.
 vary among fires in a hierarchical formulation. It was fitted with a novel strategy of
 hierarchical Approximate Bayesian Computation, based on 57 fires with known
 ignition location, with 178 further fires informing fire size.
+The model was validated by comparing size and shape
+between simulated and observed fires.
 \textbf{Key results.} Wind and slope dominated spread probability, with 
 vegetation and topography showing smaller effects. Fire weather strongly 
 controlled fire size.
@@ -938,18 +940,26 @@ new fires can be added without refitting the old ones.
 
 The spread engine used here should be replaced, but the approach built around it is valuable.
 Four of its strategies are useful for developing the spread component
-of fire regime simulators where fire behaviour is poorly documented. 
-The first is simplifying the process to what the data can inform, 
-one event per fire under one wind and one weather value. 
-The second is fitting different parts of the model from different data: 
-the whole model from the fires with a known ignition point, by simulation, 
-and the parameters that govern size from the whole record, by matching size. 
-The third is the hierarchical structure, which turns
-the unobserved into a distribution that can be simulated and linked to variables that
-we can measure (e.g., coarse weather, fire suppression resources).
-The fourth is the estimation method, which we believe is new: fire-wise ABC posteriors as
-the proposal pools of a two-stage fit. It accommodates the extensions above without change, since stage 1 samples whatever is fire-specific and stage 2
-never runs the simulator. All of them could be adopted with a better spread engine.
+of fire regime simulators where fire behaviour is poorly documented:
+
+\begin{enumerate}
+\item Simplify the process to what the data can inform: one event per fire under one
+wind and one weather value.
+
+\item Fit different parts of the model from different data: the whole model from the
+fires with a known ignition point, by simulation, and the parameters that govern size
+from the whole record, by matching size.
+
+\item The hierarchical structure turns the unobserved into a distribution that can be
+simulated and linked to variables we can measure (e.g., coarse weather, fire suppression
+resources).
+
+\item The estimation method, which we believe is new: fire-wise ABC posteriors as the
+proposal pools of a two-stage fit. It accommodates the extensions above without change,
+since stage 1 samples whatever is fire-specific and stage 2 never runs the simulator.
+\end{enumerate}
+
+\noindent All four could be adopted with a better spread engine.
 
 \section{Conclusion}
 
