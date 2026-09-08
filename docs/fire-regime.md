@@ -26,6 +26,12 @@ scientific simulations/projections.
 ## `simulate.R`
 - **Purpose:** run many simulations for scientific analysis (incl. projections under CMIP6 FWI);
   writes to `files/fire_regime_simulation/`.
+- **Inputs:** besides the fitted models and landscapes, it reads
+  `data_private/ignition/ignition_size_data.csv` — the observed ignition record, used only to
+  compare the simulated fire-size distribution with the observed one. It comes from the
+  never-shared private store (`architecture.md` → *The two stores*), so this comparison block
+  is the one part of the script that will not run without it. `plots.R` likewise reads the
+  ignition points from there for its PNNH map.
 
 ## `probability_maps.R`, `plots.R`
 - Static fire-probability maps from single-model runs; visualization utilities. Export final

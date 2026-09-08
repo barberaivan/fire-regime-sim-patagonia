@@ -6,7 +6,8 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-07 (κ-truncation re-run done; written up in `docs/spread.md`)
+**Last updated:** 2026-09-08 (private ignition data split into its own store; written up in
+`docs/architecture.md` → *The two stores*)
 
 Where finished work is written up:
 
@@ -19,6 +20,7 @@ Where finished work is written up:
 | The manuscript build (two documents, the two-column traps) and what prose is written | `docs/spread.md` → *The manuscript* |
 | The four answered questions of 2026-09-02 (shape's 241, the dropped spatial signature, Fig. 1's legend placement, the software citations) | `docs/spread.md` |
 | Machine setup (WindNinja build, GEE asset paths) | `README.md` → *Getting started* |
+| Splitting the non-public ignition data into its own store (migration TODO #9) | `docs/architecture.md` → *The two stores*, `README.md` → *The two data stores* |
 
 ---
 
@@ -34,9 +36,6 @@ Full detail in `docs/migration.md`'s TODO register.
   probability-map outputs are **stale** until they are. Multi-day job (~2.5 days last time) —
   launch in `tmux`, with a small `nsim` smoke test first. It would also pick up a new PNNH wind
   field (`docs/data-prep.md` → *`wind_sd` is frozen*) unless the old `.asc` files are recovered.
-- **TODO #9** — the Bari-Kitzberger non-public data still sits inside the shareable store;
-  deliberately left as an open decision (physically re-separate vs. restrict the Drive
-  subfolder's permissions). Decide **before** sharing the store with anyone.
 
 ---
 
@@ -56,13 +55,13 @@ online summary written; Methods and Results cut; write-up in `docs/spread.md` �
 manuscript*). What is left is Iván's reading, and the points below are the ones Claude resolved
 alone and is least sure of. Delete each once settled.
 
-- **Move the ignition database out of the store, then paste the Drive link into the paper.**
-  The Data availability statement of `manuscript-spread/ijwf/spread-paper.tex` currently reads
-  `\url{DRIVE-LINK-PENDING}`; the link cannot be handed out while
-  `data/ignition_data/` (the non-public Bari-Kitzberger ignition and population data) sits
-  inside the same store folder. So: move that folder to a separate Drive location, re-point
-  whatever reads it, then replace the placeholder with the link to the shareable store. This is
-  the concrete first half of migration TODO #9 above, now with a deadline: it blocks submission.
+- **Paste the Drive link into the paper.** The ignition database has been moved out of the
+  shareable store (write-up: `docs/architecture.md` → *The two stores*), so the store can now
+  be shared. What is left is the Drive UI step, which only Iván can do: share
+  `fire-regime-sim-patagonia-store`, then replace `\url{DRIVE-LINK-PENDING}` in
+  `manuscript-spread/ijwf/spread-paper.tex` (Data availability) with the link and delete the
+  `%` note above it. Check first that Insync has finished syncing, and never share
+  `fire-regime-sim-patagonia-store-private`.
 
 - **Decisions taken without asking, to check:**
   - *"Low-data" wording.* Rendered as "where fire behaviour is poorly documented" and, in the

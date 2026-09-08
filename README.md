@@ -22,6 +22,7 @@ this repo fits the models to data and integrates them into the regime simulator.
 | `manuscript-spread/`, `manuscript-regime/` | LaTeX sources for the two papers |
 | `data/` → store | heavy **inputs** (symlink; not in git) |
 | `files/` → store | heavy **outputs** (symlink; not in git) |
+| `data_private/` → private store | the **non-public** ignition record (symlink; not in git) |
 
 Each code folder has its own short `README.md`; the full detail lives in **[`docs/`](docs/)**
 (start with [`docs/architecture.md`](docs/architecture.md) for the module map and dependency
@@ -38,9 +39,10 @@ The **older version** of these models is documented in the PhD thesis, Barberá 
 ## Getting started (first-time setup)
 
 This repo holds **code only**. The heavy data — landscape rasters, FWI grids, fire
-shapefiles, fitted models, simulation outputs — is **not** in git. It lives in a sibling
-folder **`fire-regime-sim-patagonia-store`** (the "store"), synced via Insync/Google Drive,
-and a small script links it into the repo.
+shapefiles, fitted models, simulation outputs — is **not** in git. It lives in sibling
+folders (the "stores"), synced via Insync/Google Drive, and a small script links them into
+the repo. There are **two**: the shareable **`fire-regime-sim-patagonia-store`** and the
+never-shared **`fire-regime-sim-patagonia-store-private`** (see *The two data stores* below).
 
 > **Why?** Code belongs in git (which versions and backs it up); large binaries do not.
 > Keeping them apart avoids a bloated git history and the sync conflicts that arise when a
@@ -59,22 +61,30 @@ cd fire-regime-sim-patagonia
 Sync/download the **`fire-regime-sim-patagonia-store`** folder (Insync or a shared Google
 Drive link) and note where it landed. It mirrors the repo's heavy paths (`data/`, `files/`).
 
-### 3. Link the store into the repo
+If you also have access to the non-public ignition record, sync
+**`fire-regime-sim-patagonia-store-private`** too (it mirrors `data_private/`). It is
+optional: without it everything runs except `ignition_escape/fit.R` and two blocks of
+`fire_regime/`.
 
-From the repo root, run `setup.sh` **once**, giving it the store path:
+### 3. Link the stores into the repo
+
+From the repo root, run `setup.sh` **once**, giving it the store path (and the private one
+if you have it, as a second argument):
 
 ```bash
-./setup.sh /full/path/to/fire-regime-sim-patagonia-store
+./setup.sh /full/path/to/fire-regime-sim-patagonia-store \
+           /full/path/to/fire-regime-sim-patagonia-store-private   # optional
 ```
 
-That creates the `data/` and `files/` symlinks and remembers the path (in a local,
-gitignored `.local-paths`), so any later re-run is just `./setup.sh`.
+That creates the `data/`, `files/` and `data_private/` symlinks and remembers the paths (in
+a local, gitignored `.local-paths`), so any later re-run is just `./setup.sh`.
 
 Confirm it worked:
 
 ```bash
-ls data    # heavy inputs
-ls files   # heavy outputs
+ls data           # heavy inputs
+ls files          # heavy outputs
+ls data_private   # non-public ignition record (only if you have the private store)
 ```
 
 > **Heads-up:** because the data is outside git, **uncommitted code is backed up nowhere** —
@@ -118,13 +128,30 @@ are still read from the legacy `patagonian_fires_spread` (241 features). Detail 
 
 ---
 
-## ⚠️ Before sharing the store with anyone
+## The two data stores
 
-`data/ignition_data/` (Bari-Kitzberger ignition + population point data) is **not public**. It
-currently lives *inside* the store folder (see "Getting started" → "Get the data store" below),
-which is also what would get handed out as a single Drive share link to collaborators.
-**Do not share the store as a whole until this is resolved** — see `docs/migration.md` TODO #9
-for the open decision.
+The heavy data is split across two sibling folders, and the split is what makes the main store
+safe to hand out as a single Drive link:
+
+| Store | Linked in as | Holds | Shareable? |
+|-------|--------------|-------|------------|
+| `fire-regime-sim-patagonia-store` | `data/`, `files/` | landscape rasters, FWI grids and projections, fire perimeters, flammability indices, every fitted model and posterior sample, simulation outputs | **yes** — this is the link that goes in the papers' data availability statements |
+| `fire-regime-sim-patagonia-store-private` | `data_private/` | `ignition/` — the PNNH fire-report record (Marcelo Bari, APN), the lightning-ignition database (Thomas Kitzberger), and everything derived from them: the merged point set, its Earth Engine covariate export, the population-point sample, `ignition_size_data.csv` | **no, never** |
+
+Both sources were provided for this research only and are not ours to redistribute, which is why
+they sit in a folder a share link cannot reach rather than in a restricted subfolder of the main
+store. **Do not move them back into the main store**, and do not add derived files that contain
+individual ignition records to `data/` or `files/`.
+
+What is *not* private: the fitted ignition and escape posteriors (`files/ignition/*.rds`) and the
+PNNH covariate summaries stay in the shareable store. They are parameters and prediction surfaces,
+checked to carry no individual record. The spread paper's own ignition points
+(`data/ignition_points_checked*`, the 57 focal fires) are unrelated to the Bari-Kitzberger record
+and are public.
+
+Only `ignition_escape/fit.R` and two blocks of `fire_regime/` (the observed-size comparison in
+`simulate.R`, the ignition-point map in `plots.R`) read the private store; everything else,
+including the whole spread pipeline, runs from the shareable store alone.
 
 ## Status
 

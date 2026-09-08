@@ -51,11 +51,13 @@ rsconnect/
 # Machine-local store location, written by setup.sh
 .local-paths
 
-# Heavy inputs/outputs live outside git in the sibling "-store" folder, symlinked
+# Heavy inputs/outputs live outside git in the sibling "-store" folders, symlinked
 # in by setup.sh. Ignore the symlinks by their bare names (a trailing slash won't
-# match a symlink).
+# match a symlink). data_private points into the separate, never-shared
+# "-store-private" folder (the Bari-Kitzberger ignition record).
 data
 files
+data_private
 
 # ─── LaTeX build artifacts (manuscript-spread/, manuscript-regime/) ───
 # Keep .tex/.bib and final figures in git; ignore what the compile regenerates.

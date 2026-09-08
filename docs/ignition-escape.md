@@ -19,9 +19,11 @@ The two simpler sub-models, fitted together. Canonical version is the old repo's
     canonical with the user (2026-07-09) — this is what `escape_model_samples.rds` is fit from.
     _TODO: covariates beyond FWI/vfi/tfi/distance-to-roads-humans, full spec._
 - **Fitted via:** Stan. Sources `R/flammability_indices_functions.R` + `R/fortnight_functions.R`.
-- **Inputs:** ignition/size data (`data/ignition/…`), ignition-point shapefiles, FWI data,
-  the external (non-public) `data/ignition_data/` — Bari/Kitzberger PNNH ignition + population
-  point samples.
+- **Inputs:** FWI data, the PNNH boundary, the flammability-index parameters, and the
+  **non-public** ignition record in `data_private/ignition/` (Bari's PNNH fire reports,
+  Kitzberger's lightning database, the merged point set with its Earth Engine covariates, and
+  the population-point sample). That folder lives in a separate, never-shared store; see
+  `architecture.md` → *The two stores*. This is the only fitting script that needs it.
 - **Outputs:** `files/ignition/ignition_model_samples.rds`, `escape_model_samples.rds`
   — **production constants** consumed by `fire_regime/`.
 

@@ -874,7 +874,8 @@ dh_mean <- pnnh_data_summary$dh_mean  # distance from human settlements
 dh_sd <- pnnh_data_summary$dh_sd
 
 ## Observed fires data, in PNNH, to compare size distribution with simulations
-igdata <- read.csv(file.path("data", "ignition", "ignition_size_data.csv"))
+# non-public ignition record — separate store, see README.md → "The two data stores"
+igdata <- read.csv(file.path("data_private", "ignition", "ignition_size_data.csv"))
 igdata$area_impute2 <- igdata$area_impute
 igdata$area_impute2[igdata$area_impute < 0.09] <- 0.09
 

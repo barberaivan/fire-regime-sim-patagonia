@@ -33,7 +33,8 @@ fire-regime-sim-patagonia/
 ├── manuscript-spread/ # LaTeX sources — paper 1 (spread)
 ├── manuscript-regime/ # LaTeX sources — paper 2 (regime)
 ├── data/  → store     # heavy INPUTS  (symlink into the -store folder; gitignored)
-└── files/ → store     # heavy OUTPUTS (symlink into the -store folder; gitignored)
+├── files/ → store     # heavy OUTPUTS (symlink into the -store folder; gitignored)
+└── data_private/      # NON-PUBLIC ignition record (symlink into -store-private; gitignored)
 ```
 
 Each code folder has a short `README.md` describing its role and planned files.
@@ -98,16 +99,22 @@ Read it for background, but note what has **changed since** and must not be assu
 
 ## Code + Store — heavy data lives outside git
 
-This repo is **code only**. Heavy data (`data/`, `files/`) is not in git; it lives in a
-sibling **`fire-regime-sim-patagonia-store`** folder synced via Insync/Google Drive and
-is symlinked into the repo by **`./setup.sh`** (see `README.md` → *Getting started*, and
-the strategy doc at `~/Insync/Claude/repo-store-structure.md`).
+This repo is **code only**. Heavy data is not in git; it lives in **two** sibling store
+folders synced via Insync/Google Drive, symlinked into the repo by **`./setup.sh`** (see
+`README.md` → *Getting started* and *The two data stores*, and the strategy doc at
+`~/Insync/Claude/repo-store-structure.md`).
 
-- Run `./setup.sh /path/to/fire-regime-sim-patagonia-store` once per machine; later runs
-  are just `./setup.sh`. The store path is saved to gitignored `.local-paths`.
+| Store | Repo paths | Shareable? |
+|-------|-----------|------------|
+| `fire-regime-sim-patagonia-store` | `data/`, `files/` | **yes** — the Drive link in the papers |
+| `fire-regime-sim-patagonia-store-private` | `data_private/` | **no, never** |
+
+- Run `./setup.sh /path/to/store /path/to/store-private` once per machine; later runs are
+  just `./setup.sh`. Both paths are saved to gitignored `.local-paths`. The private store is
+  optional (without it, only `ignition_escape/fit.R` and two blocks of `fire_regime/` break).
 - Because data is outside git, **uncommitted code is backed up nowhere** — `git commit &&
   git push` often. Work one machine at a time; `git pull` before starting.
-- Never commit the `data`/`files` symlinks or `.local-paths` (all gitignored).
+- Never commit the `data`/`files`/`data_private` symlinks or `.local-paths` (all gitignored).
 
 ## Conventions
 
@@ -173,12 +180,15 @@ pipeline: `data_prep/vegetation_lara_merge.R` and `data_prep/vegetation_ciefap_m
 pre-2014-burned pixels with Lara cover. See `docs/data-prep.md` for the full chain diagram and
 `docs/migration.md` TODO #8 / T12 for how this was traced.
 
-## ⚠️ Do not share the store as a whole — see TODO #9
+## ⚠️ The non-public ignition data
 
-`data/ignition_data/` (Bari-Kitzberger ignition + population data) is **not public**, but
-currently lives inside `fire-regime-sim-patagonia-store/` — the same folder that would get
-handed out as a single Drive link to collaborators. Unsolved on purpose; see
-`docs/migration.md` TODO #9 before setting up any sharing.
+The PNNH ignition record (Marcelo Bari) and the lightning-ignition database (Thomas
+Kitzberger) were provided for this research only and **must never be redistributed**. They,
+and everything derived from them, live in the separate `-store-private` folder and are read
+through `data_private/ignition/` — never through `data/` or `files/`. When writing any new
+file that contains individual ignition records, write it under `data_private/`. The main
+store is shareable precisely because a Drive link to it cannot reach that folder; do not
+undo that by copying files back. Full rationale in `README.md` → *The two data stores*.
 
 ## Status & migration
 

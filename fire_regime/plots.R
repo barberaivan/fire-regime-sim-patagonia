@@ -153,7 +153,9 @@ burn_prob_models <- burn_prob_raster[[c("igprob_h", "igprob_l",
 
 # Load fires and ignition points
 fires <- vect(file.path("data", "patagonian_fires", "patagonian_fires.shp"))
-igpoints <- vect(file.path("data", "ignition_data", "ignition_points_pnnh_bari-kitzberger.shp"))
+# non-public ignition record — separate store, see README.md → "The two data stores"
+igpoints <- vect(file.path("data_private", "ignition",
+                           "ignition_points_pnnh_bari-kitzberger.shp"))
 igpoints$Causa <- factor(igpoints$cause,
                          levels = c("human", "lightning", "unknown"),
                          labels = c("Humanos", "Rayos", "Desconocida"))

@@ -661,31 +661,43 @@ confirms the new repo runs.
      R reclassification scripts remain in their original Insync folders (upstream, one-time
      inputs to GEE assets, not part of the recurring pipeline) — not migrated here either, since
      nothing in this repo re-runs them.
-9. **Non-public Bari-Kitzberger data risks exposure via a future store share link — UNSOLVED,
-   left as an open decision on purpose (user, 2026-07-09).** `data/ignition_data/`
-   (`ignition_points_pnnh_bari-kitzberger*`, `population_points_pnnh_bari-kitzberger_data.*`,
-   `Total_focos_NH_nov89-mar21.xlsx`, `base_ampliado_kitzberger_rayos.xlsx`) is explicitly
-   non-public — the original script's own comment says so ("Ignition data is not in the
-   fire_spread repo, it's not public"), which is why the *old* repo kept it physically outside
-   the repo entirely, at a separate sibling path (`../ignition_data`), never bundled with
-   anything shared.
-   - **The problem this migration (re)introduced:** T9 copied that data *into*
-     `fire-regime-sim-patagonia-store/data/ignition_data/` for convenience — but the store as a
-     whole is exactly the kind of folder that gets a single shared Google Drive link handed to
-     collaborators (see the `mapbiomas-arg-fire` precedent in `~/Insync/Claude/repo-store-
-     structure.md` and this repo's own `README.md` "Getting started"). If the *whole store*
-     is ever shared that way, this non-public data goes out with it.
-   - **Not solved here on purpose** — this needs the user's own decision, not a unilateral
-     restructuring. Two directions worth weighing when the user gets to it:
-     1. **Physically separate it again**, mirroring the old repo's own solution: a second,
-        never-shared location (e.g. a sibling `fire-regime-sim-patagonia-store-private/`),
-        symlinked in by `setup.sh` via a second, optional argument — the most robust guarantee,
-        since a share link simply can't reach a folder it was never given.
-     2. **Restrict the subfolder's permissions within Google Drive** (Drive supports overriding
-        a specific subfolder's sharing even when its parent is shared) — keeps everything in one
-        physical place, but is easier to misconfigure or forget after future restructuring.
-   - No files were moved and `setup.sh` was not changed — this is a documentation-only entry,
-     deliberately left for the user to resolve.
+9. **Non-public Bari-Kitzberger data risks exposure via a future store share link — RESOLVED
+   2026-09-08 by physically separating it (option 1 of the two that had been weighed).**
+   `data/ignition_data/` and `data/ignition/` were explicitly non-public — the original
+   script's own comment says so ("Ignition data is not in the fire_spread repo, it's not
+   public"), which is why the *old* repo kept that data physically outside the repo, at a
+   separate sibling path (`../ignition_data`), never bundled with anything shared. T9 of this
+   migration copied it *into* the store for convenience, and the store as a whole is exactly
+   the folder that gets a single Drive link handed to collaborators — so the non-public data
+   would have gone out with it. The two directions weighed were (1) physically separate it
+   again, in a never-shared sibling store, and (2) restrict the subfolder's permissions inside
+   Google Drive. **(1) was chosen**, on the user's decision: a share link cannot reach a folder
+   it was never given, whereas Drive permissions are one misconfiguration or one restructuring
+   away from failing.
+   - **What was done.** A new store `fire-regime-sim-patagonia-store-private/` was created next
+     to the main one in `~/Insync/` (so Insync still backs it up to Drive, just as a separate,
+     unshared folder). Both `data/ignition_data/` and `data/ignition/` were **moved** into a
+     single merged `data_private/ignition/` there: the two folders held byte-identical copies
+     of both source spreadsheets (md5-verified), so one copy of each was dropped, and the
+     remaining unique files (`ignition_size_data.csv`, the news-report kml) joined the
+     shapefiles. 21 files, 12 MB. The public store was re-scanned afterwards: nothing matching
+     `bari`/`kitz`/`focos` remains except
+     `data/vegetation_lara/clases_de_vegetacion_y_equivalencias_kitz22-firespread.csv`, a
+     vegetation-class lookup from Kitzberger's 2022 paper, which is public.
+   - **What stayed public, deliberately.** `files/ignition/*.rds` (the five stanfits and
+     `ignition_prob_relative_raw.rds`) and `data/pnnh_images/pnnh_data_summary.rds`. The rds
+     files were scanned for `bari_`/`kitz_` record ids and contain none: they are posterior
+     parameters and prediction surfaces, not records.
+   - **Plumbing.** `setup.sh` now takes the private store as an optional second argument, saves
+     it to `.local-paths` as `STORE_PRIVATE_ROOT`, and links `data_private/` the same mechanical
+     way as `data/` and `files/` (the private store mirrors the repo path `data_private/`,
+     keeping the invariant). Without it the script prints a note and skips that one link.
+     `.gitignore` ignores `data_private`. Three read paths were repointed:
+     `ignition_escape/fit.R` (`igdata_dir`), `fire_regime/simulate.R`, `fire_regime/plots.R`.
+     All three parse, and every moved file was re-read through the new path with unchanged
+     record counts (288 / 285 / 23,986 / 284).
+   - **Written up in** `docs/architecture.md` → *The two stores*, `README.md` → *The two data
+     stores*, and generically in `~/Insync/Claude/repo-store-structure.md` (§ private store).
 10. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop) —
      **analysis below**, not yet designed/decided; next session should read it before starting.

@@ -130,8 +130,11 @@ pnnh <- vect(file.path("data", "protected_areas", "apn_limites.shp"))
 pnnh <- pnnh[pnnh$nombre == "Nahuel Huapi", ]
 pnnh <- project(pnnh, "EPSG:5343")
 
-# Ignition data is not public — kept in the (gitignored) store, not in git.
-igdata_dir <- file.path("data", "ignition_data")
+# Ignition data is not public. It lives in a SEPARATE, never-shared store
+# (fire-regime-sim-patagonia-store-private), linked in as data_private/ by
+# setup.sh, so that the shareable store can be handed out as a Drive link
+# without it. See README.md → "The two data stores".
+igdata_dir <- file.path("data_private", "ignition")
 
 # Ignition points from PNNH (provided by Marcelo Bari)
 ig_pnnh_data <- readxl::read_excel(file.path(igdata_dir, "Total_focos_NH_nov89-mar21.xlsx"))

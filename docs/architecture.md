@@ -36,6 +36,7 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 | `fire_regime/` | 3 | integration, recalibration, simulator, runs, plots |
 | `data/` → store | — | heavy inputs (symlink; gitignored) |
 | `files/` → store | — | heavy outputs (symlink; gitignored) |
+| `data_private/` → private store | — | non-public ignition record (symlink; gitignored) — see *The two stores* below |
 | `manuscript-spread/`, `manuscript-regime/` | — | LaTeX sources for the two papers |
 | `docs/` | — | this documentation |
 
@@ -116,6 +117,7 @@ Raw data (GEE exports, FWI tifs, fire shapefiles)  →  data/
     │                                          data/pnnh_images/pnnh_spread_landscape*.rds
     │
     ├─ ignition_escape/fit.R                 → files/ignition/{ignition,escape}_model_samples.rds
+    │    (reads data_private/ignition/ — the non-public record, separate store)
     │
     ├─ spread/stage1_smc.R                   → files/posterior_samples_stage1/*.rds
     ├─ spread/hierarchical_fit.R             → files/hierarchical_model/*.rds   ← spread params (production constant)
@@ -128,6 +130,61 @@ Raw data (GEE exports, FWI tifs, fire shapefiles)  →  data/
 Production constants (extracted for the platform): the fitted spread model
 (`files/hierarchical_model/`), the ignition & escape samples (`files/ignition/`), and the
 regime **simulator function** (`fire_regime/simulator.R`).
+
+---
+
+## The two stores
+
+Heavy data lives in **two** sibling folders outside git, both mirroring the repo's relative
+paths and both linked in by `./setup.sh`:
+
+| Store | Mirrors | Holds | Shareable? |
+|-------|---------|-------|------------|
+| `fire-regime-sim-patagonia-store` | `data/`, `files/` | everything else | **yes** |
+| `fire-regime-sim-patagonia-store-private` | `data_private/` | `ignition/` — the non-public ignition record | **no, never** |
+
+### Why the split exists
+
+The PNNH fire-report record (Marcelo Bari, APN) and the lightning-ignition database (Thomas
+Kitzberger) were provided for this research only. The main store is what gets handed out as a
+single Google Drive link (the papers' data availability statements point at it), so anything
+inside it is effectively published. Physical separation is the guarantee: a share link cannot
+reach a folder it was never given. The alternative considered and rejected was restricting the
+subfolder's permissions inside Drive, which is one misconfiguration away from failing.
+
+### What is in the private store
+
+`data_private/ignition/` holds, in one folder (the two duplicated folders it replaced were
+merged, and identical copies of both source spreadsheets dropped):
+
+- `Total_focos_NH_nov89-mar21.xlsx`, `base_ampliado_kitzberger_rayos.xlsx` — the two sources;
+- `ignition_points_pnnh_bari-kitzberger.*` — the two merged and de-duplicated (n = 288), as
+  uploaded to Earth Engine, and `..._data.*` — the same points back with covariates (n = 285);
+- `population_points_pnnh_bari-kitzberger_data.*` — background pixels with the same covariates
+  (n = 23,986). No ignition record in it, so not sensitive in itself; kept here because it is
+  useless without the ignition points and because a whole-folder rule cannot be misapplied;
+- `ignition_size_data.csv` — the merged record with covariates, escape flag and size class
+  (n = 284), read by `fire_regime/simulate.R`. Legacy: no script in this repo writes it (it
+  came from the thesis repo's abandoned size model), so it cannot currently be regenerated;
+- one kml with a single ignition point located from news reports.
+
+### What deliberately stays public
+
+The fitted ignition and escape posteriors (`files/ignition/*.rds`) and
+`data/pnnh_images/pnnh_data_summary.rds`: parameters, prediction surfaces and covariate
+means/sds, verified to contain no individual record. The spread paper's ignition points
+(`data/ignition_points_checked*`, the 57 focal fires) are a different dataset and are public.
+
+### Working with it
+
+Only three places read the private store: `ignition_escape/fit.R` (`igdata_dir`),
+`fire_regime/simulate.R` (the observed-size comparison) and `fire_regime/plots.R` (the
+ignition-point map). Everything else, the whole spread pipeline included, runs from the
+shareable store alone, so `./setup.sh` takes the private path as an **optional** second
+argument and simply skips the `data_private/` link when it is absent.
+
+**When adding a file that contains individual ignition records, write it under
+`data_private/`.** Nothing derived from that record belongs in `data/` or `files/`.
 
 ---
 
