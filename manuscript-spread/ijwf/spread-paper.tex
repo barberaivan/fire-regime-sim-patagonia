@@ -121,11 +121,9 @@ can be fitted and validated where fire behaviour is poorly documented.
 Patagonia using regionally available inputs, and a fitting method
 that needs only fire perimeters and ignition location.
 \textbf{Methods.} We developed a stochastic cellular automaton where parameters
-vary among fires in a hierarchical formulation. It was fitted by Approximate 
-Bayesian Computation in two stages, based on 57 fires with known 
-ignition location, with 178 further fires informing fire size. 
-The model was validated by comparing size and shape 
-between simulated and observed fires.
+vary among fires in a hierarchical formulation. It was fitted with a novel strategy of
+hierarchical Approximate Bayesian Computation, based on 57 fires with known
+ignition location, with 178 further fires informing fire size.
 \textbf{Key results.} Wind and slope dominated spread probability, with 
 vegetation and topography showing smaller effects. Fire weather strongly 
 controlled fire size.
@@ -912,27 +910,34 @@ the final perimeters of the whole record. Mapping the daily advance of small fir
 within reach too: PlanetScope delivers near-daily 3\,m images and resolves burns too
 small and fragmented for coarser sensors \citep{martins_deep_2022}.
 
-\subsection*{Scope of the hierarchical structure}
+\subsection*{What the hierarchical structure makes possible}
 
 A model that explains more of the between-fire variation, through daily weather and a
 better geometry, will leave less to the random effects, but not nothing. Suppression is
 the clearest case: it ends many fires early, it is recorded for few, and it is not a
-function of any mapped covariate. Here it is lumped into $\kappa$. In a hierarchical
-model it could be a latent variable per fire controlling initial spread, informed by
-suppression records where they exist and estimated where they do not, and it would then
-be simulated from its own distribution, so that the simulator produces the mix of small
-and large fires the record shows. The same logic extends to the inputs. Weather and
+function of any mapped covariate. Here it is lumped into $\kappa$. It could instead be a latent
+variable per fire controlling initial spread, informed by suppression records where they
+exist and estimated where they do not, and simulated from its own distribution, so the
+simulator produces the mix of small and large fires the record shows. The same logic extends to the inputs. Weather and
 ignition point were treated as known here, corrected by hand where a fire's shape
 contradicted the reanalysis, but for poorly documented fires the spread date and the
 ignition point could be parameters, given informative priors and bounded by the
 satellite detections that constrain both, and estimated jointly with the spread
-parameters. The two-stage fit accommodates this without change, since stage 1 samples
-whatever is fire-specific and stage 2 never runs the simulator.
+parameters.
+
+Both extensions depend on the structure being fittable. Hierarchical models have
+been fitted by ABC before, but in the published schemes the simulator runs inside the
+sampler \citep{bazin2010likelihood, turner2014hierarchical, clarte2021componentwise}, and
+the two-stage scheme of \citet{lunn2013fully}, used in ecology to fit hierarchical movement
+models \citep{hooten2016hierarchical}, assumes a likelihood in its first stage. Using
+fire-wise ABC posteriors as its proposal pools joins the two: the hierarchical model is
+fitted without running the simulator again, so the costly step is done once per fire, and
+new fires can be added without refitting the old ones.
 
 \subsection*{Contributions}
 
 The spread engine used here should be replaced, but the approach built around it is valuable.
-We believe that four of its strategies are useful for developing the spread component
+Four of its strategies are useful for developing the spread component
 of fire regime simulators where fire behaviour is poorly documented. 
 The first is simplifying the process to what the data can inform, 
 one event per fire under one wind and one weather value. 
@@ -942,15 +947,9 @@ and the parameters that govern size from the whole record, by matching size.
 The third is the hierarchical structure, which turns
 the unobserved into a distribution that can be simulated and linked to variables that
 we can measure (e.g., coarse weather, fire suppression resources).
-The fourth is the estimation method, which we believe is new. Hierarchical models have been
-fitted by ABC before, but in the published schemes the simulator runs inside the sampler
-\citep{bazin2010likelihood, turner2014hierarchical, clarte2021componentwise}, and the
-two-stage scheme of \citet{lunn2013fully}, used in ecology to fit hierarchical movement
-models \citep{hooten2016hierarchical}, assumes a likelihood in its first stage. Using
-fire-wise ABC posteriors as its proposal pools joins the two: the hierarchical model is
-fitted without running the simulator again, so the costly step is done once per fire, and
-new fires can be added without refitting the old ones. All of them could be adopted with a
-better spread engine.
+The fourth is the estimation method, which we believe is new: fire-wise ABC posteriors as
+the proposal pools of a two-stage fit. It accommodates the extensions above without change, since stage 1 samples whatever is fire-specific and stage 2
+never runs the simulator. All of them could be adopted with a better spread engine.
 
 \section{Conclusion}
 
