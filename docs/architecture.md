@@ -60,7 +60,8 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 `landscapes_preparation.R`, `landscapes_simulation.R`.
 
 **Layer 2b — model fitting** (`spread/`, `ignition_escape/`, write to `files/`):
-`spread/stage1_smc.R` → `spread/hierarchical_fit.R`; `ignition_escape/fit.R`.
+`spread/stage1_smc.R` → `spread/hierarchical_fit_{inits,tune,run}.R` →
+`spread/hierarchical_predictions.R`; `ignition_escape/fit.R`.
 
 **Layer 3 — integration** (`fire_regime/`): `recalibrate.R`, `simulator.R`, `simulate.R`,
 `probability_maps.R`, `plots.R`.
@@ -70,8 +71,9 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 ```
 R/flammability_indices_functions.R
     ↑ sourced by: R/landscape_functions.R, data_prep/landscapes_{preparation,simulation}.R,
-                  spread/hierarchical_fit.R, ignition_escape/fit.R,
-                  fire_regime/{simulate,probability_maps,plots}.R
+                  spread/hierarchical_fit_{inits,tune,run}.R,
+                  spread/hierarchical_predictions.R, spread/exploratory_steps_area.R,
+                  ignition_escape/fit.R, fire_regime/{simulate,probability_maps,plots}.R
     (loads data/flammability_indices/*.rds at source time)
 
 R/landscape_functions.R
@@ -84,7 +86,20 @@ R/fortnight_functions.R
                   data_prep/fwi_projections.R, ignition_escape/fit.R, fire_regime/simulate.R
 
 R/mcmc_functions_smc.R
-    ↑ sourced by: spread/hierarchical_fit.R
+    ↑ sourced by: spread/hierarchical_fit_{tune,run}.R, spread/hierarchical_predictions.R,
+                  spread/exploratory_steps_area.R
+    (the single-parameter Gibbs/MH updates and the logit_scaled family)
+
+R/hierarchical_fit_data.R
+    ↑ sourced by: spread/hierarchical_fit_{inits,tune,run}.R,
+                  spread/hierarchical_predictions.R, spread/exploratory_steps_area.R
+    (hierarchical_fit_setup() builds the constants, the 235-fire table and the design
+     matrices; every stage-2 script list2env()s it into the global environment because
+     the sampler reads them as globals)
+
+R/hierarchical_mcmc_functions.R
+    ↑ sourced by: spread/hierarchical_fit_{tune,run}.R
+    (needs R/mcmc_functions_smc.R and R/hierarchical_fit_data.R sourced first)
 
 R/spread_validation_functions.R
     ↑ sourced by: spread/validation_{simulate,observed,analysis}.R,
@@ -97,7 +112,7 @@ R/focal_simulation_functions.R
 
 ../FireSpread  (library + R spread wrappers)
     ↑ used by: data_prep/landscapes_{preparation,simulation}.R, spread/stage1_smc.R,
-               spread/hierarchical_fit.R, fire_regime/{simulate,plots}.R
+               spread/hierarchical_predictions.R, fire_regime/{simulate,plots}.R
 
 src/sample_triplets_weighted.cpp
     ↑ compiled (sourceCpp) by: spread/stage1_smc.R
@@ -120,7 +135,10 @@ Raw data (GEE exports, FWI tifs, fire shapefiles)  →  data/
     │    (reads data_private/ignition/ — the non-public record, separate store)
     │
     ├─ spread/stage1_smc.R                   → files/posterior_samples_stage1/*.rds
-    ├─ spread/hierarchical_fit.R             → files/hierarchical_model/*.rds   ← spread params (production constant)
+    ├─ spread/hierarchical_fit_inits.R       → files/hierarchical_model/par_start.rds
+    ├─ spread/hierarchical_fit_tune.R        → files/hierarchical_model/{run0,sd_jump_tune}.rds
+    ├─ spread/hierarchical_fit_run.R         → files/hierarchical_model/spread_model_samples.rds ← spread params (production constant)
+    ├─ spread/hierarchical_predictions.R     → files/hierarchical_model/{mu_samples,curves_df,spreadprob_veg}*.rds
     │
     └─ fire_regime/recalibrate.R + simulate.R (uses simulator.R)
                                              → files/fire_regime_simulation/*.rds
@@ -222,8 +240,12 @@ per the behavior-preserving-first approach):
    `data_prep/landscapes_preparation.R` (fire-wise) and `data_prep/landscapes_simulation.R`
    (study-area tiles + PNNH). Verified to reproduce the saved landscapes bit-for-bit — see
    `docs/data-prep.md`.
-2. Split the monolithic hierarchical-fit script — algorithm core stays in `R/`, inline data
-   manipulation becomes functions.
+2. Split the monolithic hierarchical-fit script (algorithm core into `R/`, inline data
+   manipulation into functions) — **done 2026-09-09**: the 3,040-line
+   `spread/hierarchical_fit.R` became `R/hierarchical_mcmc_functions.R` +
+   `R/hierarchical_fit_data.R` and the four scripts
+   `spread/hierarchical_fit_{inits,tune,run}.R` + `spread/hierarchical_predictions.R`, with its
+   ~1,000 lines of superseded plotting deleted. See `docs/spread.md` → *Stage 2*.
 3. Don't source `R_spread_functions.R` from `FireSpread/tests/testthat/` — **done**: `land_cube`/
    `rast_from_mat` now live in `FireSpread/R/spread_helpers.R`, exported by the package
    (`docs/migration.md` TODO #1).

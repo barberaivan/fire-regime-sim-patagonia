@@ -32,13 +32,103 @@ The largest, most complex module. Fits the fire spread model in two stages, driv
 - **Inputs:** `data/focal_fires/landscapes/*.rds`, flammability params.
 - **Outputs:** `files/posterior_samples_stage1/*.rds`.
 
-## Stage 2 — hierarchical fit — `hierarchical_fit.R`
+## Stage 2: the hierarchical fit, in four scripts
+
 - **Purpose:** fit a hierarchical Bayesian spread model across fires.
-- **Method:** custom MCMC (Gibbs + Metropolis–Hastings) from `R/mcmc_functions_smc.R`; uses
+- **Method:** custom MCMC (Gibbs + Metropolis-Hastings) from `R/mcmc_functions_smc.R`; uses
   stage-1 samples as proposals. _TODO: hierarchy (random effects, inverse-Wishart), parameter
   transforms (scaled-logit-normal), priors, convergence diagnostics._
 - **Inputs:** `files/posterior_samples_stage1/`, the lagged FWI matrix.
 - **Outputs:** `files/hierarchical_model/*.rds` — **the fitted spread model (production constant).**
+
+The 235 rows of the fit are **57** fires with a mapped ignition point (subscript 1, spread
+actually simulated in stage 1) plus **178** without one (subscript 2, entering only through the
+`area ~ steps` regression). The FWI csv has 233 rows because two fires of the record were split
+in two after it was built.
+
+### The four scripts, in run order
+
+Until 2026-09-09 this was one 3,040-line script, `spread/hierarchical_fit.R`, that had to be run
+top to bottom for any part of it to evaluate. It is now four, each of which reads what the
+previous one left on disk and can be re-run alone:
+
+| # | script | reads | writes | cost |
+|---|--------|-------|--------|------|
+| 1 | `spread/hierarchical_fit_inits.R` | stage-1 samples, `spread/steps_model_logitnorm.stan` | `steps_model_stan_samples.rds`, `par_start.rds`, `fwi_mean_sd_spread.rds` | minutes |
+| 2 | `spread/hierarchical_fit_tune.R` | `par_start.rds` | `run0.rds`, `sd_jump_tune.rds`, `tune_diagnostics.pdf` | ~25 min on one core |
+| 3 | `spread/hierarchical_fit_run.R` | `par_start.rds`, `run0.rds`, `sd_jump_tune.rds` | `draws_batch_01..10.rds`, **`spread_model_samples.rds`** | ~15 h on 8 cores |
+| 4 | `spread/hierarchical_predictions.R` | `spread_model_samples.rds` | `mu_samples_prediction.rds`, `curves_df_prediction.rds`, `curves_df_prediction_raw_x.rds`, `spreadprob_veg_comparison_array.rds` | minutes each |
+
+Everything goes to `files/hierarchical_model/`. Step 3 is the only long one, and it writes ten
+batches so a crash costs one batch: launch it detached,
+
+```bash
+tmux new-session -d -s spread_fit -c ~/dev/fire-regime-sim-patagonia \
+  "Rscript spread/hierarchical_fit_run.R 2>&1 | tee files/hierarchical_model/run.log"
+```
+
+It prints the ESS and R-hat range of every parameter block when it finishes; the canonical run
+gave ESS above 10,000 and R-hat below 1.002 everywhere.
+
+**The heavy steps of 1 are off by default.** `do_sample` (the Stan `steps ~ FWI` +
+`area ~ steps` model) and `do_estimate` (the MLE cloud the MCMC starts from) both default to
+`FALSE`, because their artifacts are on disk and steps 2 and 3 only read them. Step 4 has one
+`do_*` switch per artifact, on by default, so any one of the four can be regenerated alone. This
+is the pattern the paper-figure scripts already use.
+
+**Every script takes `test_mode`,** which sends all writes to `files/hierarchical_model/test/`
+and shrinks the run, so the wiring can be checked in a couple of minutes without touching the
+real fit:
+
+```bash
+Rscript -e 'test_mode <- TRUE; source("spread/hierarchical_fit_tune.R")'
+```
+
+The test values are 500/200 iterations and K = 12 tuning steps (step 2), two chains x 10 draws x
+two batches (step 3), and three posterior draws (step 4). Two traps found while wiring it up and
+worth knowing: **`n_cores` is the number of chains**, and a single chain drops the array
+dimension the batch loop indexes, so the smoke test uses two; and the tuning needs enough
+iterations that an acceptance rate is neither 0 nor 1, or the beta GAM that inverts
+`acceptance ~ sigma` fails.
+
+### Where the pieces live
+
+| File | Holds |
+|------|-------|
+| `R/hierarchical_mcmc_functions.R` | `mcmc()`, `mcmc_parallel()`, `acceptance()`: the sampler |
+| `R/hierarchical_fit_data.R` | `hierarchical_fit_setup()` (constants, support, the 235-fire table, design matrices, `Ytry`), `hierarchical_fit_priors()`, `hierarchical_fit_dirs()`, `read_fit()` |
+| `R/mcmc_functions_smc.R` | the single-parameter updates (`update_lm`, `update_ranef`, …) and the `logit_scaled` family |
+
+**`mcmc()` reads its data from the global environment**, exactly as it did in the monolith,
+rather than through a 30-argument signature. That is why every stage-2 script opens with
+
+```r
+source(file.path("R", "hierarchical_fit_data.R"))
+list2env(hierarchical_fit_setup(), globalenv())
+list2env(hierarchical_fit_priors(par_start), globalenv())
+```
+
+The alternative was rewriting the sampler, which would have made the refactor a behaviour change.
+
+**One latent bug was fixed on the way.** The tidy-samples block hardcoded `nc <- 8` and
+`ni <- 1500`; when those do not match the run's actual settings, the reshape recycles silently
+instead of failing, and you get a posterior of the wrong length full of repeated values. They are
+now derived from the batches just read, and checked.
+
+### What was deleted
+
+About 1,000 lines of plotting: the correlation plots, the parameters-against-FWI figure, the two
+spread-probability-curve figures, the flammability-indices figure, the vegetation-effect figure,
+and the whole "Assessing model fit" block that wrote `metrics_table.rds`. Every one of them is
+superseded by a script of its own (the table under *The paper's model figures* below, and
+`spread/simulate_focal_metrics.R` for the model-fit block). What the fit still computes is the
+four prediction artifacts those figures read, which is step 4 above.
+
+One plotting block was kept, as `spread/exploratory_steps_area.R`: `steps` against FWI and fire
+size against `steps`, faceted by whether the ignition point is known. It is not a paper figure,
+but it is the only place the two halves of the fit are drawn side by side, and their `steps`
+posteriors are not estimated the same way. It writes `spread/figures/steps_fwi_area.{png,pdf}`
+and needs `mu_samples_prediction.rds`, so run it after step 4.
 
 ### Burn-probability maps — `figure_burn_probability.R` (paper Fig. 5)
 
@@ -520,7 +610,8 @@ way, so they need the ignition point too. The 184 fires without a mapped ignitio
 record-wide size/shape validation instead (Fig. 7).
 
 **The simulations behind it are their own script.** `metrics_table.rds`, written by the
-*Assessing model fit* block of `hierarchical_fit.R`, stores only size and size by vegetation
+*Assessing model fit* block of the old `hierarchical_fit.R` (deleted with the rest of that
+monolith's plotting), stores only size and size by vegetation
 class — shape needs each simulated fire's burned cells, which it never kept. So
 `spread/simulate_focal_metrics.R` re-runs the whole thing, 57 fires × 2000 × 2 modes, and reduces
 each simulated fire to overlap, size, size by vegetation class, compactness, orientation and the
@@ -614,10 +705,11 @@ observed values, and jittering would hide a real property of the simulated set.
 
 Written 2026-09-01. Every figure the spread paper carries now has **its own script in
 `spread/`**, each of which reads what the fit already wrote to `files/hierarchical_model/` and
-draws; none of them re-fits anything, and none needs `hierarchical_fit.R` to have been run in the
+draws; none of them re-fits anything, and none needs the fit to have been run in the
 session. Before this, Figs. 2-4 and S1-S5 existed only as plotting blocks buried in
-`hierarchical_fit.R`, a 3000-line script that has to run top to bottom before any of them will
-evaluate — so a caption change meant a refit.
+`hierarchical_fit.R`, the 3,040-line script that had to run top to bottom before any of them
+would evaluate, so a caption change meant a refit. Those blocks were deleted on 2026-09-09 when
+that script was split (above); the scripts below are the only copies now.
 
 | Paper | Script | Output stem | Reads |
 |---|---|---|---|
@@ -699,7 +791,7 @@ panels printed "1.0" and "-1.0" on top of each other (the extreme breaks are dro
 
 **Figs. S4 and S5 read `focal_metrics.rds`, not `metrics_table.rds`.** Both files hold overlap
 and simulated size for the 57 focal fires, but `metrics_table.rds` is the superseded
-`hierarchical_fit.R` run; `focal_metrics.rds` is what Fig. 6 uses, so the three focal-fire
+run of the old `hierarchical_fit.R`; `focal_metrics.rds` is what Fig. 6 uses, so the three focal-fire
 figures now describe the same 2000 × 2 simulations. Results from it: median overlap **0.527**
 under fitted random effects against **0.108** under simulated ones, and a median size quotient of
 1.09 (55 of 57 fires within a factor of two) against 1.51 (28 of 57).
@@ -1150,5 +1242,4 @@ four-predictor standardized version, `slope` matched well, `vfi` was over-weight
 under-weighted.
 
 ## Refactor targets
-- Split inline data manipulation out of the fitting script into functions (tech debt #2).
 - Vendor the `FireSpread` R spread wrappers instead of sourcing from `tests/testthat/` (#3).

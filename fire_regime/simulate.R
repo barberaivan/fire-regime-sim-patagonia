@@ -933,7 +933,7 @@ dveg$veg_num <- dveg$cnum2
 igmod <- readRDS(file.path("files", "ignition", "ignition_model_samples.rds"))
 escmod <- readRDS(file.path("files", "ignition", "escape_model_samples.rds"))
 # UPDATED (see docs/migration.md #7): repointed from the legacy pre-SMC fit to the canonical
-# SMC-fitted spread model (spread/hierarchical_fit.R's output). Structurally identical to the
+# SMC-fitted spread model (the stage-2 fit's output). Structurally identical to the
 # legacy file (same list names, dims, and dimnames — verified during migration), only the
 # posterior values differ, so the parameter-extraction code below is unaffected structurally.
 # NOT RE-RUN/RE-VALIDATED after this change — the rest of this script, and the regime-simulation

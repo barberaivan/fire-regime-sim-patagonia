@@ -42,7 +42,8 @@ A landscape is a 3-D array `[row, col, layer]` with **six layers, in this order*
 Those layer names are indexed by name downstream (`terrain_variables <- c("elevation", "wdir",
 "wspeed")` in `spread/` and `fire_regime/`), so they are part of the file format — do not rename
 them. FWI is **not** a landscape layer despite the old script header saying so: it is a
-fire-level covariate carried in the fires table read by `spread/hierarchical_fit.R`.
+fire-level covariate carried in the fires table `hierarchical_fit_setup()` builds
+(`R/hierarchical_fit_data.R`).
 
 Cells with any missing predictor are marked `veg = 99` and their layers filled with `-9999`; the
 engine skips non-burnable neighbours before reading any layer, so the fill value never enters a

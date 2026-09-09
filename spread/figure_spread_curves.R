@@ -16,11 +16,11 @@
 # 200 averaged — so the ribbon is the 95 % ETI of that average across the
 # posterior. The averaging is nonlinear (plogis of a random linear predictor),
 # which is why it cannot be shortcut. That loop lives in
-# spread/hierarchical_fit.R and its result is on disk; this script only draws.
+# spread/hierarchical_predictions.R and its result is on disk; this script only draws.
 #
 # Input:  files/hierarchical_model/curves_df_prediction.rds        (Fig. 2)
 #         files/hierarchical_model/curves_df_prediction_raw_x.rds  (Fig. S2)
-#         both written by spread/hierarchical_fit.R.
+#         both written by spread/hierarchical_predictions.R.
 # Runs in seconds.
 #
 # THE FWI LEVELS. The three curves are the 2.5th percentile, the model-internal

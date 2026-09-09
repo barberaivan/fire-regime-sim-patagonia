@@ -27,7 +27,7 @@ library(terra)
 source(file.path("R", "config.R"))
 
 K <- 4
-steps_max <- 2000   # Umax in spread/hierarchical_fit.R; stepsU never exceeds it
+steps_max <- 2000   # Umax in R/hierarchical_fit_data.R; stepsU never exceeds it
 
 land_dir <- file.path("data", "simulation_landscapes", "landscapes")
 out_dir <- file.path("files", "spread_validation")

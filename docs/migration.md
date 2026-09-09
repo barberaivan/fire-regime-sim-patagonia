@@ -701,7 +701,9 @@ confirms the new repo runs.
 10. **Refactors (post-verification, not part of this migration):**
    - `landscapes_preparation.R` loop → function (build any landscape, not a hard-coded loop) —
      **analysis below**, not yet designed/decided; next session should read it before starting.
-   - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation.
+   - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation —
+     **done 2026-09-09**; written up in `docs/spread.md` → *Stage 2: the hierarchical fit, in
+     four scripts*.
    - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
    - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
      migration/refactor, not up front).

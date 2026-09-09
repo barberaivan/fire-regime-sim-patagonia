@@ -3,8 +3,8 @@
 # One landscape per focal fire, built from that fire's GEE export. Besides the
 # spread predictors, each one carries the fire-wise data the fit needs: the
 # ignition point and the observed burned area. (The fire's FWI is fire-level
-# too, but it travels in the fires table read by spread/hierarchical_fit.R, not
-# inside the landscape.)
+# too, but it travels in the fires table `hierarchical_fit_setup()` builds
+# (R/hierarchical_fit_data.R), not inside the landscape.)
 #
 # Landscapes to *simulate* new fires — regional tiles and PNNH, which have no
 # ignition point and no observed fire — are built by landscapes_simulation.R.

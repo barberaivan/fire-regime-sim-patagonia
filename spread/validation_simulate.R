@@ -50,7 +50,7 @@ nd_variables <- c("vfi", "tfi")
 terrain_variables <- c("elevation", "wdir", "wspeed")
 upper_limit <- 1
 ext_alpha <- 50; ext_beta <- 30; stepsL <- 2
-slope_sd <- 0.1891275    # fi_params$slope_term_sd, as in spread/hierarchical_fit.R
+slope_sd <- 0.1891275    # fi_params$slope_term_sd, as in R/hierarchical_fit_data.R
 Lpar <- c(-ext_alpha, rep(0, n_coef - 2), stepsL)
 Upar <- c(ext_alpha, rep(ext_beta, n_coef - 2), NA)
 names(Lpar) <- names(Upar) <- par_names

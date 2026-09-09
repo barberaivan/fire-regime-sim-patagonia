@@ -9,7 +9,7 @@
 #              and averaging AFTER the logit-scaled back-transform; the
 #              transform is nonlinear, so the mean parameter is not the
 #              parameter of the mean. That loop is in
-#              spread/hierarchical_fit.R and its output is read from disk.
+#              spread/hierarchical_predictions.R and its output is read from disk.
 #   the points the 57 fitted random effects — posterior mean and 95 % ETI per
 #              fire, each at its own FWI. These are the data the band is fitted
 #              through, and their scatter is the between-fire variance sigma_p.
@@ -34,7 +34,8 @@
 # Input:  files/hierarchical_model/mu_samples_prediction.rds  (the band)
 #         files/hierarchical_model/spread_model_samples.rds   (the points, and
 #                                                              the slope probs)
-#         both written by spread/hierarchical_fit.R.
+#         both written by the stage-2 scripts (hierarchical_predictions.R and
+#         hierarchical_fit_run.R respectively).
 # Runs in about a minute, nearly all of it the HDI/quantile summaries over
 # 150 x 6 x 12000 draws.
 
@@ -72,7 +73,7 @@ npost <- dim(draws$fixef)[3]
 npred <- dim(mu_samples)[1]
 stopifnot(dim(mu_samples)[2] == n_coef, dim(mu_samples)[3] == npost)
 
-# The FWI axis of the band. `hierarchical_fit.R` built it as an evenly spaced
+# The FWI axis of the band. `hierarchical_predictions.R` builds it as an evenly spaced
 # sequence over the range of the 235 fires' standardized FWI, so it has to be
 # rebuilt the same way — `mu_samples` carries the values but not the grid.
 fwi_all <- spread_fwi_all(draws)
@@ -142,7 +143,7 @@ print(round(b_probs, 4))
 # focal fires': `draws$steps` is on the SCALED-LOGIT scale, bounded below by
 # `stepsL` and above by `draws$stepsU`, which is itself estimated and so
 # changes from draw to draw. Back-transform draw by draw before summarising,
-# exactly as the "Steps-FWI-Area" block of spread/hierarchical_fit.R does.
+# exactly as spread/exploratory_steps_area.R does.
 stepsL <- bounds$L["steps"]
 
 steps_nonfocal <- draws$steps

@@ -53,7 +53,7 @@ gee_dir <- file.path("data", "focal_fires", "raw_gee")
 maps_file <- file.path("files", "hierarchical_model", "burn_probability_maps.rds")
 fig_dir <- file.path("manuscript-spread", "figures")
 
-# Model constants, as in spread/hierarchical_fit.R -------------------------
+# Model constants, as in R/hierarchical_fit_data.R -------------------------
 
 n_veg <- 5
 nd_variables <- c("vfi", "tfi")

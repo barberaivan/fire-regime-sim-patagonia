@@ -4,8 +4,10 @@
 # figure_parameter_correlations.R, figure_focal_fit.R).
 #
 # Every one of those figures used to live inside spread/hierarchical_fit.R, a
-# 3000-line fitting script that has to be run top to bottom before any of its
-# plotting blocks will evaluate. They are here instead because a figure should
+# 3000-line fitting script that had to be run top to bottom before any of its
+# plotting blocks would evaluate (it has since been split into
+# spread/hierarchical_fit_{inits,tune,run}.R + hierarchical_predictions.R, and
+# the plotting blocks deleted). They are here instead because a figure should
 # be re-drawable in seconds from what the fit already wrote to
 # files/hierarchical_model/, without re-fitting anything and without the ~40
 # packages the fit loads. What each figure needs from disk is listed in its own
@@ -28,7 +30,8 @@
 
 #' Posterior summary of a vector of draws
 #'
-#' Byte-for-byte the `summarise()` of spread/hierarchical_fit.R, renamed so it
+#' Byte-for-byte the `summarise()` of the old spread/hierarchical_fit.R
+#' monolith, renamed so it
 #' does not mask `dplyr::summarise()` in scripts that load the tidyverse.
 #' Returns a named vector: mean, HDIs at 80/90/95 %, and equal-tailed
 #' quantiles at the same levels plus the median.
@@ -55,7 +58,7 @@ summarise_post <- function(x) {
 
 #' The plot theme every figure in the spread paper uses
 #'
-#' Copied from spread/hierarchical_fit.R so the paper figures keep the look of
+#' Copied from the old spread/hierarchical_fit.R so the paper figures keep the look of
 #' the thesis ones: no panel border, no grid, a thin axis line, white strips.
 #' Applied on top of `theme_bw()`, which the scripts set with `theme_set()`.
 nice_theme <- function() {
@@ -115,7 +118,7 @@ par_labels <- function(x = c("intercept", "vfi", "tfi", "slope", "wind",
 #' The FWI scaling the fit used
 #'
 #' @return list with `fwi_mean`, `fwi_sd`, as written by
-#'   spread/hierarchical_fit.R.
+#'   `hierarchical_fit_setup()` (R/hierarchical_fit_data.R).
 fwi_scale <- function(file = file.path("files", "hierarchical_model",
                                        "fwi_mean_sd_spread.rds")) {
   readRDS(file)
@@ -135,7 +138,7 @@ fwi_to_original <- function(z, scale = fwi_scale()) {
 
 #' Standardized FWI of all 235 fires in the fit, in the fit's own order
 #'
-#' `fwi_all` in spread/hierarchical_fit.R: the 57 fires with an ignition point
+#' `fwi_all` of `hierarchical_fit_setup()`: the 57 fires with an ignition point
 #' first (the rows of `draws$ranef`), then the 178 without (the rows of
 #' `draws$steps`). Reconstructed from the posterior object's dimnames rather
 #' than re-derived from the climatic tables, so it cannot drift out of step

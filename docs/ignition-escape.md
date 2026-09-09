@@ -44,7 +44,7 @@ prioritizing spread-side work next and doesn't want to touch ignition-escape rig
   `sizemod` is used (for `summary()`/diagnostic plots) but never assigned — its `sampling()` call
   is commented out, and unlike `igmod`/`escmod`, no fitted `.rds` exists anywhere to load
   instead. This section **cannot run from a fresh session as-is**. It is **unrelated** to
-  `spread/hierarchical_fit.R`'s own `stansteps` (a steps~area regression used to initialize the
+  `spread/hierarchical_fit_inits.R`'s own `stansteps` (a steps~area regression used to initialize the
   spread model's stage-2 MCMC) — no code cross-reference between the two, and the ignition-escape
   work came chronologically *after* the spread model was fit, so it could not have informed it.
   When revisited: either fit `sizemod` properly and cache it, or remove the section.

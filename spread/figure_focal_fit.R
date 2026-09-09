@@ -22,8 +22,9 @@
 #         spread/simulate_focal_metrics.R — 2000 simulations per fire per mode,
 #         from the full posterior, one draw per simulated fire. The same file
 #         Fig. 6 reads, so the three figures are the same simulations.
-#         (The older metrics_table.rds of spread/hierarchical_fit.R holds the
-#         same quantities from a superseded run; do not mix them.)
+#         (The older metrics_table.rds, from the deleted "Assessing model fit"
+#         section of spread/hierarchical_fit.R, holds the same quantities from a
+#         superseded run; do not mix them.)
 # Runs in seconds.
 
 library(ggplot2)

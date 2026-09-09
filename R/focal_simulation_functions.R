@@ -8,9 +8,10 @@
 # chain that turns posterior draws into simulator parameters. That chain has a
 # trap in it (below), so it lives here once.
 #
-# The originals are in spread/hierarchical_fit.R, section "Assessing model fit"
-# (~L2526-2620). Do not re-derive the MVLN -> invlogit_scaled chain from
-# scratch; if the fit ever changes, change it there and here together.
+# The original was the "Assessing model fit" section of spread/hierarchical_fit.R
+# (~L2526-2620), deleted when that monolith was split; this is now the only copy.
+# Do not re-derive the MVLN -> invlogit_scaled chain from scratch; if the fit
+# ever changes (R/hierarchical_mcmc_functions.R), change it here too.
 #
 #   THE TRAP: in `draws$ranef`, row `steps` is stored on the NATURAL scale
 #   while the other rows are on the logit scale. Fitted random effects are
@@ -101,7 +102,7 @@ ranef_simulated <- function(draws, fire_id, ids, bounds, fwi_z) {
 
 #' Each focal fire's standardized FWI, as the fit scaled it
 #'
-#' Same source and same scaling as `spread/hierarchical_fit.R`. The two fires
+#' Same source and same scaling as `hierarchical_fit_setup()`. The two fires
 #' that were split after the climatic table was built (`2011_19` ->
 #' `2011_19E`/`W`, `2015_47` -> `2015_47N`/`S`) are not in the csv under their
 #' split names; the fit gave both halves the parent's FWI, and so does this —

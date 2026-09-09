@@ -1327,7 +1327,7 @@ sdata_size <- list(
 # (continuous log-area via size_model.stan, skew-normal + censoring) was an earlier formulation,
 # superseded by the binary escape/not-escape model below (escape_model.stan, "Escape model
 # (> 0.09 ha)" section) — it is unrelated to spread's own `stansteps` steps~area regression in
-# spread/hierarchical_fit.R (no code cross-reference; confirmed the ignition-escape work came
+# spread/hierarchical_fit_inits.R (no code cross-reference; confirmed the ignition-escape work came
 # chronologically after spread fitting, so it could not have informed it). This section cannot
 # run from a fresh session as-is.
 ssize <- summary(sizemod)[[1]]

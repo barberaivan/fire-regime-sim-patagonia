@@ -8,13 +8,14 @@
 # residual), and plots the 57 residuals as a uniform Q-Q.
 #
 # This supersedes the `metrics_table.rds` written by the "Assessing model fit"
-# section of spread/hierarchical_fit.R, which carried only size and size by
+# section of the old spread/hierarchical_fit.R (deleted when that monolith was
+# split), which carried only size and size by
 # vegetation class. Fig. 6 also needs SHAPE, and shape needs each simulated
 # fire's burned cells, which that table never stored. Everything is recomputed
 # here in one pass so that every panel of the figure comes from the same
 # simulations:
 #
-#   overlap                  as in hierarchical_fit.R, kept as a cross-check
+#   overlap                  as in the old hierarchical_fit.R, a cross-check
 #   size, size by veg (5)    the six size metrics of the old table
 #   compactness              4*pi*area / perimeter^2
 #   orientation, axis_dev    deviation from the fire's own wind axis, 0-90 deg

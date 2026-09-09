@@ -20,11 +20,11 @@
 # drawn from that draw's population distribution, the spread probability is
 # averaged over cells and over random effects, and that average is what the
 # summaries below describe. That loop is the heavy part and lives in
-# spread/hierarchical_fit.R; its output is read from disk here.
+# spread/hierarchical_predictions.R; its output is read from disk here.
 #
 # Input:  files/hierarchical_model/spreadprob_veg_comparison_array.rds
 #         (fwi x vegetation x posterior draw), written by
-#         spread/hierarchical_fit.R.
+#         spread/hierarchical_predictions.R.
 # Runs in seconds.
 #
 # The thesis version of this figure (Fig. 4.9) is in Spanish; this is the same
