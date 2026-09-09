@@ -8,15 +8,14 @@ per unit area/time) and escape (probability a fire escapes to become large, mode
 
 | File | Role |
 |------|------|
-| `fit.R` | Fits ignition (negative binomial) and escape (binary logistic) models via Stan; writes samples to `files/ignition/` |
+| `fit.R` | **Canonical.** Fits ignition (negative binomial) and escape (binary logistic, > 0.09 ha) via Stan; writes samples to `files/ignition/`. Needs the non-public ignition record in `data_private/` |
 | `ignition_model.stan` | Canonical ignition model |
-| `escape_model.stan` | **Canonical** escape model — binary escape/not-escape (`bernoulli_logit`) |
-| `escape_model_ordinal.stan` | **Abandoned/superseded** — an earlier ordinal (K size-class) formulation of escape, replaced by the binary model above. Its output, `escape_model_samples_ordinal.rds`, still sits in the store but is not read by the canonical pipeline. Can be removed later. |
-| `size_model.stan` | **Abandoned** — a continuous fire-size regression (log-area, skew-normal + censoring below one-pixel-size), from before the escape question was simplified to binary. Never finished: `fit.R`'s "Fire size model" section references `sizemod`, which is used but never assigned (its `sampling()` call is commented out) and no fitted `.rds` exists to load instead. This section cannot run from a fresh session as-is. Unrelated to `spread/hierarchical_fit_inits.R`'s own `stansteps` steps~area regression (no code link; ignition-escape work came chronologically after spread fitting). |
+| `escape_model.stan` | Canonical escape model: binary escape/not-escape (`bernoulli_logit`) |
+| `escape_ordinal_exploratory.R` | **Exploratory, not part of the canonical pipeline.** Escape as an ordinal size class (cutpoints 0.09 / 10 / 100 ha) instead of binary. A *continuation* of `fit.R`: run `fit.R` through its "Prepare data for escape model" section first, then this in the same session. Also holds the `write.csv()` that produces `data_private/ignition/ignition_size_data.csv`, which `fire_regime/simulate.R` reads |
+| `escape_model_ordinal.stan` | The ordinal model, compiled by the script above; output `files/ignition/escape_model_samples_ordinal.rds` |
+| `figures/` | The section's figures, written by `fit.R` |
 
-> **Not being worked on right now** — user is focused on the spread side next; these two
-> abandoned-model notes are here so the ignition-escape section isn't confusing later, and
-> so nobody redirects `size_model`/`escape_model_ordinal` work assuming it's still active.
-> When this area is revisited: decide whether to delete `size_model.stan`,
-> `escape_model_ordinal.stan`, and `escape_model_samples_ordinal.rds`, or finish/fix the size
-> model properly.
+Only `fit.R` and its two `.stan` files feed `fire_regime/`. The ordinal variant is kept because
+its 10 ha cutpoint matches the size above which the spread simulator was estimated, so escape
+can be redefined at that threshold without refitting; see
+[`../docs/ignition-escape.md`](../docs/ignition-escape.md) for the full description.

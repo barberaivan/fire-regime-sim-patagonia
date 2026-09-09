@@ -61,7 +61,8 @@ engine itself (the C++ cellular automaton) is the **external `FireSpread` packag
 
 **Layer 2b — model fitting** (`spread/`, `ignition_escape/`, write to `files/`):
 `spread/stage1_smc.R` → `spread/hierarchical_fit_{inits,tune,run}.R` →
-`spread/hierarchical_predictions.R`; `ignition_escape/fit.R`.
+`spread/hierarchical_predictions.R`; `ignition_escape/fit.R` (with the exploratory
+`ignition_escape/escape_ordinal_exploratory.R` hanging off it, feeding nothing downstream).
 
 **Layer 3 — integration** (`fire_regime/`): `recalibrate.R`, `simulator.R`, `simulate.R`,
 `probability_maps.R`, `plots.R`.
@@ -132,7 +133,10 @@ Raw data (GEE exports, FWI tifs, fire shapefiles)  →  data/
     │                                          data/pnnh_images/pnnh_spread_landscape*.rds
     │
     ├─ ignition_escape/fit.R                 → files/ignition/{ignition,escape}_model_samples.rds
-    │    (reads data_private/ignition/ — the non-public record, separate store)
+    │    (reads data_private/ignition/, the non-public record, separate store)
+    │    └─ escape_ordinal_exploratory.R     → files/ignition/escape_model_samples_ordinal.rds
+    │         exploratory continuation of fit.R's session; read by nothing downstream, but
+    │         it writes data_private/ignition/ignition_size_data.csv (used by simulate.R)
     │
     ├─ spread/stage1_smc.R                   → files/posterior_samples_stage1/*.rds
     ├─ spread/hierarchical_fit_inits.R       → files/hierarchical_model/par_start.rds
@@ -187,9 +191,10 @@ merged, and identical copies of both source spreadsheets dropped):
 - `population_points_pnnh_bari-kitzberger_data.*` — background pixels with the same covariates
   (n = 23,986). No ignition record in it, so not sensitive in itself; kept here because it is
   useless without the ignition points and because a whole-folder rule cannot be misapplied;
-- `ignition_size_data.csv` — the merged record with covariates, escape flag and size class
-  (n = 284), read by `fire_regime/simulate.R`. Legacy: no script in this repo writes it (it
-  came from the thesis repo's abandoned size model), so it cannot currently be regenerated;
+- `ignition_size_data.csv` (the merged record with covariates, escape flag and size class,
+  n = 284): read by `fire_regime/simulate.R` to compare the simulated fire size distribution
+  against the observed one, and written by the commented `write.csv()` in
+  `ignition_escape/escape_ordinal_exploratory.R`, where the size classes are defined;
 - one kml with a single ignition point located from news reports.
 
 ### What deliberately stays public
@@ -201,8 +206,9 @@ means/sds, verified to contain no individual record. The spread paper's ignition
 
 ### Working with it
 
-Only three places read the private store: `ignition_escape/fit.R` (`igdata_dir`),
-`fire_regime/simulate.R` (the observed-size comparison) and `fire_regime/plots.R` (the
+Only four places read the private store: `ignition_escape/fit.R` (`igdata_dir`),
+`ignition_escape/escape_ordinal_exploratory.R` (which also writes `ignition_size_data.csv`
+there), `fire_regime/simulate.R` (the observed-size comparison) and `fire_regime/plots.R` (the
 ignition-point map). Everything else, the whole spread pipeline included, runs from the
 shareable store alone, so `./setup.sh` takes the private path as an **optional** second
 argument and simply skips the `data_private/` link when it is absent.
@@ -228,8 +234,9 @@ pipeline:
   script has been re-run/validated against it — existing outputs are stale until they are
   (`docs/migration.md` TODO #7).
 
-- **The ignition-escape "fire size" model and ordinal-class escape model are abandoned/
-  superseded** — see `ignition_escape/README.md`; not touched, just flagged.
+- **Only `ignition_escape/fit.R` is canonical in that folder.** The ordinal-size-class escape
+  variant sits beside it as `escape_ordinal_exploratory.R`, fitted but read by nothing
+  downstream; see `ignition_escape/README.md` and `docs/ignition-escape.md`.
 
 Tech-debt items deferred to *after* this migration (old `INVENTORY.md` §9; not addressed here
 per the behavior-preserving-first approach):

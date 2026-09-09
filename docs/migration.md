@@ -585,12 +585,18 @@ confirms the new repo runs.
    rather than silently pointed at the SMC folder itself (which would have made it compare the
    SMC output against itself — a real bug, not just stale code). Re-derive from the archived old
    repo if that comparison is ever needed again.
-6. **`ignition_escape/fit.R`'s "Fire size model" section can't run from a fresh session** —
-   `sizemod` (used at 3 sites) has no active assignment (its `sampling()` call is commented) and
-   no fitted `.rds` exists anywhere to load instead, unlike the ignition/escape models in the
-   same script. Pre-existing in the old repo, not introduced by migration; looks like an
-   abandoned/exploratory side-analysis, not a canonical output. Flagged in-code; needs either a
-   real fit + `saveRDS`/`readRDS` pair, or removal, if this section is ever needed.
+6. **`ignition_escape/fit.R`'s "Fire size model" section: RESOLVED (2026-09-09).** The section
+   used `sizemod` at 3 sites with no active assignment (its `sampling()` call was commented) and
+   no fitted `.rds` anywhere to load instead. Per user decision, since nothing in `fire_regime/`
+   (or anywhere else) read it, `ignition_escape/size_model.stan` and the whole section were
+   **deleted**; verified self-contained first (`area_stan`, `sdata_size`, `ssize` were used
+   nowhere else). In the same pass the **ordinal escape variant moved out of `fit.R`** into
+   `ignition_escape/escape_ordinal_exploratory.R`, so `fit.R` now holds only the canonical
+   ignition and binary escape models: the dangling `ordinal_predict()` helper went with it, and
+   `escape_model_ordinal.stan` (which had never actually been migrated, despite the docs saying
+   it was here) was brought over from `ignition-escape_FWIZ/`. `ignition_size_data.csv` in
+   `data_private/` is a separate inherited data file and stays; the `write.csv()` that regenerates
+   it now lives in the exploratory script. New structure written up in `docs/ignition-escape.md`.
 7. **`fire_regime/simulate.R` and `probability_maps.R` — repointed to the canonical SMC spread
    model; NOT yet re-validated.** Originally both read `spread_model_samples.rds` from
    `files/hierarchical_model_legacy_preSMC/` (the pre-SMC fit, kept during T10 to preserve exact

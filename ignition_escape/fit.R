@@ -67,27 +67,6 @@ nice_theme <- function() {
   )
 }
 
-# Compute prediction from ordinal model
-
-ordinal_predict <- function(pdata, xname, bname) {
-  eta <- as.matrix(scmod, bname) %*% pdata[, xname]
-  cmf <- array(NA, dim = c(nrow(pdata), K-1, npost))
-  for(k in 1:(K-1)) cmf[, k, ] <- plogis(ahat[, k] - eta) |> t()
-  pmf <- array(NA, dim = c(nrow(pdata), K, npost))
-  pmf[, 1, ] <- cmf[, 1, ]
-  pmf[, K, ] <- 1 - cmf[, K-1, ]
-  for(k in 2:(K-1)) pmf[, k, ] <- cmf[, k, ] - cmf[, k-1, ]
-  
-  out <- do.call("rbind", lapply(1:K, function(k) {
-    summ <- apply(pmf[, k, ], 1, mean_ci) |> t() |> as.data.frame()
-    summ$class <- k
-    summ$class_name <- factor(class_names[k], levels = class_names)
-    return(cbind(pdata, summ))
-  }))
-  
-  return(out)
-}
-
 logistic_predict <- function(pdata, xname, bname) {
   if(xname == "fwi") {
     bb <- as.matrix(escmod, c("a", "b_fwi")) |> t()
@@ -1281,68 +1260,6 @@ for(i in 1:nrow(ig2)) {
 # like in spread, ignitions FWI has mean > 0 and sd < 1.
 # They occur at relatively high FWI conditions
 
-# Fire size model ----------------------------------------------------
-
-ig2$area_stan <- ig2$area
-ig2$area_stan[is.na(ig2$area)] <- 1e6
-
-# stan data
-sdata_size <- list(
-  n = nrow(ig2),
-  nlag = nlags,
-  
-  y = log(ig2$area_stan),
-  cutoff = log(0.09), # one pixel size
-  
-  n_notna = sum(!is.na(ig2$area)),
-  n_na = sum(is.na(ig2$area)),
-  ids_na = which(is.na(ig2$area)),
-  ids_notna = which(!is.na(ig2$area)),
-  
-  fwi_mat = fwi_points,
-  vfi = ig2$vfi,
-  tfi = ig2$tfi,
-  drz = ig2$drz,
-  dhz = ig2$dhz,
-  
-  prior_a_mean = mean(log(na.omit(ig2$area_stan))),
-  prior_a_sd = 20,
-  prior_b_sd = 5,
-  prior_sigma_sd = 10,
-  prior_g_sd = 10,
-  prior_ls_sd = nlags * 0.75
-)
-
-# smodel_size <- stan_model(file.path("ignition_escape", "size_model.stan"))
-# sizemod <- sampling(
-#   smodel_size, data = sdata_size, seed = 1596142, refresh = 200,
-#   control = list(adapt_delta = 0.98),
-#   cores = 8, chains = 8, iter = 2000, warmup = 1000
-# )
-
-# CONFIRMED ABANDONED (user, 2026-07-09) — do not fix/fit now, see ignition_escape/README.md.
-# `sizemod` below is used but never assigned (its only assignment, above, is commented out) and
-# no fitted-size-model .rds exists anywhere in the old repo to load instead (unlike igmod/escmod,
-# which have a readRDS() right after their commented sampling() call). This "Fire size model"
-# (continuous log-area via size_model.stan, skew-normal + censoring) was an earlier formulation,
-# superseded by the binary escape/not-escape model below (escape_model.stan, "Escape model
-# (> 0.09 ha)" section) — it is unrelated to spread's own `stansteps` steps~area regression in
-# spread/hierarchical_fit_inits.R (no code cross-reference; confirmed the ignition-escape work came
-# chronologically after spread fitting, so it could not have informed it). This section cannot
-# run from a fresh session as-is.
-ssize <- summary(sizemod)[[1]]
-min(ssize[, "n_eff"], na.rm = T) 
-max(ssize[, "Rhat"], na.rm = T)  
-
-pairs(sizemod, pars = c("a", "b_fwi", "b_vfi", "b_tfi", "b_drz", "b_dhz",
-                        "ls", "sigma", "g"))
-
-# glimpse at the posteriors
-mcmc_dens(sizemod, pars = c("a", "b_fwi", "b_vfi", "b_tfi", "b_drz", "b_dhz",
-                            "ls", "sigma", "g"),
-          facet_args = list(scales = "free", ncol = 3))
-
-
 # Escape model (> 0.09 ha) ------------------------------------------------
 
 ig2$area_impute <- ig2$area
@@ -1365,11 +1282,10 @@ sdata_esc <- list(
   prior_ls_sd = nlags * 0.75
 )
 
-# CANONICAL escape model: binary escape/not-escape (bernoulli_logit) — this is what
-# escape_model_samples.rds (loaded below) was actually fit from. The ordinal/K-size-class
-# alternative (escape_model_ordinal.stan, output escape_model_samples_ordinal.rds in the store)
-# was an earlier formulation, superseded by this binary one (confirmed with user, 2026-07-09) —
-# see ignition_escape/README.md; can be removed later, not touched now.
+# CANONICAL escape model: binary escape/not-escape (bernoulli_logit), fitted from
+# escape_model.stan; escape_model_samples.rds (loaded below) is its output, and this is the
+# escape model fire_regime/ reads. The ordinal / K-size-class alternative lives on its own in
+# ignition_escape/escape_ordinal_exploratory.R, which continues from this point of the script.
 # smodel_esc <- stan_model(file.path("ignition_escape", "escape_model.stan"))
 # escmod <- sampling(
 #   smodel_esc, data = sdata_esc, seed = 1596142, refresh = 200,

@@ -170,8 +170,9 @@ TODO register, especially:
   pre-SMC fit), but neither `simulate.R` nor `probability_maps.R` has been **re-run/validated**
   against it yet — treat existing regime-simulation/probability-map outputs as stale until they
   are (TODO #7);
-- the ignition-escape "fire size" model and the ordinal-class escape model are abandoned/
-  superseded exploratory work, not part of the canonical pipeline (see `ignition_escape/README.md`).
+- in `ignition_escape/`, only `fit.R` (ignition + binary escape) is canonical; the
+  ordinal-size-class escape variant is exploratory and lives in its own script
+  (see `ignition_escape/README.md`).
 
 See `CLAUDE.md` for conventions and `docs/architecture.md` for the full migration/tech-debt list.
 **Picking this back up after a break? See `docs/roadmap.md`** — it lists what is still open. What

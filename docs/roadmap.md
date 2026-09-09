@@ -6,8 +6,8 @@ was done — when a task here is finished, the procedure it involved goes into t
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-09 (the stage-2 hierarchical fit split out of its monolith; written up
-in `docs/spread.md` → *Stage 2: the hierarchical fit, in four scripts*)
+**Last updated:** 2026-09-09 (ignition-escape tidied: migration TODO #6 closed, the ordinal
+escape variant now its own script; written up in `docs/ignition-escape.md`)
 
 Where finished work is written up:
 
@@ -22,6 +22,7 @@ Where finished work is written up:
 | Machine setup (WindNinja build, GEE asset paths) | `README.md` → *Getting started* |
 | Splitting the non-public ignition data into its own store (migration TODO #9) | `docs/architecture.md` → *The two stores*, `README.md` → *The two data stores* |
 | Splitting the stage-2 hierarchical fit out of its 3,040-line monolith (tech debt #2) | `docs/spread.md` → *Stage 2: the hierarchical fit, in four scripts* |
+| The ignition-escape folder's structure: canonical `fit.R` vs. the exploratory ordinal escape variant (migration TODO #6) | `docs/ignition-escape.md`, `ignition_escape/README.md` |
 
 ---
 
@@ -29,9 +30,6 @@ Where finished work is written up:
 
 Full detail in `docs/migration.md`'s TODO register.
 
-- **TODO #6** — the ignition-escape "fire size" model can't run from a fresh session (dangling
-  `sizemod`); confirmed abandoned/exploratory, and not touched per the explicit instruction not
-  to work on ignition-escape right now.
 - **TODO #7** — `fire_regime/simulate.R` / `probability_maps.R` read the canonical SMC-fitted
   spread model now, but have not been re-run against it; existing regime-simulation and
   probability-map outputs are **stale** until they are. Multi-day job (~2.5 days last time) —

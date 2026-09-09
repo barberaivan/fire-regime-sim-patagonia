@@ -27,24 +27,36 @@ The two simpler sub-models, fitted together. Canonical version is the old repo's
 - **Outputs:** `files/ignition/ignition_model_samples.rds`, `escape_model_samples.rds`
   — **production constants** consumed by `fire_regime/`.
 
-## Abandoned/superseded model variants — not part of the canonical pipeline
+## The ordinal escape variant: `escape_ordinal_exploratory.R`
 
-Two earlier formulations exist in this folder but are **not used** by the canonical fit above.
-Confirmed with the user (2026-07-09); flagged here rather than removed, since the user is
-prioritizing spread-side work next and doesn't want to touch ignition-escape right now.
+Escape can also be asked as a size-class question rather than a yes/no one, and that version is
+kept in `escape_ordinal_exploratory.R` (model file `escape_model_ordinal.stan`, fitted output
+`files/ignition/escape_model_samples_ordinal.rds`). It is **exploratory: nothing in
+`fire_regime/` reads it**, and it is not one of the paper's fitted models.
 
-- **`escape_model_ordinal.stan`** — an earlier **ordinal** (K size-class) formulation of escape
-  (`ordered` cutpoints + `categorical` likelihood), superseded by the binary model above. Its
-  fitted output, `escape_model_samples_ordinal.rds`, still sits in `files/ignition/` (copied
-  wholesale during migration) but nothing reads it. **Can be deleted** whenever this area is
-  revisited — no other decision needed.
-- **`size_model.stan`** + the **"Fire size model" section in `fit.R`** — a continuous fire-size
-  regression (log-area, `skew_normal` likelihood, left-censored below one-pixel-size), from
-  before the escape question was simplified to binary. **Never finished**: the script's
-  `sizemod` is used (for `summary()`/diagnostic plots) but never assigned — its `sampling()` call
-  is commented out, and unlike `igmod`/`escmod`, no fitted `.rds` exists anywhere to load
-  instead. This section **cannot run from a fresh session as-is**. It is **unrelated** to
-  `spread/hierarchical_fit_inits.R`'s own `stansteps` (a steps~area regression used to initialize the
-  spread model's stage-2 MCMC) — no code cross-reference between the two, and the ignition-escape
-  work came chronologically *after* the spread model was fit, so it could not have informed it.
-  When revisited: either fit `sizemod` properly and cache it, or remove the section.
+- **Response:** the fire's size class, cutpoints at **0.09, 10 and 100 ha** (K = 4 classes),
+  instead of the binary > 0.09 ha indicator.
+- **Method:** cumulative logit, with `ordered[K-1]` cutpoints and a `categorical` likelihood over
+  the implied class probabilities. The linear predictor is the *same* as the binary model's:
+  FWI through the Gaussian lag-weighting kernel, `vfi`, `tfi`, `drz`, `dhz`, with the cutpoints
+  carrying what the binary model puts in its single intercept.
+- **Why it is kept:** the 10 ha cutpoint. The spread simulator was estimated on fires above that
+  size, so an escape definition anchored at 10 ha can be read off this fit without refitting.
+- **How it runs:** it is a *continuation* of `fit.R`, not a standalone script. Run `fit.R` down
+  to the end of its "Prepare data for escape model" section, then run this one in the same
+  session; it takes `ig2`, `fwi_points`, `nlags` and `mean_ci` from there (the script stops with
+  a message if they are absent). Sampling is a few minutes on 8 cores, but the fit is already in
+  the store, so the `sampling()` call is commented and the `readRDS()` is the active line, the
+  same convention `fit.R` uses.
+- **Its `ordinal_predict()`** is the counterpart of `fit.R`'s `logistic_predict()`: same
+  prediction grids, but it returns one class probability curve per size class instead of a
+  single escape-probability curve.
+- **It also writes** `data_private/ignition/ignition_size_data.csv` (`ig2` plus its size class),
+  the file `fire_regime/simulate.R` reads to compare the simulated fire size distribution
+  against the observed one. That `write.csv()` is commented like the other exports: re-run it
+  only if the ignition record or the cutpoints change. This is why the size-class definition
+  lives here rather than in `fit.R`, even though the regime side depends on its output.
+
+The escape question was once also posed as a **continuous** fire-size regression (log-area,
+`skew_normal`, left-censored at one pixel). That formulation is gone: it is not in the repo, has
+no fitted output anywhere, and nothing reads it.

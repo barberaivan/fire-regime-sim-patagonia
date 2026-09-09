@@ -1,13 +1,9 @@
 data {
   int n;        // number of ignitions
   int nlag;     // lag length for FWI
-  int n_notna;
-  int n_na;
+  int K;        // size classes
 
-  vector[n] y;
-  int ids_notna[n_notna];
-  int ids_na[n_na];
-  real cutoff;
+  int y[n];
 
   matrix[n, nlag] fwi_mat;
   vector[n] vfi;
@@ -15,16 +11,17 @@ data {
   vector[n] drz;
   vector[n] dhz;
 
-  real prior_a_mean;
   real prior_a_sd;
   real prior_b_sd;
-  real prior_sigma_sd;
-  real prior_g_sd;
   real prior_ls_sd;
 }
 
+transformed data {
+  vector[n] ones = rep_vector(1.0, n);
+}
+
 parameters {
-  real a_raw;
+  ordered[K-1] a_raw;
 
   real<lower=0> b_fwi_raw;
   real<lower=0> b_vfi_raw;
@@ -32,13 +29,11 @@ parameters {
   real b_drz_raw;
   real b_dhz_raw;
 
-  real<lower=0> sigma_raw;
-  real g_raw;
   real<lower=0> ls_raw;
 }
 
 transformed parameters {
-  real a = a_raw * prior_a_sd;
+  ordered[K-1] a = a_raw * prior_a_sd;
 
   real b_fwi = b_fwi_raw * prior_b_sd;
   real b_vfi = b_vfi_raw * prior_b_sd;
@@ -46,24 +41,34 @@ transformed parameters {
   real b_drz = b_drz_raw * prior_b_sd;
   real b_dhz = b_dhz_raw * prior_b_sd;
 
-  real sigma = sigma_raw * prior_sigma_sd;
-  real g = g_raw * prior_g_sd;
   real ls = ls_raw * prior_ls_sd;                      // FWI temporal corr
 
   vector[nlag] lag_weights_un; // unnormalized
   vector[nlag] lag_weights;    // time-weights for FWI
 
-  vector[n] mu;
+  vector[n] eta;
+  matrix[n, K] cmf;
+  matrix[n, K] pmf;
 
   for(t in 1:nlag)
     lag_weights_un[t] = exp(-((t-1) / ls) ^ 2); // t-1 to start at zero
   // normalize
   lag_weights = lag_weights_un / sum(lag_weights_un);
 
-  mu = a +
-       b_fwi * (fwi_mat * lag_weights) +
-       b_vfi * vfi + b_tfi * tfi +
-       b_drz * drz + b_dhz * dhz;
+  eta = b_fwi * (fwi_mat * lag_weights) +
+        b_vfi * vfi + b_tfi * tfi +
+        b_drz * drz + b_dhz * dhz;
+
+  // compute cumulative and probability mass functions
+  for(k in 1:(K-1)) {
+    cmf[, k] = inv_logit(a[k] - eta);
+  }
+  cmf[, K] = ones;
+
+  pmf[, 1] = cmf[, 1];
+  for(k in 2:K) {
+    pmf[, k] = cmf[, k] - cmf[, k-1];
+  }
 }
 
 model {
@@ -76,12 +81,10 @@ model {
   b_drz_raw ~ std_normal();
   b_dhz_raw ~ std_normal();
 
-  sigma_raw ~ std_normal();
-  g_raw ~ std_normal();
   ls_raw ~ std_normal();
 
   // likelihood
-  y[ids_notna] ~ skew_normal(mu[ids_notna], sigma, g);
-  target += skew_normal_lcdf(cutoff | mu[ids_na], sigma, g);
-  // the second is the probability of being below log(0.09)
+  for(i in 1:n) {
+    y[i] ~ categorical(pmf[i, ]');
+  }
 }
