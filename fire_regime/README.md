@@ -1,9 +1,15 @@
-# fire_regime/ — integration & simulation
+# fire_regime/: integration & simulation
 
 Integrates the ignition, escape and spread models into the full fire regime simulator, and
 runs the scientific simulations/projections (paper 2).
 
 > Full detail: [`../docs/fire-regime.md`](../docs/fire-regime.md).
+
+> **The simulator is being redesigned.** The season loop is moving into C++, and the planned
+> `simulator.R` below will be a thin R wrapper over it rather than the simulator itself. Read
+> [`../docs/fire-regime.md`](../docs/fire-regime.md) → *Rebuilding the season simulator in C++*
+> before touching `simulate.R`: it holds the diagnosis, the decisions taken, and three that
+> are still open.
 
 Design intent (keep these separate so the production side can extract cleanly):
 

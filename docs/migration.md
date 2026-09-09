@@ -710,7 +710,11 @@ confirms the new repo runs.
    - Split `hierarchical_fit.R` monolith — algorithm core vs. inline data manipulation —
      **done 2026-09-09**; written up in `docs/spread.md` → *Stage 2: the hierarchical fit, in
      four scripts*.
-   - Extract `recalibrate.R` + `simulator.R` (standalone function) out of `fire_regime/simulate.R`.
+   - Extract `recalibrate.R` + `simulator.R` (standalone function) out of
+     `fire_regime/simulate.R`. **Superseded, and now much larger in scope**: the simulator is
+     being rebuilt as a C++ season loop rather than extracted as an R function. Design
+     discussion, decisions and open questions in `docs/fire-regime.md` → *Rebuilding the season
+     simulator in C++*.
    - Fill `docs/*.md` deep detail per module as each is refactored (docs strategy: fill during
      migration/refactor, not up front).
 
