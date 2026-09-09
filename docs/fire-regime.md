@@ -37,6 +37,45 @@ scientific simulations/projections.
 - Static fire-probability maps from single-model runs; visualization utilities. Export final
   figures into `manuscript-regime/figures/`.
 
+## `spread_probability_map.R` — the spread panel under the SMC posterior (2026-09-09)
+
+Recomputes **only** the spread panel (panel D of the thesis figure
+`burn_prob_models_modern`) under the canonical SMC fit and under the legacy pre-SMC fit, so the
+two are directly comparable. Written to answer a specific question: the south of PNNH burns
+much more than the rest in the annual burn-probability map (panel E), and it was unclear whether
+that comes from ignition (low elevation raising the lightning-ignition probability) or from
+spread. Run it from the repo root, no arguments, **~20 min** (2 posteriors x 12000 draws x 1.1 M
+burnable pixels x 2 variants).
+
+Workflow: reads `data/pnnh_images/pnnh_data_120m_buff_10000.tif`, recodes vegetation, computes
+VFI/TFI, then for each posterior draw takes the fixed effects at FWI = mean (`fixef[, "a", ]`),
+draws one fire-level parameter vector from `MVN(mu, V)` built from `s2` and `rho`, maps it to
+the constrained support, and averages `plogis()` over draws. Writes
+`files/fire_regime_simulation/spread_prob_map_120m.tif` (4 layers) and two figures into
+`fire_regime/figures/` (gitignored, like `spread/figures/`).
+
+Two variants per posterior, because the original code and the thesis caption disagree:
+- **static** — slope and wind terms set to zero. This is what the code behind the thesis figure
+  actually computed, so it is the drop-in remake of panel D.
+- **directional** — the most favourable direction (straight upslope, 14.4 km/h wind blowing
+  along the spread). This is what the caption describes ("se fijó la velocidad del viento en
+  14.4 km/h"), and it is where the slope and wind coefficients show up. **The caption is wrong
+  about the published panel**; fix it if that figure is reused in the regime paper.
+
+Results:
+- The map **barely changed**. Overall mean spread probability inside PNNH: 15.7 % legacy ->
+  12.8 % SMC (static); 76.9 % -> 76.9 % (directional). The spatial pattern is essentially
+  identical; the SMC-legacy difference is a nearly uniform -3 pp offset with no structure
+  (see `spread_prob_smc_vs_legacy.png`, panel C).
+- The south is **not** a spread hotspot. Mean static spread probability by latitudinal band
+  inside the park runs 19.9 % (southernmost tenth) down to 9.4 % (northernmost), a gentle
+  gradient of the same shape under both fits; the directional variant is flat (83.7 % south
+  vs 77.0 % north). Nothing in this that looks like the sharp, order-of-magnitude southern
+  hotspot in panel E.
+- So the southern burn-probability hotspot is **not explained by the spread model**, and
+  repointing to the SMC posterior does not change that. The remaining candidates are ignition
+  (elevation -> TFI -> lightning) and escape, plus the compounding of many simulated fires.
+
 ---
 
 # Rebuilding the season simulator in C++ (design discussion, 2026-09-09)
