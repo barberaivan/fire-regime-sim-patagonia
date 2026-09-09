@@ -47,6 +47,9 @@ that comes from ignition (low elevation raising the lightning-ignition probabili
 spread. Run it from the repo root, no arguments, **~20 min** (2 posteriors x 12000 draws x 1.1 M
 burnable pixels x 2 variants).
 
+It also recomputes the **escape** layer, not because that fit changed but because of the
+`prob_esc` bug below; the two ignition layers are read from the old tiff unchanged.
+
 Workflow: reads `data/pnnh_images/pnnh_data_120m_buff_10000.tif`, recodes vegetation, computes
 VFI/TFI, then for each posterior draw takes the fixed effects at FWI = mean (`fixef[, "a", ]`),
 draws one fire-level parameter vector from `MVN(mu, V)` built from `s2` and `rho`, maps it to
@@ -75,6 +78,26 @@ Results:
 - So the southern burn-probability hotspot is **not explained by the spread model**, and
   repointing to the SMC posterior does not change that. The remaining candidates are ignition
   (elevation -> TFI -> lightning) and escape, plus the compounding of many simulated fires.
+
+### The `prob_esc` bug (found and fixed 2026-09-09)
+
+The escape loop in `probability_maps.R` read `prob_esc <- plogis(...)` where every other loop in
+the script accumulates (`x <- x + ... * weight`). It therefore kept only the **last** posterior
+draw. Consequences:
+
+- `data/pnnh_images/pnnh_data_120m_buff_10000_ig-esc-spread-prob_FWIZ.tiff`'s `escprob` layer,
+  and with it **panel C of the thesis figure** `burn_prob_models_modern`, is one draw from the
+  escape posterior rather than its mean. That tiff is stale until `probability_maps.R` is
+  re-run in full.
+- The error is smaller than it sounds, because the escape posterior is tight: mean inside PNNH
+  31.2 % (one draw) vs 31.9 % (posterior mean), correlation 0.957, 95 % of pixels within
+  +-9 pp. The map reads the same; individual pixels move.
+- Nothing else consumed that layer. The simulator (`simulate.R`) evaluates escape per ignition
+  from the posterior directly and never reads the tiff, so simulation output is unaffected.
+
+Fixed in `probability_maps.R`, with the corrected escape layer recomputed by
+`spread_probability_map.R` (layer `escprob` of `spread_prob_map_120m.tif`) so the remade
+five-panel figure has a correct panel C without waiting on a full re-run.
 
 ---
 

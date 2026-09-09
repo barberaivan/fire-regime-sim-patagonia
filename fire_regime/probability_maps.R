@@ -259,7 +259,13 @@ Xesc_complete <- Xesc[!na_esc, ]
 
 for(k in 1:npost) {
   if(k %% 100 == 0) print(k)
-  prob_esc <- plogis(esc_intercept[k] + Xesc_complete %*% esc_betas[, k])
+  # accumulate, as in the ignition and spread loops above and below. Until
+  # 2026-09-09 this line assigned instead of accumulating, so the escape layer of
+  # pnnh_data_120m_buff_10000_ig-esc-spread-prob_FWIZ.tiff (and panel C of the
+  # thesis figure burn_prob_models_modern) is a single posterior draw, not the
+  # posterior mean. The tiff has to be regenerated for that layer to be right.
+  prob_esc <- prob_esc +
+    plogis(esc_intercept[k] + Xesc_complete %*% esc_betas[, k])[, 1] * weight
 }
 
 prob_esc_full <- numeric(nrow(Xesc))

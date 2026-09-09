@@ -9,9 +9,12 @@
 # ignitions south) or by spread? To tell, panel D has to be recomputed with the
 # canonical SMC-fitted posterior (docs/migration.md #7).
 #
-# This script recomputes ONLY the spread panel, under BOTH posteriors, so the two are
-# directly comparable. Ignition and escape are untouched (their fits did not change);
-# their layers are read from the existing tiff for the drop-in remake of the full figure.
+# This script recomputes the spread panel under BOTH posteriors, so the two are directly
+# comparable. The escape panel is recomputed too, not because its fit changed (it did not)
+# but because the loop in probability_maps.R assigned instead of accumulating until
+# 2026-09-09, so the escape layer of the existing tiff is a single posterior draw rather
+# than the posterior mean. The two ignition layers are unaffected and are read from that
+# tiff for the drop-in remake of the full figure.
 #
 # What is computed
 # ----------------
@@ -35,16 +38,20 @@
 # Inputs : data/pnnh_images/pnnh_data_120m_buff_10000.tif
 #          files/hierarchical_model/spread_model_samples.rds            (canonical, SMC)
 #          files/hierarchical_model_legacy_preSMC/spread_model_samples.rds
+#          files/ignition/escape_model_samples.rds
 #          data/pnnh_images/pnnh_data_120m_buff_10000_ig-esc-spread-prob_FWIZ.tiff
-#            (only for the ignition/escape layers of the full-figure remake)
-# Outputs: files/fire_regime_simulation/spread_prob_map_120m.tif   (4 layers)
+#            (only for the two ignition layers of the full-figure remake)
+# Outputs: files/fire_regime_simulation/spread_prob_map_120m.tif
+#            (4 spread layers + the recomputed escprob)
 #          fire_regime/figures/spread_prob_smc_vs_legacy.png/.pdf
 #          fire_regime/figures/burn_prob_models_modern_smc.png/.pdf
 #
-# Runtime: ~30-60 min (2 posteriors x 12000 draws x ~1.2 M pixels x 2 variants).
+# Runtime: ~30 min (2 posteriors x 12000 draws x ~1.1 M pixels x 2 variants, plus 8000
+# escape draws).
 # Run from the repo root:  Rscript fire_regime/spread_probability_map.R
 
 library(terra)
+library(rstan)
 library(ggplot2)
 library(tidyterra)
 library(ggspatial)
@@ -169,9 +176,19 @@ pnnh_rast$tfi <- tfi_calc(values(pnnh_rast$elevation),
                           values(pnnh_rast$slope))
 pnnh_rast$slope_spread <- sin(pnnh_rast$slope * pi / 180)
 
+# distances to roads and human settlements, standardised as the escape model expects
+pnnh_data_summary <- readRDS(file.path("data", "pnnh_images",
+                                       "pnnh_data_summary.rds"))
+pnnh_rast$drz <- (pnnh_rast$dist_roads / 1000 - pnnh_data_summary$dr_mean) /
+  pnnh_data_summary$dr_sd
+pnnh_rast$dhz <- (pnnh_rast$dist_humans / 1000 - pnnh_data_summary$dh_mean) /
+  pnnh_data_summary$dh_sd
+
 vfi <- values(pnnh_rast$vfi)[, 1]
 tfi <- values(pnnh_rast$tfi)[, 1]
 slope_term <- values(pnnh_rast$slope_spread)[, 1]
+drz <- values(pnnh_rast$drz)[, 1]
+dhz <- values(pnnh_rast$dhz)[, 1]
 
 ok <- !is.na(vfi) & !is.na(tfi) & !is.na(slope_term)
 msg("burnable pixels:", sum(ok), "of", length(ok))
@@ -179,6 +196,10 @@ msg("burnable pixels:", sum(ok), "of", length(ok))
 vfi_ok <- vfi[ok]
 tfi_ok <- tfi[ok]
 slope_ok <- slope_term[ok]
+
+# the escape model needs the two distances as well
+ok_esc <- ok & !is.na(drz) & !is.na(dhz)
+msg("pixels with distances too (escape):", sum(ok_esc))
 
 # Spread probability ------------------------------------------------------
 
@@ -224,6 +245,36 @@ spread_prob_map <- function(smod, label) {
   list(static = p_static, directional = p_dir)
 }
 
+# Escape probability ------------------------------------------------------
+
+# Recomputed here only so panel C of the five-panel remake is a posterior mean. The
+# escape layer of the existing tiff was written by the assignment bug in
+# probability_maps.R (fixed 2026-09-09), so it is a single posterior draw. The escape
+# fit itself did not change; this is the same logistic regression, accumulated properly.
+escape_prob_map <- function() {
+  escmod <- readRDS(file.path("files", "ignition", "escape_model_samples.rds"))
+
+  esc_betas <- as.matrix(escmod, pars = c("b_vfi", "b_tfi",
+                                          "b_drz", "b_dhz")) |> t()
+  esc_intercept <- as.matrix(escmod, pars = "a") |> as.numeric()
+  # no fwi effect included
+
+  Xesc <- cbind(vfi[ok_esc], tfi[ok_esc], drz[ok_esc], dhz[ok_esc])
+
+  npost <- ncol(esc_betas)
+  weight <- 1 / npost
+  stopifnot(nrow(esc_betas) == ncol(Xesc), length(esc_intercept) == npost)
+
+  msg("escape: ", npost, " posterior draws")
+
+  p <- numeric(nrow(Xesc))
+  for(k in 1:npost) {
+    if(k %% 500 == 0) msg("escape: draw", k, "/", npost)
+    p <- p + plogis(esc_intercept[k] + Xesc %*% esc_betas[, k])[, 1] * weight
+  }
+  p
+}
+
 smod_smc <- readRDS(file.path("files", "hierarchical_model",
                               "spread_model_samples.rds"))
 smod_leg <- readRDS(file.path("files", "hierarchical_model_legacy_preSMC",
@@ -234,11 +285,13 @@ res_leg <- spread_prob_map(smod_leg, "legacy")
 
 rm(smod_smc, smod_leg); gc()
 
+res_esc <- escape_prob_map()
+
 # Assemble the output raster ----------------------------------------------
 
-mk_layer <- function(x, nm) {
-  full <- rep(NA_real_, length(ok))
-  full[ok] <- x
+mk_layer <- function(x, nm, mask = ok) {
+  full <- rep(NA_real_, length(mask))
+  full[mask] <- x
   r <- rast(pnnh_rast[[1]])
   values(r) <- full
   names(r) <- nm
@@ -249,7 +302,8 @@ out <- c(
   mk_layer(res_smc$static, "spreadprob_smc"),
   mk_layer(res_leg$static, "spreadprob_legacy"),
   mk_layer(res_smc$directional, "spreadprob_smc_dir"),
-  mk_layer(res_leg$directional, "spreadprob_legacy_dir")
+  mk_layer(res_leg$directional, "spreadprob_legacy_dir"),
+  mk_layer(res_esc, "escprob", mask = ok_esc)
 )
 
 writeRaster(out, file.path("files", "fire_regime_simulation",
@@ -259,7 +313,7 @@ msg("wrote files/fire_regime_simulation/spread_prob_map_120m.tif")
 # Numbers worth printing: is the south really hotter under the new fit? -----
 
 # Latitudinal profile inside the park, in 10 bands from south to north.
-inside <- mask(out, pnnh)
+inside <- mask(out[[1:4]], pnnh)
 yy <- yFromCell(inside, 1:ncell(inside))
 band <- cut(yy, breaks = 10, labels = FALSE)   # 1 = southernmost, 10 = northernmost
 prof <- do.call(rbind, lapply(names(inside), function(nm) {
@@ -370,18 +424,18 @@ burn_map <- file.path("files", "fire_regime_simulation", "burn_prob_map-modern.t
 
 if(file.exists(old_tiff) && file.exists(burn_map)) {
   old <- rast(old_tiff)
-  ig_esc <- old[[c("igprob_h", "igprob_l", "escprob")]] * 100
+  ig <- old[[c("igprob_h", "igprob_l")]] * 100
   bp_modern_lyr <- rast(burn_map) * 100
 
   titles <- c("A. Probabilidad relativa de\nignición por humanos",
               "B. Probabilidad relativa de\nignición por rayos",
-              "C. Probabilidad de escape",
+              "C. Probabilidad de escape\n(recalculada)",
               "D. Probabilidad de\npropagación (SMC)")
 
   ll <- list(
-    map_panel(ig_esc[[1]], titles[1]),
-    map_panel(ig_esc[[2]], titles[2]),
-    map_panel(ig_esc[[3]], titles[3]),
+    map_panel(ig[[1]], titles[1]),
+    map_panel(ig[[2]], titles[2]),
+    map_panel(pct[["escprob"]], titles[3]),
     map_panel(pct[["spreadprob_smc"]], titles[4])
   )
 
