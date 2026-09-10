@@ -6,8 +6,8 @@ was done: when a task here is finished, the procedure it involved goes into the 
 `docs/*.md` (see `CLAUDE.md` → *Roadmap discipline*) and the entry is deleted from here. History
 lives in git log and, for the migration, in `docs/migration.md`.
 
-**Last updated:** 2026-09-09 (the fire-regime season simulator's C++ redesign discussed and
-written up in `docs/fire-regime.md`; four decisions taken, three still open)
+**Last updated:** 2026-09-10 (the spatial ignition model rebuild designed and written up in
+`docs/ignition-escape.md`; the fire-regime C++ redesign still has three open decisions)
 
 Where finished work is written up:
 
@@ -55,6 +55,31 @@ Short, and all of it is independent of the C++ redesign.
    collapses to `spread_row = ignition_row + 186`, the `rbind`/`c()` accumulators grow
    quadratically, and `rm()` on the stanfits after `as.matrix()` saves ~46 MB per worker. Detail
    in `docs/fire-regime.md` → *Order of work* steps 1 to 3.
+
+## Rebuilding the spatial ignition models
+
+Decided and written up in full in `docs/ignition-escape.md` → *Modifications to the spatial
+ignition models*. Nothing coded yet. Refits of the ignition models are cheap, so all of it goes
+in one pass:
+
+1. A coarse `gp` spatial field (fixed range 20-30 km, diagonal penalty, hierarchical `sigma`) in
+   both cause models, with the option to simulate new fields for the far-horizon projections.
+2. Soft-clipping the `tfi` effect for lightning via `log_inv_logit(a + b * tfi)`, with `a` set
+   through `tfi_50` at the upper limit of the observed range.
+3. A larger background sample (`nland` 1e4 → 1e5), no stratification.
+4. Rewriting the location likelihood in log space (`log_sum_exp`), splitting `X_pop_fi`.
+5. Splitting the fortnightly ignition rate between PNNH and the 10 km buffer, and locating
+   the buffer's share **flat over burnable cells** instead of by extrapolated covariates.
+   This one is a `simulate.R` change, not a refit, and it matters for the *calibration*:
+   with the Manso absorbing burned area, `steps_int_shift` has to be pushed up for PNNH to
+   look right, which biases spread for the whole park.
+
+Run the observed-vs-expected ignition counts per 10-20 km tile **first**: it needs no refit, it
+says whether the field is warranted and at what amplitude, and it separates the Bariloche
+mismatch into an ignition problem or an escape/suppression one.
+
+Downstream: `fire_regime/simulate.R` gains one coarse field grid and a one-line change to the
+`iprob_h` / `iprob_l` blocks, and its outputs go stale again (see TODO #7 above).
 
 ## The season simulator moves into C++
 
