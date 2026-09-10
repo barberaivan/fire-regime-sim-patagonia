@@ -68,11 +68,12 @@ in one pass:
    through `tfi_50` at the upper limit of the observed range.
 3. A larger background sample (`nland` 1e4 → 1e5), no stratification.
 4. Rewriting the location likelihood in log space (`log_sum_exp`), splitting `X_pop_fi`.
-5. Splitting the fortnightly ignition rate between PNNH and the 10 km buffer, and locating
-   the buffer's share **flat over burnable cells** instead of by extrapolated covariates.
-   This one is a `simulate.R` change, not a refit, and it matters for the *calibration*:
-   with the Manso absorbing burned area, `steps_int_shift` has to be pushed up for PNNH to
-   look right, which biases spread for the whole park.
+5. Allocating the fortnightly ignitions between PNNH and the 10 km buffer **by burnable area**,
+   then normalising the spatial model **within each region** so the softmax cannot compete
+   across the boundary. A `simulate.R` change, not a refit, and it matters for the
+   *calibration*: with the Manso absorbing burned area, `steps_int_shift` has to be pushed up
+   for PNNH to look right, which biases spread for the whole park. Measure
+   `A_buffer_burnable / A_total_burnable` first, since that fraction is the containment ceiling.
 
 Run the observed-vs-expected ignition counts per 10-20 km tile **first**: it needs no refit, it
 says whether the field is warranted and at what amplitude, and it separates the Bariloche

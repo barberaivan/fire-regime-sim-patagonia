@@ -429,26 +429,45 @@ every fire in the park spread more**. The bias is not confined to the area nobod
 leaks into the spread recalibration for the whole park, and it forces the Manso itself to an
 implausible total burn probability along the way.
 
-### The change
+The root cause is that the spatial model is a **single softmax over the whole simulated
+landscape**. A data-free region with high extrapolated `eta` does not merely get too many
+ignitions of its own: it competes for a fixed pool and takes them away from the park.
 
-Each fortnight, split the ignition rate between the two areas and locate the two sets of
-ignitions differently:
+### The change: allocate by burnable area, then normalise within each region
 
-| Area | Rate | Location |
-|------|------|----------|
-| **Inside PNNH** | `lambda_per_km2 * A_pnnh_burnable` | modelled, as now (`exp(eta)` softmax with the field) |
-| **Buffer (10 km ring)** | `lambda_per_km2 * A_buffer_burnable` | **flat over burnable cells** |
+Each fortnight, split the fortnight's ignitions between the two regions **in proportion to their
+burnable area**, and then run the spatial model **separately inside each**:
 
-The buffer keeps its share of ignitions in proportion to its burnable area, so the inward flux
-of fires across the park boundary stays about right, which is the whole reason the buffer exists.
-What it loses is the ability of extrapolated covariates to concentrate that share anywhere in
-particular. Where there is no data, uniform over burnable area is the honest default. Note that
-restricting to *burnable* cells already removes the largest inhomogeneity in the buffer, since
-its western part is high Andes and mostly non-burnable.
+| Area | Share of the fortnight's ignitions | Location within the region |
+|------|------------------------------------|----------------------------|
+| **Inside PNNH** | `A_pnnh_burnable / A_total_burnable` | modelled: `exp(eta)` softmax **normalised over PNNH burnable cells** |
+| **Buffer (10 km ring)** | `A_buffer_burnable / A_total_burnable` | modelled: `exp(eta)` softmax **normalised over buffer burnable cells** |
 
-This also composes cleanly with section 1: the field is at its prior mean outside the fitting
-extent anyway, so it only ever acts inside PNNH, which is exactly where the modelled branch
-applies.
+This is the **preferred strategy**. The competition that the softmax creates is *contained*
+within each region instead of running across the whole landscape. The Manso can still drag most
+of the buffer's ignitions, which is fine and may well be right, but it can no longer reach into
+the park's allocation. And unlike the flat variant below, the covariate information in the buffer
+is kept: roads, vegetation and topography south and east of the park still place the ignitions
+they are given.
+
+Both regions use the same per-burnable-km2 rate, so the mean intensity per burnable cell matches
+on the two sides of the line by construction, and the inward flux of fires across the park
+boundary stays about right, which is the whole reason the buffer exists.
+
+This composes cleanly with section 1: the field is at its prior mean outside the fitting extent
+anyway, so it only ever acts inside PNNH, which is exactly where it has data. Per-region
+normalisation preserves the scale cancellation, so the field's additive constant still drops out
+within each region independently.
+
+### Variant: flat in the buffer
+
+The more conservative version locates the buffer's share **uniformly over its burnable cells**,
+discarding `eta` outside the park entirely, on the grounds that there is no data there. Recorded
+as the fallback if the modelled buffer still concentrates too hard. It throws away real
+information (roads south of PNNH are still roads, and the distance relationship plausibly
+transfers), and it produces a *larger* boundary artefact, see below. If it is ever used, a middle
+position worth considering is to keep the model for **human** ignitions in the buffer and go flat
+only for **lightning**, where the elevation extrapolation is the actual problem.
 
 ### Drawing the two counts
 
@@ -456,36 +475,55 @@ Prefer **binomial thinning of a single negative-binomial draw** (draw `N_total` 
 buffered area, then `N_buffer ~ Binomial(N_total, A_buffer_burnable / A_total_burnable)`) over two
 independent negative-binomial draws. Thinning a negative binomial leaves negative-binomial
 marginals, so nothing is lost, and it keeps the two areas coupled through the shared draw. Two
-independent draws would make them independent, which is wrong: the overdispersion is a
-weather and regional phenomenon, so a fortnight that is busy inside the park is busy outside it
-too.
+independent draws would make them independent, which is wrong: the overdispersion is a weather
+and regional phenomenon, so a fortnight that is busy inside the park is busy outside it too.
+
+### The containment ceiling, which is worth measuring first
+
+The most the Manso can now take is the **buffer's entire allocation**, i.e. its burnable-area
+share. That ceiling is not obviously tight: a 10 km ring around a park of 7161.577 km2 with a long
+perimeter is a substantial area in its own right. **Compute
+`A_buffer_burnable / A_total_burnable` before assuming the containment solves the problem.** If
+it comes out large, the lever is the buffer width, which is set by how far fires actually travel
+and not by anything intrinsic to 10 km; a narrower ring would tighten the containment and still
+serve its purpose.
 
 ### What it does and does not fix
 
-It removes the **ignition-side** contribution to the Manso, which was the dominant one, since the
-softmax was actively concentrating mass there. Escape and spread still favour low elevation, so
-the Manso will still burn more than average *given* an ignition. That residual is accepted (see
-the conservatism note above); what is removed is the part where a data-free area competes for a
-fixed pool of ignitions and wins.
+It removes the **cross-region** competition, which was the dominant channel: the softmax was
+actively concentrating the whole landscape's ignitions on the Manso. Within the buffer, and in
+escape and spread everywhere, low elevation is still favoured, so the Manso will still burn more
+than average. That residual is accepted (see the conservatism note above); what is removed is the
+part where a data-free area competes for the park's ignitions and wins.
 
 ### The artefact to watch for
 
-The PNNH boundary is arbitrary with respect to fire ecology, so a flat-outside / modelled-inside
-split puts a step in the ignition intensity at the park line. Two things to check once it runs:
+Per-region normalisation puts a step in intensity at the park line: two otherwise identical cells
+straddling the boundary differ by the ratio of the two regions' mean `exp(eta)`. Since the buffer
+contains the low-elevation Manso and the eastern steppe, its mean is the higher one, so buffer
+cells are scaled *down* relative to what a global softmax would give them, which is the intended
+effect.
 
-- **In the maps.** Any figure that shows the buffer (the thesis burn-probability panels draw its
+Note this step is a **constant factor**, and it is smaller than the flat variant's, whose step is
+`mean_pnnh(exp(eta)) / exp(eta_i)` and therefore varies cell by cell and is generally larger. Two
+checks once it runs:
+
+- **In the maps.** Any figure that draws the buffer (the thesis burn-probability panels show its
   contour) would show the step. Simplest mitigation is to mask the buffer in published maps,
   which is nearly the status quo already, since it is excluded from every metric.
 - **Inside the park, near the boundary.** Plot simulated burn probability against distance to the
-  PNNH boundary and look for a discontinuity in the first few km inside. If one appears, the fix
-  is to feather the transition (blend the modelled and flat intensities over a few km inside the
-  line) rather than to abandon the split, but that adds a tuning knob and is probably not worth
-  it unless the step is visible.
+  PNNH boundary and look for a discontinuity in the first few km inside. If one appears, feather
+  the transition over a few km rather than abandoning the split, but that adds a tuning knob and
+  is probably not worth it unless the step is visible.
 
-One variant considered and not taken: keeping the modelled location for **human** ignitions in
-the buffer (roads are roads, and the distance relationship plausibly transfers) and going flat
-only for **lightning**, where the extrapolation is the elevation one. Worth revisiting if the
-flat human buffer turns out to lose something real, for instance along the Manso road.
+### In `simulate.R`
+
+`cells_pnnh_dyn` is currently sampled as one pool (`candidate_cells <- sample(cells_pnnh_dyn,
+size = nss * 2)`) and weighted by one `iprob`. The change is local: split the cell index into an
+inner and a buffer pool once at setup, draw `nss` candidates from each per fortnight, and run the
+existing weighting separately per pool with its own count. The importance-sampling approximation
+stays valid region by region. Cost is roughly double the current ignition-placement work, which
+is negligible against spread.
 
 ## Not planned: clipping `tfi`
 
